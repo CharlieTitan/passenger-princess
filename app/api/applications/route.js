@@ -1,0 +1,2 @@
+import {kv} from "@vercel/kv";
+export async function GET(req){if(req.headers.get("x-admin-key")!==process.env.ADMIN_KEY)return Response.json({error:"Unauthorized"},{status:401});const rows=await kv.lrange("pp:applications",0,99);return Response.json(rows.map(x=>typeof x==="string"?JSON.parse(x):x))}
