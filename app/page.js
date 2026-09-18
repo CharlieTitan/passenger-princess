@@ -1,0 +1,22 @@
+"use client";
+import {useState} from "react";
+const qs=[
+["name","Candidate name","text","Legal name, stage name, or what I'll be saving you as"],
+["why","Why do you believe you're qualified for this highly competitive position?","textarea","Sell yourself. The recruitment panel is ruthless."],
+["snacks","You have £20 and 4 minutes at a petrol station. What's the snack haul?","textarea","There are wrong answers."],
+["aux","Your AUX privileges would best be described as…","select",["Elite — no skips","Strong but occasionally questionable","I need supervision","I will play one song on repeat"]],
+["navigation","I miss a turn after ignoring your directions. What happens next?","select",["Silent judgment","I told you so, immediately","Laugh and let it go","This will be referenced for the next 3–5 business years"]],
+["maintenance","How high maintenance are you?","range",""],
+["duties","Which Passenger Princess duties are you prepared to undertake?","textarea","DJ, snacks, navigation, looking pretty, moral support, etc."],
+["destination","Where should the first official road test take us?","text","Choose wisely."],
+["final","Anything else that might strengthen your application?","textarea","References, qualifications, bribery attempts…"]
+];
+export default function Home(){
+ const [started,setStarted]=useState(false),[i,setI]=useState(0),[a,setA]=useState({maintenance:5}),[done,setDone]=useState(false),[busy,setBusy]=useState(false);
+ const q=qs[i];
+ function val(){return a[q[0]]??""} function set(v){setA({...a,[q[0]]:v})}
+ async function next(){if(!String(val()).trim()&&q[2]!=="range")return alert("This is a rigorous recruitment process. Answer the question."); if(i<qs.length-1)setI(i+1);else{setBusy(true);let r=await fetch("/api/apply",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(a)});setBusy(false);if(r.ok)setDone(true);else alert("HR has suffered a technical incident. Try again.");}}
+ if(done)return <main><div className="card center"><div className="crown">👑</div><div className="eyebrow">APPLICATION STATUS</div><h1>Application received.</h1><p>Background checks are now underway.</p><div className="status"><b>STATUS</b><span>UNDER REVIEW</span></div><p className="small">Successful candidates may be invited to an in-person road test. Response times vary depending on applicant quality and how busy the hiring manager is.</p></div></main>;
+ if(!started)return <main><div className="card hero"><div className="top"><span>PP™</span><span>RECRUITMENT • 2026</span></div><div className="crown">👑</div><div className="eyebrow">OFFICIAL CANDIDATE PORTAL</div><h1>Passenger<br/>Princess</h1><p className="lead">Applications are currently open for <b>one (1)</b> highly coveted position.</p><div className="benefits"><b>ROLE BENEFITS</b><p>Climate-controlled passenger seating*</p><p>Limited AUX privileges</p><p>Snack procurement opportunities</p><p>Door-to-door transportation*</p><p>Occasional compliments</p></div><button onClick={()=>setStarted(true)}>BEGIN APPLICATION →</button><p className="fine">*Subject to availability and continued satisfactory performance. Terms may change without notice.</p></div></main>;
+ return <main><div className="card"><div className="top"><span>PP™</span><span>CONFIDENTIAL</span></div><div className="progress"><i style={{width:`${((i+1)/qs.length)*100}%`}}/></div><div className="eyebrow">SECTION {i+1} OF {qs.length}</div><h2>{q[1]}</h2><p className="hint">{q[3] instanceof Array?"Select the most accurate response.":q[3]}</p>{q[2]==="textarea"?<textarea value={val()} onChange={e=>set(e.target.value)} autoFocus/>:q[2]==="select"?<div className="options">{q[3].map(x=><button className={val()===x?"chosen":""} key={x} onClick={()=>set(x)}>{x}</button>)}</div>:q[2]==="range"?<div className="range"><div className="big">{val()}/10</div><input type="range" min="1" max="10" value={val()} onChange={e=>set(e.target.value)}/><div className="ends"><span>Low maintenance</span><span>Full-time role</span></div></div>:<input value={val()} onChange={e=>set(e.target.value)} autoFocus/>}<div className="nav">{i>0&&<button className="back" onClick={()=>setI(i-1)}>← BACK</button>}<button onClick={next}>{i===qs.length-1?(busy?"SUBMITTING…":"SUBMIT APPLICATION"):"CONTINUE →"}</button></div></div></main>
+}
