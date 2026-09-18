@@ -1,2 +1,2 @@
 import {kv} from "@vercel/kv";
-export async function POST(req){try{const data=await req.json();const id=Date.now().toString();const record={id,createdAt:new Date().toISOString(),...data};await kv.lpush("pp:applications",JSON.stringify(record));return Response.json({ok:true,id})}catch(e){return Response.json({ok:false},{status:500})}}
+export async function POST(req){try{const data=await req.json();const seq=await kv.incr("pp:sequence");const id=String(seq).padStart(3,"0");const record={id,status:"Screening",createdAt:new Date().toISOString(),...data};await kv.lpush("pp:applications",JSON.stringify(record));return Response.json({ok:true,id})}catch(e){return Response.json({ok:false},{status:500})}}
