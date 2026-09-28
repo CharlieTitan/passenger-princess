@@ -1,0 +1,6 @@
+import {kv} from "@vercel/kv";import crypto from "crypto";
+const auth=req=>req.headers.get("x-admin-key")===process.env.ADMIN_KEY;
+const inviteKey=t=>"pp:programme:invite:"+t,candidateKey=id=>"pp:programme:candidate:"+id,selectionKey=id=>"pp:programme:selection:"+id;
+const parse=x=>!x?null:(typeof x==="string"?JSON.parse(x):x);
+export async function GET(req){if(!auth(req))return Response.json({error:"Unauthorized"},{status:401});const id=new URL(req.url).searchParams.get("candidateId");if(!id)return Response.json({error:"candidateId required"},{status:400});return Response.json({invite:parse(await kv.get(candidateKey(id))),selection:parse(await kv.get(selectionKey(id)))})}
+export async function POST(req){if(!auth(req))return Response.json({error:"Unauthorized"},{status:401});const {candidateId,candidateName,instagram}=await req.json();let existing=parse(await kv.get(candidateKey(candidateId)));if(existing)return Response.json(existing);const token=crypto.randomBytes(12).toString("hex");const invite={token,candidateId,candidateName,instagram:instagram||"",createdAt:new Date().toISOString()};await kv.set(inviteKey(token),JSON.stringify(invite));await kv.set(candidateKey(candidateId),JSON.stringify(invite));return Response.json(invite)}

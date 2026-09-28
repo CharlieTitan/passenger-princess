@@ -1,0 +1,7 @@
+import {kv} from "@vercel/kv";
+const inviteKey=t=>"pp:programme:invite:"+t;
+const candidateKey=id=>"pp:programme:candidate:"+id;
+const selectionKey=id=>"pp:programme:selection:"+id;
+const parse=x=>!x?null:(typeof x==="string"?JSON.parse(x):x);
+export async function GET(req,{params}){try{const {token}=await params;const invite=parse(await kv.get(inviteKey(token)));if(!invite)return Response.json({error:"Invite not found"},{status:404});const selection=parse(await kv.get(selectionKey(invite.candidateId)));return Response.json({candidateId:invite.candidateId,candidateName:invite.candidateName,instagram:invite.instagram||"",selection})}catch(e){return Response.json({error:"Unable to load"},{status:500})}}
+export async function POST(req,{params}){try{const {token}=await params;const invite=parse(await kv.get(inviteKey(token)));if(!invite)return Response.json({error:"Invite not found"},{status:404});const body=await req.json();const selection={candidateId:invite.candidateId,choice:body.choice||"",custom:body.custom||"",preferredTime:body.preferredTime||"",note:body.note||"",createdAt:new Date().toISOString()};await kv.set(selectionKey(invite.candidateId),JSON.stringify(selection));return Response.json({ok:true,selection})}catch(e){return Response.json({error:"Unable to save"},{status:500})}}
