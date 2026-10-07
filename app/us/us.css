@@ -451,3 +451,16 @@
 .us-review-input{margin-top:8px!important}
 .us-rating-readonly{flex-direction:column;align-items:flex-start;justify-content:center;gap:3px}
 .us-rating-readonly p{margin:0!important;font-size:10px!important;color:#7f7074!important}
+
+.us-gallery-section{margin:16px 0;padding-top:14px;border-top:1px solid #eadfdd}
+.us-gallery-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.us-gallery-head span{font-size:10px;font-weight:600;color:#6f6064}
+.us-gallery-head small{font-size:8px;color:#aaa0a3}
+.us-gallery-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.us-gallery-tile{position:relative;aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:#f2ece9}
+.us-gallery-tile img{width:100%;height:100%;object-fit:cover;display:block}
+.us-gallery-tile button{position:absolute;top:6px;right:6px;width:24px!important;height:24px!important;min-height:24px!important;padding:0!important;border-radius:50%!important;background:#ffffffd9!important;color:#6b5e62!important;border:0!important;font-size:15px!important;box-shadow:0 3px 10px #0002!important}
+.us-gallery-empty{font-size:10px!important;color:#aaa0a3!important;margin:0 0 9px!important}
+.us-gallery-add{display:inline-flex!important;align-items:center;justify-content:center;width:auto!important;min-height:34px;margin:0!important;padding:0 11px;border:1px dashed #d9cdcf;border-radius:999px;color:#8f8084!important;font-size:9px!important;cursor:pointer}
+.us-gallery-add input{display:none!important}
+@media(max-width:700px){.us-gallery-grid{grid-template-columns:repeat(3,1fr)}}
