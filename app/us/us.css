@@ -435,3 +435,15 @@
   .us-comment{align-items:flex-start}
   .us-comment-side{max-width:48%}
 }
+
+.us-rating-section{margin-top:16px;padding-top:14px;border-top:1px solid #eadfdd}
+.us-rating-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.us-rating-head>span{font-size:10px;font-weight:600;color:#6f6064}
+.us-rating-head small{font-size:8px;color:#aaa0a3}
+.us-rating-head small.complete{color:#e65a8d}
+.us-rating-card{min-width:0}
+.us-rating-card>label{display:block;font-size:9px;color:#75676b;margin-bottom:6px}
+.us-rating-readonly{display:flex;align-items:center;min-height:52px;border:1px solid #e3d8da;border-radius:12px;background:#faf7f5;padding:0 12px}
+.us-rating-readonly b{font-size:18px;color:#4b4044}
+.us-rating-readonly span{font-size:10px;color:#aa9da1}
+.us-rating-card.locked{opacity:.9}
