@@ -33,6 +33,7 @@ export default function Us() {
   const [pendingIds, setPendingIds] = useState({});
   const [toast, setToast] = useState("");
   const [editValues, setEditValues] = useState({});
+  const [commentDrafts, setCommentDrafts] = useState({});
   const [recovering, setRecovering] = useState(false);
   const [recovery, setRecovery] = useState({ recoveryCode: "", newPassword: "" });
   const [recoveryMessage, setRecoveryMessage] = useState("");
@@ -321,6 +322,25 @@ export default function Us() {
       { favourites },
       favourites.Charlie && favourites.Tayla ? "Mutual favourite ❤️" : (!state.mine ? "Favourited ❤️" : "Favourite removed")
     );
+  }
+
+  async function addComment(item) {
+    const text=(commentDrafts[item.id] || "").trim();
+    if(!text) return;
+    const comment={
+      id:(globalThis.crypto?.randomUUID?.() || String(Date.now())),
+      user,
+      text,
+      at:new Date().toISOString()
+    };
+    const comments=[...(item.comments || []),comment];
+    const ok=await patch(item,{comments},"Comment added");
+    if(ok) setCommentDrafts((s)=>({...s,[item.id]:""}));
+  }
+
+  async function deleteComment(item, commentId) {
+    const comments=(item.comments || []).filter((c)=>c.id!==commentId);
+    await patch(item,{comments},"Comment removed");
   }
 
   const filtered = useMemo(() => {
@@ -790,6 +810,48 @@ export default function Us() {
                       />
                     </label>
                   ) : null}
+
+                  <div className="us-comments">
+                    <div className="us-comments-head">
+                      <span>Comments</span>
+                      <small>{(x.comments || []).length}</small>
+                    </div>
+
+                    {(x.comments || []).length ? (
+                      <div className="us-comment-list">
+                        {(x.comments || []).map((comment)=>(
+                          <div className="us-comment" key={comment.id}>
+                            <div>
+                              <b>{comment.user}</b>
+                              <span>{comment.text}</span>
+                            </div>
+                            <div className="us-comment-meta">
+                              <small>{new Date(comment.at).toLocaleDateString(undefined,{day:"numeric",month:"short"})}</small>
+                              {comment.user===user ? (
+                                <button onClick={()=>deleteComment(x,comment.id)}>Delete</button>
+                              ) : null}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : <p className="us-comments-empty">Nothing here yet.</p>}
+
+                    <div className="us-comment-compose">
+                      <input
+                        placeholder="Add a comment…"
+                        value={commentDrafts[x.id] || ""}
+                        onChange={(e)=>setCommentDrafts((s)=>({...s,[x.id]:e.target.value}))}
+                        onKeyDown={(e)=>{if(e.key==="Enter" && !e.shiftKey){e.preventDefault();addComment(x);}}}
+                      />
+                      <button
+                        className="us-primary"
+                        disabled={!(commentDrafts[x.id] || "").trim()}
+                        onClick={()=>addComment(x)}
+                      >
+                        Send
+                      </button>
+                    </div>
+                  </div>
 
                   <div className="us-ratings">
                     <label>Charlie /10 <input type="number" min="1" max="10" value={x.ratings?.Charlie || ""} onChange={(e) => patch(x, { ratings: { ...x.ratings, Charlie: Number(e.target.value) || null } }, "Charlie rating saved")} /></label>
