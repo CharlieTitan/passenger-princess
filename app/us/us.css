@@ -5,3 +5,12 @@
 .us-recovery small{display:block;font-size:8px;letter-spacing:1.4px;color:#9a868b;margin-bottom:8px}
 .us-recovery input{margin-bottom:8px}
 .us-recovery-message{font-size:10px!important;color:#6f5d62!important;margin:8px 0 0!important}
+
+.us-actions button.active{background:#2d2829;color:#fff;border-color:#2d2829}
+.us-actions button:disabled{opacity:.55;cursor:wait}
+.us-saving{display:flex;align-items:center;gap:6px;font-size:9px;color:#96878b;margin-top:3px}
+.us-saving span{width:10px;height:10px;border:1.5px solid #c8b9bc;border-top-color:#5d4f53;border-radius:50%;animation:usSpin .7s linear infinite}
+.us-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:100;background:#2d2829;color:#fff;padding:10px 14px;border-radius:999px;font-size:11px;box-shadow:0 10px 30px #0003;animation:usToast .2s ease}
+.us-detail input,.us-detail select{width:100%;margin-top:5px}
+@keyframes usSpin{to{transform:rotate(360deg)}}
+@keyframes usToast{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
