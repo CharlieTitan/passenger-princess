@@ -792,3 +792,12 @@ body:before{display:none!important}
 .us-inbox-group-label{font-size:7px;letter-spacing:1.3px;color:#a08e94}
 .us-save-to{margin-top:14px}
 .us-save-to>span{display:block;font-size:9px;color:#75676b;margin-bottom:7px}
+
+.us-nav-toggle{position:relative}
+.us-nav-badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#e65a8d;color:#fff;font-size:9px;font-weight:800;display:grid;place-items:center;line-height:1;border:2px solid #fff}
+.us-nav-links a,.us-nav-links button{justify-content:space-between}
+.us-menu-badge{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#fff0f5;color:#d94f83;font-size:9px;font-weight:800;display:grid;place-items:center}
+.us-nav-bottom{margin-top:auto;padding-top:10px;border-top:1px solid #eee2e5;display:grid;gap:4px}
+.us-nav-send{display:flex;align-items:center;width:100%;min-height:40px;padding:0 12px;border-radius:11px;background:#fff4f8;color:#c25379;border:0;text-decoration:none;font-size:10px;font-weight:700;letter-spacing:.4px;text-align:left}
+.us-nav-logout{margin-top:0;border-top:0;padding-top:0}
+.us-inbox-copy small{display:block}
