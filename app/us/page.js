@@ -17,6 +17,7 @@ export default function Us() {
   const [loading, setLoading] = useState(true);
   const [login, setLogin] = useState({ username: "Charlie", password: "" });
   const [category, setCategory] = useState("eat");
+  const [sublist, setSublist] = useState("all");
   const [shortcut, setShortcut] = useState("");
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(null);
@@ -145,10 +146,11 @@ export default function Us() {
       if (shortcut === "Try Again" && !x.tryAgain) return false;
       if (shortcut === "Surprises" && !x.isSurprise) return false;
       if (!shortcut && x.category !== category) return false;
+      if (!shortcut && sublist !== "all" && x.list !== sublist) return false;
       if (query && !x.title.toLowerCase().includes(query.toLowerCase())) return false;
       return true;
     });
-  }, [items, category, shortcut, query]);
+  }, [items, category, sublist, shortcut, query]);
 
   function eligibleForPicker(item, mode) {
     if (item.status === "done" || item.status === "archived") return false;
@@ -283,11 +285,26 @@ export default function Us() {
 
         <section className="us-cats">
           {Object.entries(categoryMeta).map(([k, v]) => (
-            <button key={k} className={category === k && !shortcut ? "active" : ""} onClick={() => { setCategory(k); setShortcut(""); setPickerMode(null); setWheelPick(null); }}>
+            <button key={k} className={category === k && !shortcut ? "active" : ""} onClick={() => { setCategory(k); setSublist("all"); setShortcut(""); setPickerMode(null); setWheelPick(null); }}>
               <span>{v.emoji}</span><b>{v.label}</b><small>{items.filter((x) => x.category === k).length} items</small>
             </button>
           ))}
         </section>
+
+        {!shortcut ? (
+          <section className="us-sublists" aria-label={categoryMeta[category].label + " lists"}>
+            <button className={sublist==="all"?"active":""} onClick={()=>setSublist("all")}>
+              <span>All</span>
+              <small>{items.filter((x)=>x.category===category).length}</small>
+            </button>
+            {categoryMeta[category].sublists.map(([value,label,emoji]) => (
+              <button key={value} className={sublist===value?"active":""} onClick={()=>setSublist(value)}>
+                <span>{emoji} {label}</span>
+                <small>{items.filter((x)=>x.category===category && x.list===value).length}</small>
+              </button>
+            ))}
+          </section>
+        ) : null}
 
         <section className="us-shortcuts">
           {quickShortcuts.map((s) => (
@@ -304,6 +321,7 @@ export default function Us() {
                 }
                 else {
                   setPickerMode(null); setWheelPick(null);
+                  setSublist("all");
                   setShortcut(shortcut === s ? "" : s);
                 }
               }}
