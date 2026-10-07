@@ -1,7 +1,7 @@
 "use client";
 import "./us.css";
 import { useEffect, useMemo, useState } from "react";
-import { categoryMeta, quickShortcuts } from "../../lib/usData";
+import { categoryMeta, quickShortcuts, mealTypes } from "../../lib/usData";
 
 export default function Us() {
   const [user, setUser] = useState(null);
@@ -14,7 +14,7 @@ export default function Us() {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(null);
   const [quick, setQuick] = useState(false);
-  const [draft, setDraft] = useState({ title: "", category: "eat", list: "restaurants", effort: "normal", timeHorizon: "soon" });
+  const [draft, setDraft] = useState({ title: "", category: "eat", list: "restaurants", effort: "normal", timeHorizon: "soon", mealType: "any" });
   const [wheel, setWheel] = useState(false);
   const [wheelPick, setWheelPick] = useState(null);
   const [recovering, setRecovering] = useState(false);
@@ -78,7 +78,7 @@ export default function Us() {
     });
     if (r.ok) {
       setQuick(false);
-      setDraft({ title: "", category: "eat", list: "restaurants", effort: "normal", timeHorizon: "soon" });
+      setDraft({ title: "", category: "eat", list: "restaurants", effort: "normal", timeHorizon: "soon", mealType: "any" });
       load();
     }
   }
@@ -273,7 +273,7 @@ export default function Us() {
                       <button onClick={() => patch(x, { status: "done", doneAt: new Date().toISOString() })}>Done</button>
                     </div>
                     <label>Try Again <input type="checkbox" checked={!!x.tryAgain} onChange={(e) => patch(x, { tryAgain: e.target.checked })} /></label>
-                    <label>Location <input value={x.location || ""} onChange={(e) => patch(x, { location: e.target.value })} /></label>
+                    <label>Location <input value={x.location || ""} onChange={(e) => patch(x, { location: e.target.value })} /></label>{x.category === "eat" ? <label>Meal type <select value={x.mealType || "any"} onChange={(e) => patch(x,{mealType:e.target.value})}>{mealTypes.map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label> : null}
                     <div className="us-ratings">
                       <label>Charlie /10 <input type="number" min="1" max="10" value={x.ratings?.Charlie || ""} onChange={(e) => patch(x, { ratings: { ...x.ratings, Charlie: Number(e.target.value) || null } })} /></label>
                       <label>Tayla /10 <input type="number" min="1" max="10" value={x.ratings?.Tayla || ""} onChange={(e) => patch(x, { ratings: { ...x.ratings, Tayla: Number(e.target.value) || null } })} /></label>
@@ -303,7 +303,7 @@ export default function Us() {
             <input placeholder="What should we add?" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
             <div className="us-mini-grid">
               {Object.entries(categoryMeta).map(([k, v]) => (
-                <button key={k} className={draft.category === k ? "active" : ""} onClick={() => setDraft({ ...draft, category: k, list: v.sublists[0][0] })}>
+                <button key={k} className={draft.category === k ? "active" : ""} onClick={() => setDraft({ ...draft, category: k, list: v.sublists[0][0], mealType: k === "eat" ? (draft.mealType || "any") : undefined })}>
                   {v.emoji} {v.label}
                 </button>
               ))}
