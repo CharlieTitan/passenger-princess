@@ -37,6 +37,8 @@ export default function Us() {
   const [newListOpen, setNewListOpen] = useState(false);
   const [newList, setNewList] = useState({ name:"", emoji:"✨" });
   const [editingList, setEditingList] = useState(null);
+  const [planningItem, setPlanningItem] = useState(null);
+  const [planDraft, setPlanDraft] = useState({ date:"", time:"" });
 
   async function load() {
     setLoading(true);
@@ -245,6 +247,36 @@ export default function Us() {
     await patch(item, { cover: compressed }, "Photo added ✓");
   }
 
+
+  function openPlan(item) {
+    setPlanningItem(item);
+    setPlanDraft({ date:item.planDate || "", time:item.planTime || "" });
+  }
+
+  async function savePlan() {
+    if (!planningItem || !planDraft.date) {
+      setToast("Pick a date first");
+      setTimeout(()=>setToast(""),1600);
+      return;
+    }
+    const ok = await patch(planningItem, {
+      status:"planned",
+      planDate:planDraft.date,
+      planTime:planDraft.time || ""
+    }, "Plan locked in ✓");
+    if (ok) {
+      setPlanningItem(null);
+      setPlanDraft({date:"",time:""});
+    }
+  }
+
+  function plannedTimestamp(item) {
+    if (!item.planDate) return Number.POSITIVE_INFINITY;
+    const time=item.planTime || "23:59";
+    const ts=new Date(item.planDate+"T"+time).getTime();
+    return Number.isNaN(ts)?Number.POSITIVE_INFINITY:ts;
+  }
+
   const filtered = useMemo(() => {
     return items.filter((x) => {
       if (shortcut === "Planned" && x.status !== "planned") return false;
@@ -366,7 +398,7 @@ export default function Us() {
 
   const hour = new Date().getHours();
   const greet = hour < 12 ? "Morning" : hour < 18 ? "Afternoon" : "Evening";
-  const planned = items.filter((x) => x.status === "planned");
+  const planned = items.filter((x) => x.status === "planned").sort((a,b)=>plannedTimestamp(a)-plannedTimestamp(b));
   const tonight = items.filter((x) => x.status !== "done" && x.status !== "archived" && x.timeHorizon === "tonight");
   const soon = items.filter((x) => x.status !== "done" && x.status !== "archived" && x.timeHorizon === "soon");
 
@@ -382,9 +414,16 @@ export default function Us() {
           <span>{greet}, {user}</span>
           <h1>What are we doing next?</h1>
           <div className="us-now">
-            <small>NOW</small>
-            <b>{planned[0] ? planned[0].title : tonight[0] ? tonight[0].title : soon[0] ? soon[0].title : "Add something worth doing."}</b>
-            <p>{planned[0] ? "You already planned this." : tonight[0] ? "One for tonight." : soon[0] ? "One for soon." : "The lists are waiting."}</p>
+            <small>{planned[0] ? "NEXT UP" : "NOW"}</small>
+            <b>{planned[0] ? planned[0].title : "Nothing on."}</b>
+            <p>
+              {planned[0]
+                ? [planned[0].planDate, planned[0].planTime].filter(Boolean).join(" · ") || "Planned — add a date when you know it."
+                : "Pick something and make a plan."}
+            </p>
+            {!planned[0] ? (
+              <button className="us-now-cta" onClick={()=>openPicker("pick")}>PICK SOMETHING →</button>
+            ) : null}
           </div>
         </section>
 
@@ -514,7 +553,7 @@ export default function Us() {
                 <h3>{wheelPick.title}</h3>
                 <p>{wheelPick.category ? categoryMeta[wheelPick.category]?.label : ""}{wheelPick.effort ? " · "+wheelPick.effort : ""}</p>
                 <div>
-                  <button className="us-primary" onClick={()=>patch(wheelPick,{status:"planned"}, "Planned ✓")}>LOCK IT IN</button>
+                  <button className="us-primary" onClick={()=>openPlan(wheelPick)}>LOCK IT IN</button>
                   <button className="us-secondary" onClick={()=>spin()}>PICK AGAIN</button>
                 </div>
               </div>
@@ -573,7 +612,7 @@ export default function Us() {
                   <div className="us-detail-audit">Added by {x.addedBy} · Last updated by {x.updatedBy}</div>
                   <div className="us-actions">
                     <button className={(x.status === "idea" || x.status === "maybe") ? "active" : ""} disabled={!!pendingIds[x.id]} onClick={() => patch(x, { status: "idea" }, "Saved as Idea")}>Idea</button>
-                    <button className={x.status === "planned" ? "active" : ""} disabled={!!pendingIds[x.id]} onClick={() => patch(x, { status: "planned" }, "Planned ✓")}>Planned</button>
+                    <button className={x.status === "planned" ? "active" : ""} disabled={!!pendingIds[x.id]} onClick={() => openPlan(x)}>Planned</button>
                     <button className={x.status === "done" ? "active" : ""} disabled={!!pendingIds[x.id]} onClick={() => patch(x, { status: "done", doneAt: new Date().toISOString() }, "Done ✓")}>Done</button>
                   </div>
 
@@ -651,6 +690,26 @@ export default function Us() {
       </div>
 
       {toast ? <div className="us-toast">{toast}</div> : null}
+
+      {planningItem ? (
+        <div className="us-modal">
+          <div className="us-modal-card us-plan-modal">
+            <button className="us-close" onClick={()=>setPlanningItem(null)}>×</button>
+            <small>PLAN IT</small>
+            <h2>{planningItem.title}</h2>
+            <p>Give it a date so it can become the next thing on your home screen.</p>
+            <div className="us-plan-grid">
+              <label>Date
+                <input type="date" value={planDraft.date} onChange={(e)=>setPlanDraft({...planDraft,date:e.target.value})} />
+              </label>
+              <label>Time <span>optional</span>
+                <input type="time" value={planDraft.time} onChange={(e)=>setPlanDraft({...planDraft,time:e.target.value})} />
+              </label>
+            </div>
+            <button className="us-primary us-quick-submit" disabled={!planDraft.date} onClick={savePlan}>LOCK IN PLAN →</button>
+          </div>
+        </div>
+      ) : null}
 
       {editingList ? (
         <div className="us-modal">
