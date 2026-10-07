@@ -55,6 +55,19 @@ async function repairCharliePasswordOnce() {
   await kv.set(repairKey, "1");
 }
 
+async function repairTaylaPasswordOnce() {
+  const repairKey = NS + "auth:repair:tayla:v1";
+  if (await kv.get(repairKey)) return;
+
+  const users = parse(await kv.get(NS + "auth:users")) || {};
+  if (users.Tayla) {
+    users.Tayla.passwordHash = "c3633e6ffc235a565e080f7aca6360d1aea80d25f154f927aa2239f464b33dd2";
+    await kv.set(NS + "auth:users", JSON.stringify(users));
+  }
+
+  await kv.set(repairKey, "1");
+}
+
 async function createSession(username) {
   const sid = crypto.randomBytes(24).toString("hex");
   await kv.set(
@@ -71,6 +84,7 @@ async function createSession(username) {
 export async function POST(req) {
   await ensureUsers();
   await repairCharliePasswordOnce();
+  await repairTaylaPasswordOnce();
 
   const body = await req.json();
   const {
