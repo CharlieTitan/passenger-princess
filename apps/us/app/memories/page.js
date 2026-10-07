@@ -7,6 +7,7 @@ export default function Memories(){
   const [state,setState]=useState({loading:true,user:null,items:[]});
   const [lightbox,setLightbox]=useState(null);
   const [tab,setTab]=useState("memories");
+  const [memoryFilter,setMemoryFilter]=useState(null);
 
   useEffect(()=>{
     fetch("/api/us",{cache:"no-store"})
@@ -21,6 +22,29 @@ export default function Memories(){
   const memories=useMemo(()=>state.items
     .filter((x)=>x.status==="done")
     .sort((a,b)=>new Date(b.doneAt||b.updatedAt||0)-new Date(a.doneAt||a.updatedAt||0)),[state.items]);
+
+  const filteredMemories=useMemo(()=>{
+    if(!memoryFilter) return memories;
+    if(memoryFilter.type==="id") return memories.filter(x=>x.id===memoryFilter.value);
+    if(memoryFilter.type==="category") return memories.filter(x=>x.category===memoryFilter.value);
+    if(memoryFilter.type==="list") return memories.filter(x=>x.list===memoryFilter.value);
+    if(memoryFilter.type==="lists") return memories.filter(x=>memoryFilter.value.includes(x.list));
+    if(memoryFilter.type==="mutual") return memories.filter(x=>x.favourites?.Charlie&&x.favourites?.Tayla);
+    if(memoryFilter.type==="photos") return memories.filter(x=>x.cover||(x.gallery||[]).length);
+    if(memoryFilter.type==="month"){
+      const now=new Date();
+      return memories.filter(x=>{const d=new Date(x.doneAt||0);return d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth();});
+    }
+    if(memoryFilter.type==="challenge") return memories.filter(x=>x.challenge?.winner||x.challenge?.charlieScore!=null||x.challenge?.taylaScore!=null);
+    if(memoryFilter.type==="title") return memories.filter(x=>(x.title||"").toLowerCase().replace(/\s+/g," ").trim()===memoryFilter.value);
+    return memories;
+  },[memories,memoryFilter]);
+
+  function showMemories(label,filter){
+    setMemoryFilter({label,...filter});
+    setTab("memories");
+    setTimeout(()=>document.querySelector(".us-memory-timeline")?.scrollIntoView({behavior:"smooth",block:"start"}),0);
+  }
 
   const stats=useMemo(()=>{
     const done=memories;
@@ -72,58 +96,68 @@ export default function Memories(){
       </section>
 
       <nav className="us-memory-tabs">
-        <button className={tab==="memories"?"active":""} onClick={()=>setTab("memories")}>Memories</button>
+        <button className={tab==="memories"?"active":""} onClick={()=>{setTab("memories");setMemoryFilter(null);}}>Memories</button>
         <button className={tab==="numbers"?"active":""} onClick={()=>setTab("numbers")}>Us in Numbers</button>
       </nav>
 
       {tab==="numbers" ? (
         <section className="us-numbers">
-          <article className="us-first-date">
+          <button className="us-first-date" disabled={!stats.first} onClick={()=>stats.first&&showMemories("first date",{type:"id",value:stats.first.id})}>
             <small>FIRST DATE</small>
             <h2>{stats.first?.title || "Not dated yet"}</h2>
             <p>{stats.first ? [stats.first.doneAt?new Date(stats.first.doneAt).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}):null,stats.first.location].filter(Boolean).join(" · ") : "Add completion dates and it’ll appear here."}</p>
-          </article>
+            {stats.first?<span>VIEW MEMORY →</span>:null}
+          </button>
 
           <div className="us-number-grid">
             {[
-              [stats.total,"things done"],
-              [stats.movies,"movies watched"],
-              [stats.series,"series finished"],
-              [stats.cooked,"meals cooked"],
-              [stats.restaurants,"restaurants tried"],
-              [stats.coffee,"coffee / sweet stops"],
-              [stats.trips,"trips & staycations"],
-              [stats.rematches,"rematches completed"],
-              [stats.mutual,"mutual favourites"],
-              [stats.photos,"photos captured"],
-              [stats.thisMonth,"done this month"]
-            ].map(([value,label])=>(
-              <article className="us-number-card" key={label}><b>{value}</b><span>{label}</span></article>
+              {value:stats.total,label:"things done",filter:{type:"all"}},
+              {value:stats.movies,label:"movies watched",filter:{type:"list",value:"films"}},
+              {value:stats.series,label:"series finished",filter:{type:"list",value:"series"}},
+              {value:stats.cooked,label:"meals cooked",filter:{type:"list",value:"cook-together"}},
+              {value:stats.restaurants,label:"restaurants tried",filter:{type:"list",value:"restaurants"}},
+              {value:stats.coffee,label:"coffee / sweet stops",filter:{type:"lists",value:["coffee","dessert"]}},
+              {value:stats.trips,label:"trips & staycations",filter:{type:"category",value:"go"}},
+              {value:stats.rematches,label:"rematches completed",filter:{type:"list",value:"rematches"}},
+              {value:stats.mutual,label:"mutual favourites",filter:{type:"mutual"}},
+              {value:stats.photos,label:"photos captured",filter:{type:"photos"}},
+              {value:stats.thisMonth,label:"done this month",filter:{type:"month"}}
+            ].map((stat)=>(
+              <button
+                className={"us-number-card"+(!stat.value?" empty":"")}
+                key={stat.label}
+                disabled={!stat.value}
+                onClick={()=>showMemories(stat.label,stat.filter.type==="all"?{type:null}:stat.filter)}
+              >
+                <b>{stat.value}</b><span>{stat.label}</span>{stat.value?<small>VIEW →</small>:null}
+              </button>
             ))}
           </div>
 
-          <article className="us-score-card">
+          <button className="us-score-card" disabled={!(stats.wins.Charlie+stats.wins.Tayla+stats.wins.Draw)} onClick={()=>showMemories("challenge results",{type:"challenge"})}>
             <small>CHALLENGE RECORD</small>
             <h2>Charlie {stats.wins.Charlie} — {stats.wins.Tayla} Tayla</h2>
             {stats.wins.Draw ? <p>{stats.wins.Draw} draw{stats.wins.Draw===1?"":"s"}</p> : <p>No draws. Serious business.</p>}
-          </article>
+            {(stats.wins.Charlie+stats.wins.Tayla+stats.wins.Draw)>0?<span>VIEW RESULTS →</span>:null}
+          </button>
 
           <div className="us-number-wide-grid">
-            <article>
+            <article className="us-number-wide-static">
               <small>AVERAGE RATING</small>
               <b>Charlie {stats.avgCharlie}/10</b>
               <span>Tayla {stats.avgTayla}/10</span>
             </article>
-            <article>
+            <button disabled={!stats.repeated} onClick={()=>stats.repeated&&showMemories("most repeated",{type:"title",value:(stats.repeated.title||"").toLowerCase().replace(/\s+/g," ").trim()})}>
               <small>MOST REPEATED</small>
               <b>{stats.repeated?.title || "Nothing yet"}</b>
-              <span>{stats.repeated ? stats.repeatedCount+" times" : "One-offs so far"}</span>
-            </article>
+              <span>{stats.repeated ? stats.repeatedCount+" times · VIEW →" : "One-offs so far"}</span>
+            </button>
           </div>
         </section>
       ) : (
       <section className="us-memory-timeline">
-        {memories.map((x,i)=>{
+        {memoryFilter ? <div className="us-memory-filter"><span>Showing: <b>{memoryFilter.label}</b></span><button onClick={()=>setMemoryFilter(null)}>Show all</button></div> : null}
+        {filteredMemories.map((x,i)=>{
           const images=[...(x.cover?[x.cover]:[]),...(x.gallery||[]).map(g=>g.src)];
           return <article className="us-memory-card" key={x.id}>
             <div className="us-memory-top">
@@ -152,7 +186,7 @@ export default function Memories(){
             </div>
           </article>
         })}
-        {!memories.length?<div className="us-empty"><b>No memories yet.</b><span>Mark something Done and it’ll land here.</span></div>:null}
+        {!filteredMemories.length?<div className="us-empty"><b>No memories here yet.</b><span>{memoryFilter?"Try another stat or show all.":"Mark something Done and it’ll land here."}</span></div>:null}
       </section>
       )}
     </div>
