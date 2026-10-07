@@ -101,15 +101,14 @@ export default function Memories(){
               else window.location.href="/";
             }}
           >←</button>
-          <div className="us-appbar-brand">{tab==="numbers"?"US IN NUMBERS":"MEMORIES"}</div>
+          <div className="us-appbar-brand">MEMORIES</div>
         </div>
         <button className="us-nav-toggle" aria-label="Open navigation" onClick={()=>setNavOpen(!navOpen)}>☰</button>
         {navOpen ? (
           <div className="us-nav-drawer">
             <div className="us-nav-links">
               <a href="/">US</a>
-              <button className={tab==="memories"?"active":""} onClick={()=>{setTab("memories");setMemoryFilter(null);setNavOpen(false);}}>Memories</button>
-              <button className={tab==="numbers"?"active":""} onClick={()=>{setTab("numbers");setMemoryFilter(null);setNavOpen(false);}}>Us in Numbers</button>
+              <button className="active" onClick={()=>{setTab("memories");setMemoryFilter(null);setNavOpen(false);}}>Memories</button>
             </div>
             <button className="us-nav-logout" onClick={doLogout}>Log out</button>
           </div>
@@ -124,6 +123,11 @@ export default function Memories(){
         <h1>Things we’ve actually done.</h1>
         <p>{memories.length} memor{memories.length===1?"y":"ies"} so far.</p>
       </section>
+
+      <nav className="us-memory-tabs">
+        <button className={tab==="memories"?"active":""} onClick={()=>{setTab("memories");setMemoryFilter(null);}}>Memories</button>
+        <button className={tab==="numbers"?"active":""} onClick={()=>{setTab("numbers");setMemoryFilter(null);}}>Us in Numbers</button>
+      </nav>
 
 
       {tab==="numbers" ? (
