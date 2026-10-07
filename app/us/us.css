@@ -539,3 +539,28 @@
 .us-surprise-revealed-grid small{display:block;font-size:8px;color:#a09195}
 .us-surprise-revealed-grid b{display:block;font-size:12px;color:#4e4246;margin-top:2px}
 @media(max-width:700px){.us-surprise-revealed-grid{grid-template-columns:1fr}}
+
+.us-polls{margin:24px 0 0;padding:16px;border:1px solid #e3d8d6;border-radius:20px;background:#ffffff9c}
+.us-polls-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.us-polls-head small{font-size:8px;letter-spacing:1.4px;color:#9a8d90}
+.us-polls-head h2{font-family:Georgia,serif;font-size:24px;margin:4px 0 0;color:#463c40}
+.us-polls-head button{width:auto;min-height:34px;border-radius:999px;padding:0 11px;background:transparent;color:#8d7d82;border:1px solid #ddd1d4;font-size:9px}
+.us-poll-list{display:grid;gap:10px;margin-top:12px}
+.us-poll-card{padding:13px;border:1px solid #e8dcde;border-radius:15px;background:#fff}
+.us-poll-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.us-poll-title-row h3{font-family:Georgia,serif;font-size:18px;margin:0;color:#4a4044}
+.us-poll-title-row small{font-size:8px;color:#aaa0a3}
+.us-poll-options{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.us-poll-options button{display:flex;align-items:center;gap:7px;width:auto;min-height:34px;border-radius:999px;padding:0 11px;background:#f7f2f0;color:#6f6064;border:1px solid #e6dadd;font-size:9px}
+.us-poll-options button.active{background:#fff4f8;color:#e65a8d;border-color:#e65a8d}
+.us-poll-options button small{font-size:8px;color:#9d8f93}
+.us-poll-status{margin-top:9px;font-size:9px;color:#94868a}
+.us-poll-status b{color:#e65a8d}
+.us-poll-empty{font-size:10px;color:#9f9295;padding:14px 2px 2px}
+.us-poll-modal h2{font-family:Georgia,serif;font-size:28px;margin:6px 0 16px}
+.us-poll-field{display:block;font-size:9px;color:#7c6d71}
+.us-poll-field input{display:block;width:100%;margin-top:6px}
+.us-poll-option-edit{display:grid;gap:8px;margin-top:12px}
+.us-poll-option-edit>div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px}
+.us-poll-option-edit button{width:36px;min-height:36px;border-radius:50%;background:#f3eeee;color:#8c7d81;padding:0}
+.us-poll-add-option{width:auto;min-height:32px;margin-top:10px;padding:0!important;background:transparent!important;border:0!important;color:#9b8e91!important;font-size:9px!important}
