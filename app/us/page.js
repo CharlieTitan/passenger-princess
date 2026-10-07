@@ -36,6 +36,7 @@ export default function Us() {
   const [toast, setToast] = useState("");
   const [editValues, setEditValues] = useState({});
   const [commentDrafts, setCommentDrafts] = useState({});
+  const [lightbox, setLightbox] = useState(null);
   const [recovering, setRecovering] = useState(false);
   const [recovery, setRecovery] = useState({ recoveryCode: "", newPassword: "" });
   const [recoveryMessage, setRecoveryMessage] = useState("");
@@ -747,7 +748,7 @@ export default function Us() {
             <article className={"us-card status-" + x.status + (x.cover ? " has-photo" : " no-photo")} key={x.id} onClick={() => setOpen(open === x.id ? null : x.id)}>
               <div className={"us-polaroid " + (i % 2 ? "tilt-r" : "tilt-l")}>
                 {x.cover ? (
-                  <img className="us-cover-img" src={x.cover} alt="" />
+                  <button className="us-cover-view" onClick={(e)=>{e.stopPropagation();setLightbox({src:x.cover,title:x.title,index:0,images:[x.cover,...(x.gallery||[]).map((g)=>g.src)]});}}><img className="us-cover-img" src={x.cover} alt="" /></button>
                 ) : (
                   <div className="us-photo-placeholder">{x.emoji || categoryMeta[x.category]?.emoji || "✦"}</div>
                 )}
@@ -939,7 +940,7 @@ export default function Us() {
                       <div className="us-gallery-grid">
                         {(x.gallery || []).map((photo)=>(
                           <div className="us-gallery-tile" key={photo.id}>
-                            <img src={photo.src} alt="" />
+                            <button className="us-gallery-view" onClick={()=>setLightbox({src:photo.src,title:x.title,index:(x.cover?1:0)+(x.gallery||[]).findIndex((g)=>g.id===photo.id),images:[...(x.cover?[x.cover]:[]),...(x.gallery||[]).map((g)=>g.src)]})}><img src={photo.src} alt="" /></button>
                             <button
                               aria-label="Remove photo"
                               onClick={()=>removeGalleryPhoto(x,photo.id)}
@@ -1102,6 +1103,37 @@ export default function Us() {
               <input autoFocus placeholder="e.g. Late night spots" value={newList.name} onChange={(e)=>setNewList({...newList,name:e.target.value})} onKeyDown={(e)=>{if(e.key==="Enter")createCustomList();}} />
             </label>
             <button className="us-primary us-quick-submit" disabled={!newList.name.trim()} onClick={createCustomList}>CREATE LIST →</button>
+          </div>
+        </div>
+      ) : null}
+
+      {lightbox ? (
+        <div className="us-lightbox" onClick={()=>setLightbox(null)}>
+          <button className="us-lightbox-close" onClick={()=>setLightbox(null)}>×</button>
+          <div className="us-lightbox-inner" onClick={(e)=>e.stopPropagation()}>
+            <img src={lightbox.src} alt="" />
+            <div className="us-lightbox-foot">
+              <span>{lightbox.title}</span>
+              <small>{lightbox.index+1} / {lightbox.images.length}</small>
+            </div>
+            {lightbox.images.length>1 ? (
+              <>
+                <button
+                  className="us-lightbox-nav prev"
+                  onClick={()=>{
+                    const idx=(lightbox.index-1+lightbox.images.length)%lightbox.images.length;
+                    setLightbox({...lightbox,index:idx,src:lightbox.images[idx]});
+                  }}
+                >‹</button>
+                <button
+                  className="us-lightbox-nav next"
+                  onClick={()=>{
+                    const idx=(lightbox.index+1)%lightbox.images.length;
+                    setLightbox({...lightbox,index:idx,src:lightbox.images[idx]});
+                  }}
+                >›</button>
+              </>
+            ) : null}
           </div>
         </div>
       ) : null}
