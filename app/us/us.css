@@ -120,3 +120,9 @@
 @media(max-width:700px){
   .us-sublists{margin-top:-2px}
 }
+
+.us-new-list-btn{border-style:dashed!important;color:#8d7d82!important;background:transparent!important}
+.us-list-modal h2{font-family:Georgia,serif;font-size:28px;margin:7px 0 18px}
+.us-list-field{display:block;font-size:9px;color:#8b7c80;margin:10px 0}
+.us-list-field input{display:block;width:100%;margin-top:6px}
+.us-list-field:first-of-type input{max-width:90px;text-align:center;font-size:22px}
