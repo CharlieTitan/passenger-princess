@@ -110,3 +110,13 @@
     flex:0 0 auto;
   }
 }
+
+.us-sublists{display:flex;gap:8px;overflow-x:auto;padding:1px 0 14px;scrollbar-width:none;-ms-overflow-style:none}
+.us-sublists::-webkit-scrollbar{display:none}
+.us-sublists button{display:flex;align-items:center;gap:8px;width:auto;white-space:nowrap;min-height:38px;border-radius:999px;padding:0 12px;background:#ffffffa8;color:#685a5e;border:1px solid #e3d7d8;font-size:9px}
+.us-sublists button small{font-size:8px;color:#a29296}
+.us-sublists button.active{background:#2d2829;color:#fff;border-color:#2d2829}
+.us-sublists button.active small{color:#d8ced1}
+@media(max-width:700px){
+  .us-sublists{margin-top:-2px}
+}
