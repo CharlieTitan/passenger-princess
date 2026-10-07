@@ -60,7 +60,7 @@ Both users can create additional custom sublists and assign custom emoji/icons.
 
 Main lifecycle:
 
-**Maybe → Idea → Planned → Done**
+**Idea → Planned → Done**
 
 Additional states / affordances:
 - **Archive** can be used from any stage without deleting history.
@@ -961,7 +961,7 @@ Exact schemas can evolve during implementation, but PP data must remain logicall
 - Eat/Watch/Go/Do
 - custom lists
 - item CRUD
-- Maybe / Idea / Planned / Done / Archive
+- Idea / Planned / Done / Archive
 - Try Again
 - seed data
 - real-time sync baseline
