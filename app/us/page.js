@@ -3,6 +3,13 @@ import "./us.css";
 import { useEffect, useMemo, useState } from "react";
 import { categoryMeta, quickShortcuts, mealTypes } from "../../lib/usData";
 
+const quickAddMeta={
+  eat:{label:"Eat",emoji:"🍝",subLabel:"What kind of eat?",subOptions:[["restaurants","Restaurant"],["coffee","Coffee"],["dessert","Dessert"],["cook-together","Cook together"],["drinks","Drinks"]]},
+  watch:{label:"Watch",emoji:"🎬",subLabel:"What are we watching?",subOptions:[["films","Film"],["series","Series"],["rewatch","Rewatch"]]},
+  go:{label:"Go",emoji:"✈️",subLabel:"What kind of trip?",subOptions:[["holidays","Holiday"],["staycations","Staycation"],["day-trips","Day trip"],["revisit","Revisit"]]},
+  do:{label:"Do",emoji:"🎳",subLabel:"What kind of plan?",subOptions:[["date-ideas","Date idea"],["weekend","Weekend"],["challenges","Challenge"],["rematches","Rematch"],["bucket","Bucket list"]]}
+};
+
 export default function Us() {
   const [user, setUser] = useState(null);
   const [items, setItems] = useState([]);
@@ -424,28 +431,78 @@ export default function Us() {
 
       {quick ? (
         <div className="us-modal">
-          <div className="us-modal-card">
+          <div className="us-modal-card us-quick-card">
             <button className="us-close" onClick={() => setQuick(false)}>×</button>
             <small>QUICK ADD</small>
             <h2>Add something</h2>
-            <input placeholder="What should we add?" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
+
+            <input
+              placeholder={draft.category==="eat"?"Where / what are we eating?":draft.category==="watch"?"What are we watching?":draft.category==="go"?"Where are we going?":"What should we do?"}
+              value={draft.title}
+              onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+            />
+
             <div className="us-mini-grid">
               {Object.entries(categoryMeta).map(([k, v]) => (
-                <button key={k} className={draft.category === k ? "active" : ""} onClick={() => setDraft({ ...draft, category: k, list: v.sublists[0][0], mealType: k === "eat" ? (draft.mealType || "any") : undefined })}>
+                <button
+                  key={k}
+                  className={draft.category === k ? "active" : ""}
+                  onClick={() => setDraft({
+                    ...draft,
+                    category: k,
+                    list: quickAddMeta[k].subOptions[0][0],
+                    mealType: k === "eat" ? (draft.mealType || "any") : undefined
+                  })}
+                >
                   {v.emoji} {v.label}
                 </button>
               ))}
             </div>
-            <select value={draft.effort} onChange={(e) => setDraft({ ...draft, effort: e.target.value })}>
-              <option value="low">Low effort</option><option value="normal">Normal</option><option value="big">Big plan</option>
-            </select>
-            <select value={draft.timeHorizon} onChange={(e) => setDraft({ ...draft, timeHorizon: e.target.value })}>
-              <option value="tonight">Tonight</option><option value="soon">Soon</option><option value="someday">Someday</option>
-            </select>
-            <button className="us-primary" onClick={add}>ADD TO US →</button>
+
+            <div className="us-quick-section">
+              <span>{quickAddMeta[draft.category].subLabel}</span>
+              <div className="us-picker-chips">
+                {quickAddMeta[draft.category].subOptions.map(([value,label]) => (
+                  <button key={value} className={draft.list===value?"active":""} onClick={() => setDraft({...draft,list:value})}>{label}</button>
+                ))}
+              </div>
+            </div>
+
+            {draft.category === "eat" ? (
+              <div className="us-quick-section">
+                <span>Meal type</span>
+                <div className="us-picker-chips">
+                  {mealTypes.map(([value,label]) => (
+                    <button key={value} className={(draft.mealType||"any")===value?"active":""} onClick={() => setDraft({...draft,mealType:value})}>{label}</button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <div className="us-quick-section">
+              <span>Effort</span>
+              <div className="us-picker-chips">
+                {[["low","Low effort"],["normal","Normal"],["big","Big plan"]].map(([value,label]) => (
+                  <button key={value} className={draft.effort===value?"active":""} onClick={() => setDraft({...draft,effort:value})}>{label}</button>
+                ))}
+              </div>
+            </div>
+
+            <div className="us-quick-section">
+              <span>When</span>
+              <div className="us-picker-chips">
+                {[["tonight","Tonight"],["soon","Soon"],["someday","Someday"]].map(([value,label]) => (
+                  <button key={value} className={draft.timeHorizon===value?"active":""} onClick={() => setDraft({...draft,timeHorizon:value})}>{label}</button>
+                ))}
+              </div>
+            </div>
+
+            <button className="us-primary us-quick-submit" onClick={add} disabled={!draft.title.trim()}>
+              ADD TO US →
+            </button>
           </div>
         </div>
-      ) : null}
+      ) : null}}
     </main>
   );
 }
