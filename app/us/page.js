@@ -105,6 +105,30 @@ export default function Us() {
     }
   }
 
+  async function deleteItem(item) {
+    const ok = window.confirm("Delete “" + item.title + "” permanently? Archive is safer if you might want it later.");
+    if (!ok) return;
+    setPendingIds((s)=>({...s,[item.id]:true}));
+    const previous=items;
+    setItems((current)=>current.filter((x)=>x.id!==item.id));
+    try {
+      const r=await fetch("/api/us",{
+        method:"DELETE",
+        headers:{"content-type":"application/json"},
+        body:JSON.stringify({id:item.id})
+      });
+      if(!r.ok) throw new Error("Delete failed");
+      setToast("Deleted");
+      setTimeout(()=>setToast(""),1600);
+    } catch(e) {
+      setItems(previous);
+      setToast("Couldn’t delete that");
+      setTimeout(()=>setToast(""),2200);
+    } finally {
+      setPendingIds((s)=>({...s,[item.id]:false}));
+    }
+  }
+
   async function patch(item, changes, successMessage = "Saved") {
     const previous = items;
     setPendingIds((s) => ({ ...s, [item.id]: true }));
@@ -652,23 +676,32 @@ export default function Us() {
                     <button className={x.status === "done" ? "active" : ""} disabled={!!pendingIds[x.id]} onClick={() => patch(x, { status: "done", doneAt: new Date().toISOString() }, "Done ✓")}>Done</button>
                   </div>
                   <div className="us-archive-row">
-                    {x.status === "archived" ? (
+                    <div className="us-archive-actions">
+                      {x.status === "archived" ? (
+                        <button
+                          className="us-restore-btn"
+                          disabled={!!pendingIds[x.id]}
+                          onClick={() => patch(x, { status: x.archivedFrom || "idea", archivedFrom: null }, "Restored ✓")}
+                        >
+                          RESTORE ITEM
+                        </button>
+                      ) : (
+                        <button
+                          className="us-archive-btn"
+                          disabled={!!pendingIds[x.id]}
+                          onClick={() => patch(x, { archivedFrom: x.status, status: "archived" }, "Archived")}
+                        >
+                          ARCHIVE
+                        </button>
+                      )}
                       <button
-                        className="us-restore-btn"
+                        className="us-delete-btn"
                         disabled={!!pendingIds[x.id]}
-                        onClick={() => patch(x, { status: x.archivedFrom || "idea", archivedFrom: null }, "Restored ✓")}
+                        onClick={() => deleteItem(x)}
                       >
-                        RESTORE ITEM
+                        DELETE
                       </button>
-                    ) : (
-                      <button
-                        className="us-archive-btn"
-                        disabled={!!pendingIds[x.id]}
-                        onClick={() => patch(x, { archivedFrom: x.status, status: "archived" }, "Archived")}
-                      >
-                        ARCHIVE
-                      </button>
-                    )}
+                    </div>
                   </div>
 
                   <div className="us-detail-grid">
