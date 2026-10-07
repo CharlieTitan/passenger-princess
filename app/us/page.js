@@ -303,11 +303,18 @@ export default function Us() {
   }
 
   function openPicker(mode) {
+    setShortcut("");
+    setSublist("all");
     setPickerMode(mode);
     setWheelPick(null);
-    setPickerFilters(mode === "tonight"
-      ? { category:"any", effort:"any", duration:"any", timeHorizon:"any" }
-      : { category:"any", effort:"any", duration:"any", timeHorizon:"any" });
+    setPickerFilters(
+      mode === "tonight"
+        ? { category:"any", effort:"any", duration:"any", timeHorizon:"any" }
+        : { category:"any", effort:"any", duration:"any", timeHorizon:"any" }
+    );
+    setTimeout(() => {
+      document.querySelector(".us-picker-panel")?.scrollIntoView({ behavior:"smooth", block:"start" });
+    }, 0);
   }
 
   function spin(mode = pickerMode) {
