@@ -156,3 +156,20 @@
   .us-media-controls{grid-template-columns:90px 1fr}
   .us-remove-photo{grid-column:1/-1}
 }
+
+/* Preserve the original compact Polaroid layout even when editing */
+.us-card{grid-template-columns:128px minmax(0,1fr)}
+.us-card.no-photo,.us-card.has-photo{grid-template-columns:128px minmax(0,1fr);padding:14px}
+.us-card-summary{min-width:0}
+.us-card-summary h3{font-family:Georgia,serif;font-size:22px;margin:9px 0 5px}
+.us-polaroid{width:128px;max-width:128px}
+.us-photo-placeholder,.us-cover-img{width:112px;height:92px}
+.us-detail-full{grid-column:1/-1;width:100%;min-width:0;margin-top:4px}
+.us-detail-grid{display:grid;grid-template-columns:140px minmax(0,1fr) minmax(180px,.7fr);gap:10px;align-items:end}
+@media(max-width:700px){
+  .us-card,.us-card.no-photo,.us-card.has-photo{grid-template-columns:92px minmax(0,1fr)}
+  .us-polaroid{width:92px;max-width:92px;padding:7px 7px 20px}
+  .us-photo-placeholder,.us-cover-img{width:78px;height:68px}
+  .us-detail-grid{grid-template-columns:1fr}
+  .us-media-controls{grid-template-columns:90px minmax(0,1fr)}
+}
