@@ -50,6 +50,7 @@ export default function Us() {
   const [pollDraft, setPollDraft] = useState({ question:"", options:[{label:"",itemId:null},{label:"",itemId:null}] });
   const [challengeItem, setChallengeItem] = useState(null);
   const [challengeDraft, setChallengeDraft] = useState({scoring:"winner",stakes:"",winner:"",charlieScore:"",taylaScore:"",outcome:""});
+  const [navOpen,setNavOpen]=useState(false);
 
   async function load() {
     setLoading(true);
@@ -789,10 +790,21 @@ export default function Us() {
 
   return (
     <main className={"us-bg theme-" + category}>
+      <div className="us-top-strip" aria-hidden="true" />
       <div className="us-shell">
         <header className="us-header">
-          <div><small>OUR PRIVATE SPACE</small><b>US</b></div>
-          <div className="us-header-actions"><button className="us-logout" onClick={doLogout}>Log out</button><button onClick={() => setQuick(true)}>＋</button></div>
+          <div className="us-header-brand"><small>OUR PRIVATE SPACE</small><b>US</b></div>
+          <div className="us-header-actions">
+            <button className="us-nav-toggle" aria-label="Open navigation" onClick={()=>setNavOpen(!navOpen)}>☰</button>
+            <button className="us-logout" onClick={doLogout}>Log out</button>
+            <button onClick={() => setQuick(true)}>＋</button>
+          </div>
+          {navOpen ? (
+            <div className="us-nav-menu">
+              <button className="active" onClick={()=>setNavOpen(false)}>US</button>
+              <a href="/memories">Memories</a>
+            </div>
+          ) : null}
         </header>
 
         <section className="us-hero">
