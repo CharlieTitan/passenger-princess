@@ -564,3 +564,10 @@
 .us-poll-option-edit>div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px}
 .us-poll-option-edit button{width:36px;min-height:36px;border-radius:50%;background:#f3eeee;color:#8c7d81;padding:0}
 .us-poll-add-option{width:auto;min-height:32px;margin-top:10px;padding:0!important;background:transparent!important;border:0!important;color:#9b8e91!important;font-size:9px!important}
+
+.us-poll-meta{display:flex;align-items:center;gap:8px}
+.us-poll-delete{width:auto!important;min-height:0!important;padding:0!important;border:0!important;background:transparent!important;color:#aaa0a3!important;font-size:8px!important;text-decoration:underline;text-underline-offset:2px}
+.us-poll-delete:hover{color:#7f7377!important}
+.us-poll-ideas{margin-top:14px}
+.us-poll-ideas>span{display:block;font-size:9px;color:#7c6d71;margin-bottom:8px}
+.us-poll-ideas>small{display:block;margin-top:8px;font-size:8px;color:#aaa0a3}
