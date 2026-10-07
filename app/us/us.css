@@ -334,3 +334,11 @@
   min-height:82px;
   resize:vertical;
 }
+
+.us-card-badges{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap}
+.us-card-top .us-mutual-badge{color:#9c5570;border-color:#dfb6c3;background:#fff8fa}
+.us-heart{width:30px!important;height:30px!important;min-height:30px!important;border-radius:50%!important;padding:0!important;background:transparent!important;color:#b6a6aa!important;border:1px solid #e5d9dc!important;font-size:18px!important;line-height:1!important}
+.us-heart.active{color:#b84f70!important;background:#fff5f8!important;border-color:#dfb6c3!important;transform:scale(1.04)}
+.us-favourite-filter{display:flex;margin:-4px 0 12px}
+.us-favourite-filter button{width:auto;min-height:32px;border-radius:999px;padding:0 11px;background:transparent;color:#8e7d82;border:1px solid #dfd2d5;font-size:9px}
+.us-favourite-filter button.active{background:#2d2829;color:#fff;border-color:#2d2829}
