@@ -10,6 +10,11 @@ export default function Memories(){
   const [memoryFilter,setMemoryFilter]=useState(null);
   const [navOpen,setNavOpen]=useState(false);
 
+  async function doLogout(){
+    await fetch("/api/us-auth",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"logout"})});
+    window.location.href="/";
+  }
+
   useEffect(()=>{
     fetch("/api/us",{cache:"no-store"})
       .then(async r=>{
@@ -84,9 +89,8 @@ export default function Memories(){
   if(!state.user) return <main className="us-bg"><div className="us-login"><div className="us-brand">US</div><h1>Just us.</h1><p>Please log in first.</p><a href="/">Back to login</a></div></main>;
 
   return <main className="us-bg us-memories-bg">
-    <div className="us-top-strip" aria-hidden="true" />
-    <div className="us-shell">
-      <header className="us-header">
+    <header className="us-appbar">
+      <div className="us-appbar-inner">
         <div className="us-memory-header-left">
           <button
             className="us-back-arrow"
@@ -97,19 +101,23 @@ export default function Memories(){
               else window.location.href="/";
             }}
           >←</button>
-          <div className="us-header-brand"><small>OUR PRIVATE SPACE</small><b>{tab==="numbers"?"US IN NUMBERS":"MEMORIES"}</b></div>
+          <div className="us-appbar-brand">{tab==="numbers"?"US IN NUMBERS":"MEMORIES"}</div>
         </div>
-        <div className="us-header-actions">
-          <button className="us-nav-toggle" aria-label="Open navigation" onClick={()=>setNavOpen(!navOpen)}>☰</button>
-        </div>
+        <button className="us-nav-toggle" aria-label="Open navigation" onClick={()=>setNavOpen(!navOpen)}>☰</button>
         {navOpen ? (
-          <div className="us-nav-menu">
-            <a href="/">US</a>
-            <button className={tab==="memories"?"active":""} onClick={()=>{setTab("memories");setMemoryFilter(null);setNavOpen(false);}}>Memories</button>
-            <button className={tab==="numbers"?"active":""} onClick={()=>{setTab("numbers");setMemoryFilter(null);setNavOpen(false);}}>Us in Numbers</button>
+          <div className="us-nav-drawer">
+            <div className="us-nav-links">
+              <a href="/">US</a>
+              <button className={tab==="memories"?"active":""} onClick={()=>{setTab("memories");setMemoryFilter(null);setNavOpen(false);}}>Memories</button>
+              <button className={tab==="numbers"?"active":""} onClick={()=>{setTab("numbers");setMemoryFilter(null);setNavOpen(false);}}>Us in Numbers</button>
+            </div>
+            <button className="us-nav-logout" onClick={doLogout}>Log out</button>
           </div>
         ) : null}
-      </header>
+      </div>
+    </header>
+    <div className="us-top-strip" aria-hidden="true" />
+    <div className="us-shell">
 
       <section className="us-memories-hero">
         <small>DONE, BUT NOT GONE</small>
