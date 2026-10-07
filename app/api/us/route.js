@@ -1,5 +1,45 @@
 import {kv} from "@vercel/kv";import crypto from "crypto";import {seedItems} from "../../../lib/usData";
-const NS="us:";const parse=x=>!x?null:(typeof x==="string"?JSON.parse(x):x);const now=()=>new Date().toISOString();function calcRevealAt(date,time,preset,custom){if(custom&&preset==="custom"){const d=new Date(custom);return Number.isNaN(d.getTime())?null:d.toISOString();}if(!date)return null;const base=new Date(date+"T"+(time||"19:00"));if(Number.isNaN(base.getTime()))return null;const mins={start:0,"10m":10,"30m":30,"1h":60}[preset||"start"]??0;base.setMinutes(base.getMinutes()-mins);return base.toISOString();}function sanitizeSurprise(item,user){if(!item?.isSurprise||!item.surprise)return item;const s=item.surprise;const timeReached=s.revealAt&&Date.now()>=new Date(s.revealAt).getTime();const isRevealed=!!s.revealedAt||!!timeReached;if(user===s.creator||isRevealed)return {...item,surprise:{...s,isRevealed:true}};return {...item,title:"Surprise Plan",location:"",bookingUrl:"",planNotes:"",notes:"",surprise:{creator:s.creator,date:s.date,time:s.time,teaser:s.teaser||"",revealAt:s.revealAt,isRevealed:false}};}const itemsKey=NS+"items";const activityKey=NS+"activity";const listsKey=NS+"customLists";
+const NS="us:";const parse=x=>!x?null:(typeof x==="string"?JSON.parse(x):x);const now=()=>new Date().toISOString();function calcRevealAt(date,time,preset,custom){if(custom&&preset==="custom"){const d=new Date(custom);return Number.isNaN(d.getTime())?null:d.toISOString();}if(!date)return null;const base=new Date(date+"T"+(time||"19:00"));if(Number.isNaN(base.getTime()))return null;const mins={start:0,"10m":10,"30m":30,"1h":60}[preset||"start"]??0;base.setMinutes(base.getMinutes()-mins);return base.toISOString();}function sanitizeSurprise(item,user){
+  if(!item?.isSurprise)return item;
+  const s=item.surprise||{
+    creator:item.addedBy||"Charlie",
+    date:item.planDate||"",
+    time:item.planTime||"",
+    dressCode:"",
+    meetMode:"meet",
+    pickupTime:"",
+    location:"",
+    teaser:"",
+    note:"",
+    revealPreset:"start",
+    revealAt:calcRevealAt(item.planDate||"",item.planTime||"","start",null),
+    revealedAt:null
+  };
+  const timeReached=!!s.revealAt&&Date.now()>=new Date(s.revealAt).getTime();
+  const isRevealed=!!s.revealedAt||timeReached;
+  if(user===s.creator){
+    return {...item,surprise:{...s,isRevealed}};
+  }
+  if(isRevealed){
+    return {...item,surprise:{...s,isRevealed:true}};
+  }
+  return {
+    ...item,
+    title:"Surprise Plan",
+    location:"",
+    bookingUrl:"",
+    planNotes:"",
+    notes:"",
+    surprise:{
+      creator:s.creator,
+      date:s.date,
+      time:s.time,
+      teaser:s.teaser||"",
+      revealAt:s.revealAt,
+      isRevealed:false
+    }
+  };
+}const itemsKey=NS+"items";const activityKey=NS+"activity";const listsKey=NS+"customLists";
 async function ensureSeed(){const seeded=await kv.get(NS+"seeded");if(seeded)return;for(const item of seedItems)await kv.hset(itemsKey,{[item.id]:JSON.stringify({...item,createdAt:now(),updatedAt:now()})});await kv.set(NS+"seeded","1")}
 function sessionId(req){return req.cookies.get("us_session")?.value||null}
 async function sessionUser(req){const sid=sessionId(req);if(!sid)return null;const s=parse(await kv.get(NS+"session:"+sid));if(!s||s.expiresAt<Date.now())return null;return s.user}
