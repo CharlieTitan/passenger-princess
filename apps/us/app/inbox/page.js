@@ -65,7 +65,8 @@ export default function Inbox(){
       body:JSON.stringify({action:"convertInbox",id:entry.id,category})
     });
     if(!r.ok){setToast("Couldn’t make that an idea");setTimeout(()=>setToast(""),1700);return;}
-    setState(s=>({...s,inbox:s.inbox.filter(x=>x.id!==entry.id)}));
+    const d=await r.json();
+    setState(s=>({...s,inbox:s.inbox.map(x=>x.id===entry.id?{...x,ideaItemId:d.item.id,ideaCategory:category,ideaCreatedAt:new Date().toISOString(),ideaCreatedBy:state.user}:x)}));
     setIdeaFromMessage(null);
     setToast("Added to "+categoryMeta[category].label+" ✓");
     setTimeout(()=>setToast(""),1400);
@@ -121,7 +122,9 @@ export default function Inbox(){
             {entry.content && entry.content!==entry.url ? <p>{entry.content}</p> : null}
             {entry.url ? <a href={entry.url} target="_blank" rel="noreferrer">{entry.url.replace(/^https?:\/\//,"").slice(0,72)}{entry.url.length>78?"…":""}</a> : null}
 
-            {ideaFromMessage===entry.id ? (
+            {entry.ideaItemId ? (
+              <div className="us-message-linked">✓ Added to {categoryMeta[entry.ideaCategory]?.label || "ideas"}</div>
+            ) : ideaFromMessage===entry.id ? (
               <div className="us-message-idea">
                 <span>Make this an idea</span>
                 <div>
