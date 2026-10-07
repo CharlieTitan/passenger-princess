@@ -17,6 +17,8 @@ export default function Us() {
   const [draft, setDraft] = useState({ title: "", category: "eat", list: "restaurants", effort: "normal", timeHorizon: "soon", mealType: "any" });
   const [wheel, setWheel] = useState(false);
   const [wheelPick, setWheelPick] = useState(null);
+  const [pickerMode, setPickerMode] = useState(null);
+  const [pickerFilters, setPickerFilters] = useState({category:"any",effort:"any",duration:"any",timeHorizon:"any"});
   const [pendingIds, setPendingIds] = useState({});
   const [toast, setToast] = useState("");
   const [editValues, setEditValues] = useState({});
@@ -132,24 +134,48 @@ export default function Us() {
 
   const filtered = useMemo(() => {
     return items.filter((x) => {
-      if (shortcut === "Try Again" && !x.tryAgain) return false;
       if (shortcut === "Planned" && x.status !== "planned") return false;
-      if (shortcut === "Tonight" && !(x.status !== "done" && x.status !== "archived" && x.timeHorizon === "tonight")) return false;
+      if (shortcut === "Try Again" && !x.tryAgain) return false;
       if (!shortcut && x.category !== category) return false;
       if (query && !x.title.toLowerCase().includes(query.toLowerCase())) return false;
       return true;
     });
   }, [items, category, shortcut, query]);
 
-  function spin() {
-    const pool = items.filter((x) => x.status !== "done" && x.status !== "archived");
-    if (!pool.length) return;
+  function eligibleForPicker(item, mode) {
+    if (item.status === "done" || item.status === "archived") return false;
+    if (pickerFilters.category !== "any" && item.category !== pickerFilters.category) return false;
+    if (pickerFilters.effort !== "any" && item.effort !== pickerFilters.effort) return false;
+    if (pickerFilters.duration !== "any" && item.duration !== pickerFilters.duration) return false;
+    if (pickerFilters.timeHorizon !== "any" && item.timeHorizon !== pickerFilters.timeHorizon) return false;
+    if (mode === "tonight") {
+      if (item.timeHorizon === "someday") return false;
+      if (item.effort === "big") return false;
+    }
+    return true;
+  }
+
+  function openPicker(mode) {
+    setPickerMode(mode);
+    setWheelPick(null);
+    setPickerFilters(mode === "tonight"
+      ? { category:"any", effort:"any", duration:"any", timeHorizon:"any" }
+      : { category:"any", effort:"any", duration:"any", timeHorizon:"any" });
+  }
+
+  function spin(mode = pickerMode) {
+    const pool = items.filter((x) => eligibleForPicker(x, mode));
+    if (!pool.length) {
+      setToast("Nothing matches those filters");
+      setTimeout(() => setToast(""), 1800);
+      return;
+    }
     setWheel(true);
     setWheelPick(null);
     setTimeout(() => {
       setWheelPick(pool[Math.floor(Math.random() * pool.length)]);
       setWheel(false);
-    }, 1200);
+    }, 1100);
   }
 
   if (loading && !user) {
@@ -261,7 +287,8 @@ export default function Us() {
               key={s}
               className={shortcut === s ? "active" : ""}
               onClick={() => {
-                if (s === "Pick for us") { spin(); setShortcut(""); }
+                if (s === "Pick for us") { openPicker("pick"); setShortcut(""); }
+                else if (s === "Tonight") { openPicker("tonight"); setShortcut(""); }
                 else if (s === "Quick add") setQuick(true);
                 else setShortcut(shortcut === s ? "" : s);
               }}
@@ -271,25 +298,75 @@ export default function Us() {
           ))}
         </section>
 
-        {wheelPick ? (
-          <section className="us-picker-result">
-            <small>THE WHEEL HAS SPOKEN</small>
-            <h2>{wheelPick.title}</h2>
-            <div>
-              <button className="us-primary" onClick={() => patch(wheelPick, { status: "planned" })}>LOCK IT IN</button>
-              <button className="us-secondary" onClick={spin}>SPIN AGAIN</button>
+                {pickerMode ? (
+          <section className="us-picker-panel">
+            <div className="us-picker-head">
+              <div>
+                <small>{pickerMode === "tonight" ? "TONIGHT" : "PICK FOR US"}</small>
+                <h2>{pickerMode === "tonight" ? "What kind of night is it?" : "Narrow it down or leave it open."}</h2>
+              </div>
+              <button className="us-picker-close" onClick={() => { setPickerMode(null); setWheelPick(null); }}>×</button>
             </div>
-          </section>
-        ) : null}
-        {wheel ? <section className="us-wheel">SPINNING…</section> : null}
 
-        {shortcut ? (
-          <section className="us-filter-banner">
-            <div>
-              <small>FILTERING</small>
-              <b>{shortcut}</b>
+            <div className="us-picker-group">
+              <span>Category</span>
+              <div className="us-picker-chips">
+                {[["any","Anything"],["eat","Eat"],["watch","Watch"],["go","Go"],["do","Do"]].map(([v,l]) => (
+                  <button key={v} className={pickerFilters.category===v?"active":""} onClick={() => setPickerFilters({...pickerFilters,category:v})}>{l}</button>
+                ))}
+              </div>
             </div>
-            <button onClick={() => setShortcut("")}>Clear</button>
+
+            <div className="us-picker-group">
+              <span>Effort</span>
+              <div className="us-picker-chips">
+                {[["any","Any"],["low","Low effort"],["normal","Normal"],["big","Big plan"]].map(([v,l]) => (
+                  <button key={v} className={pickerFilters.effort===v?"active":""} onClick={() => setPickerFilters({...pickerFilters,effort:v})}>{l}</button>
+                ))}
+              </div>
+            </div>
+
+            <div className="us-picker-row">
+              <label>Duration
+                <select value={pickerFilters.duration} onChange={(e)=>setPickerFilters({...pickerFilters,duration:e.target.value})}>
+                  <option value="any">Any</option>
+                  <option value="30m">30 mins</option>
+                  <option value="1-2h">1–2 hours</option>
+                  <option value="half-day">Half day</option>
+                  <option value="full-day">Full day</option>
+                  <option value="overnight">Overnight / Trip</option>
+                </select>
+              </label>
+              <label>When
+                <select value={pickerFilters.timeHorizon} onChange={(e)=>setPickerFilters({...pickerFilters,timeHorizon:e.target.value})}>
+                  <option value="any">Any</option>
+                  <option value="tonight">Tonight</option>
+                  <option value="soon">Soon</option>
+                  <option value="someday">Someday</option>
+                </select>
+              </label>
+            </div>
+
+            <div className="us-picker-count">
+              {items.filter((x)=>eligibleForPicker(x,pickerMode)).length} option{items.filter((x)=>eligibleForPicker(x,pickerMode)).length===1?"":"s"} match
+            </div>
+
+            <button className="us-primary us-picker-go" onClick={()=>spin()}>
+              {pickerMode === "tonight" ? "PICK TONIGHT →" : "SPIN FOR US →"}
+            </button>
+
+            {wheel ? <div className="us-wheel-inline"><span />Picking…</div> : null}
+            {wheelPick ? (
+              <div className="us-picker-result-inline">
+                <small>HOW ABOUT</small>
+                <h3>{wheelPick.title}</h3>
+                <p>{wheelPick.category ? categoryMeta[wheelPick.category]?.label : ""}{wheelPick.effort ? " · "+wheelPick.effort : ""}</p>
+                <div>
+                  <button className="us-primary" onClick={()=>patch(wheelPick,{status:"planned"}, "Planned ✓")}>LOCK IT IN</button>
+                  <button className="us-secondary" onClick={()=>spin()}>PICK AGAIN</button>
+                </div>
+              </div>
+            ) : null}
           </section>
         ) : null}
 
