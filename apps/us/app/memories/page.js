@@ -113,7 +113,7 @@ export default function Memories(){
           <div className="us-nav-drawer">
             <div className="us-nav-links">
               <a href="/">US</a>
-              <a href="/?inbox=1"><span>Inbox</span>{unreadInbox ? <span className="us-menu-badge">{unreadInbox}</span> : null}</a>
+              <a href="/inbox"><span>Inbox</span>{unreadInbox ? <span className="us-menu-badge">{unreadInbox}</span> : null}</a>
               <button className="active" onClick={()=>{setTab("memories");setMemoryFilter(null);setNavOpen(false);}}>Memories</button>
             </div>
             <div className="us-nav-bottom">

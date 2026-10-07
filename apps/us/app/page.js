@@ -900,10 +900,10 @@ export default function Us() {
             <div className="us-nav-drawer">
               <div className="us-nav-links">
                 <button className="active" onClick={()=>setNavOpen(false)}>US</button>
-                <button onClick={()=>{setInboxOpen(true);setNavOpen(false);}}>
+                <a href="/inbox">
                   <span>Inbox</span>
                   {unreadInbox ? <span className="us-menu-badge">{unreadInbox}</span> : null}
-                </button>
+                </a>
                 <a href="/memories">Memories</a>
               </div>
               <div className="us-nav-bottom">
@@ -1084,49 +1084,7 @@ export default function Us() {
           ))}
         </section>
 
-        {inboxOpen ? (
-          <section className="us-inbox-panel us-thread-panel">
-            <div className="us-inbox-head">
-              <div><small>JUST US</small><h2>Inbox</h2><p>Send links, notes and ideas back and forth.</p></div>
-              <button onClick={()=>setInboxOpen(false)}>×</button>
-            </div>
 
-            <div className="us-thread">
-              {inbox.length ? [...inbox].reverse().map(entry=>(
-                <article className={"us-message "+(entry.addedBy===user?"mine":"theirs")} key={entry.id}>
-                  <div className="us-message-meta">
-                    <b>{entry.addedBy}</b>
-                    <span>{new Date(entry.createdAt).toLocaleDateString(undefined,{day:"numeric",month:"short"})}</span>
-                  </div>
-                  {entry.title ? <h3>{entry.title}</h3> : null}
-                  {entry.content && entry.content!==entry.url ? <p>{entry.content}</p> : null}
-                  {entry.url ? <a href={entry.url} target="_blank" rel="noreferrer">{entry.url.replace(/^https?:\/\//,"").slice(0,72)}{entry.url.length>78?"…":""}</a> : null}
-
-                  {ideaFromMessage===entry.id ? (
-                    <div className="us-message-idea">
-                      <span>Make this an idea</span>
-                      <div>
-                        {Object.entries(categoryMeta).map(([key,value])=>(
-                          <button key={key} onClick={()=>{convertInbox(entry,key);setIdeaFromMessage(null);}}>{value.emoji} {value.label}</button>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <button className="us-make-idea" onClick={()=>setIdeaFromMessage(entry.id)}>Make idea →</button>
-                  )}
-                </article>
-              )) : <div className="us-inbox-empty">Nothing here yet. Send the first one.</div>}
-            </div>
-
-            <div className="us-thread-compose">
-              <input placeholder="Optional title" value={saveDraft.title} onChange={e=>setSaveDraft({...saveDraft,title:e.target.value})}/>
-              <div>
-                <textarea placeholder={"Message "+(user==="Charlie"?"Tayla":"Charlie")+" or paste a link…"} value={saveDraft.content} onChange={e=>setSaveDraft({...saveDraft,content:e.target.value})}/>
-                <button className="us-primary" disabled={!saveDraft.title.trim()&&!saveDraft.content.trim()} onClick={saveToInbox}>SEND →</button>
-              </div>
-            </div>
-          </section>
-        ) : null}
 
                 {pickerMode ? (
           <section className="us-picker-panel">
