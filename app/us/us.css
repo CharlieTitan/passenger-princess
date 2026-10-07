@@ -204,3 +204,25 @@
 .us-archive-btn{background:transparent;color:#9a7f86;border:1px solid #e2d4d7}
 .us-restore-btn{background:#2d2829;color:#fff;border:1px solid #2d2829}
 .us-archive-row button:disabled{opacity:.55}
+
+/* Archive should be a quiet secondary action, not a primary CTA */
+.us-archive-row{justify-content:flex-start;margin-top:12px}
+.us-archive-row .us-archive-btn{
+  background:transparent!important;
+  border:0!important;
+  color:#aaa0a3!important;
+  min-height:0!important;
+  padding:0!important;
+  font-size:9px!important;
+  font-weight:400!important;
+  text-decoration:none;
+}
+.us-archive-row .us-restore-btn{
+  background:transparent!important;
+  border:0!important;
+  color:#8f8084!important;
+  min-height:0!important;
+  padding:0!important;
+  font-size:9px!important;
+  font-weight:500!important;
+}
