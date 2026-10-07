@@ -16,6 +16,7 @@ export default function Us() {
   const [user, setUser] = useState(null);
   const [items, setItems] = useState([]);
   const [activity, setActivity] = useState([]);
+  const [polls, setPolls] = useState([]);
   const [customLists, setCustomLists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [login, setLogin] = useState({ username: "Charlie", password: "" });
@@ -45,6 +46,8 @@ export default function Us() {
   const [editingList, setEditingList] = useState(null);
   const [planningItem, setPlanningItem] = useState(null);
   const [planDraft, setPlanDraft] = useState({ date:"", time:"", location:"", bookingUrl:"", notes:"", recurrence:"none", reminderPreset:"none" });
+  const [pollOpen, setPollOpen] = useState(false);
+  const [pollDraft, setPollDraft] = useState({ question:"", options:["",""] });
 
   async function load() {
     setLoading(true);
@@ -54,6 +57,7 @@ export default function Us() {
       setUser(d.user);
       setItems(d.items);
       setActivity(d.activity);
+      setPolls(d.polls || []);
       setCustomLists(d.customLists || []);
     }
     setLoading(false);
@@ -66,6 +70,7 @@ export default function Us() {
     setUser(null);
     setItems([]);
     setActivity([]);
+    setPolls([]);
     setCustomLists([]);
     setLogin({ username: "Charlie", password: "" });
   }
@@ -417,6 +422,56 @@ export default function Us() {
       return {...comment,reactions:{...current,[emoji]:nextUsers}};
     });
     await patch(item,{comments},"Reaction updated");
+  }
+
+  async function createPoll() {
+    const question=pollDraft.question.trim();
+    const options=pollDraft.options.map((x)=>x.trim()).filter(Boolean);
+    if(!question || options.length<2) return;
+    const r=await fetch("/api/us",{
+      method:"POST",
+      headers:{"content-type":"application/json"},
+      body:JSON.stringify({action:"createPoll",question,options})
+    });
+    if(!r.ok){
+      setToast("Couldn’t create poll");
+      setTimeout(()=>setToast(""),1800);
+      return;
+    }
+    const d=await r.json();
+    setPolls((current)=>[d.poll,...current]);
+    setPollOpen(false);
+    setPollDraft({question:"",options:["",""]});
+    setToast("Poll created ✓");
+    setTimeout(()=>setToast(""),1600);
+  }
+
+  async function votePoll(poll, optionId) {
+    const r=await fetch("/api/us",{
+      method:"PATCH",
+      headers:{"content-type":"application/json"},
+      body:JSON.stringify({action:"votePoll",id:poll.id,optionId})
+    });
+    if(!r.ok){
+      setToast("Couldn’t save vote");
+      setTimeout(()=>setToast(""),1800);
+      return;
+    }
+    const d=await r.json();
+    setPolls((current)=>current.map((x)=>x.id===d.poll.id?d.poll:x));
+    setToast("Vote saved ✓");
+    setTimeout(()=>setToast(""),1400);
+  }
+
+  function pollResult(poll){
+    const votes=poll.votes||{};
+    const both=!!votes.Charlie && !!votes.Tayla;
+    if(!both) return null;
+    const counts={};
+    for(const id of Object.values(votes)) counts[id]=(counts[id]||0)+1;
+    const max=Math.max(...Object.values(counts));
+    const winners=(poll.options||[]).filter((o)=>(counts[o.id]||0)===max);
+    return {tie:winners.length>1,winners,counts};
   }
 
   const filtered = useMemo(() => {
@@ -1125,6 +1180,56 @@ export default function Us() {
           ) : null}
         </section>
 
+        <section className="us-polls">
+          <div className="us-polls-head">
+            <div>
+              <small>POLL IT</small>
+              <h2>Can’t decide?</h2>
+            </div>
+            <button onClick={()=>setPollOpen(true)}>+ New poll</button>
+          </div>
+
+          {polls.length ? (
+            <div className="us-poll-list">
+              {polls.slice(0,3).map((poll)=>{
+                const result=pollResult(poll);
+                const myVote=poll.votes?.[user];
+                return (
+                  <article className="us-poll-card" key={poll.id}>
+                    <div className="us-poll-title-row">
+                      <h3>{poll.question}</h3>
+                      <small>{poll.createdBy}</small>
+                    </div>
+                    <div className="us-poll-options">
+                      {(poll.options||[]).map((option)=>(
+                        <button
+                          key={option.id}
+                          className={myVote===option.id?"active":""}
+                          onClick={()=>votePoll(poll,option.id)}
+                        >
+                          <span>{option.label}</span>
+                          {result ? <small>{result.counts[option.id]||0}</small> : null}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="us-poll-status">
+                      {result ? (
+                        result.tie
+                          ? <span>Tie. Very helpful 😂</span>
+                          : <span>Winner: <b>{result.winners[0]?.label}</b></span>
+                      ) : (
+                        <span>{myVote ? "Your vote is in. Waiting for the other one." : "Vote once. You can change it until both have voted."}</span>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="us-poll-empty">Film? Restaurant? Date? Make it democratic.</div>
+          )}
+        </section>
+
         <a className="us-memories-link" href="/us/memories"><span>Memories</span><small>Done, but not gone →</small></a><section className="us-activity">
           <div className="us-section-title"><span>Recent activity</span></div>
           {activity.slice(0, 8).map((a) => (
@@ -1134,6 +1239,57 @@ export default function Us() {
       </div>
 
       {toast ? <div className="us-toast">{toast}</div> : null}
+
+      {pollOpen ? (
+        <div className="us-modal">
+          <div className="us-modal-card us-poll-modal">
+            <button className="us-close" onClick={()=>setPollOpen(false)}>×</button>
+            <small>NEW POLL</small>
+            <h2>Make us choose.</h2>
+
+            <label className="us-poll-field">Question
+              <input
+                autoFocus
+                placeholder="Which film tonight?"
+                value={pollDraft.question}
+                onChange={(e)=>setPollDraft({...pollDraft,question:e.target.value})}
+              />
+            </label>
+
+            <div className="us-poll-option-edit">
+              {pollDraft.options.map((option,index)=>(
+                <div key={index}>
+                  <input
+                    placeholder={"Option "+(index+1)}
+                    value={option}
+                    onChange={(e)=>{
+                      const options=[...pollDraft.options];
+                      options[index]=e.target.value;
+                      setPollDraft({...pollDraft,options});
+                    }}
+                  />
+                  {pollDraft.options.length>2 ? <button onClick={()=>setPollDraft({...pollDraft,options:pollDraft.options.filter((_,i)=>i!==index)})}>×</button> : null}
+                </div>
+              ))}
+            </div>
+
+            <button
+              className="us-poll-add-option"
+              onClick={()=>setPollDraft({...pollDraft,options:[...pollDraft.options,""]})}
+            >
+              + Add option
+            </button>
+
+            <button
+              className="us-primary us-quick-submit"
+              disabled={!pollDraft.question.trim() || pollDraft.options.filter((x)=>x.trim()).length<2}
+              onClick={createPoll}
+            >
+              CREATE POLL →
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {planningItem ? (
         <div className="us-modal">
