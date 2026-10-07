@@ -188,7 +188,8 @@ export default function Us() {
   const hour = new Date().getHours();
   const greet = hour < 12 ? "Morning" : hour < 18 ? "Afternoon" : "Evening";
   const planned = items.filter((x) => x.status === "planned");
-  const tonight = items.filter((x) => x.status !== "done" && (x.effort === "low" || x.effort === "normal"));
+  const tonight = items.filter((x) => x.status !== "done" && x.status !== "archived" && x.timeHorizon === "tonight");
+  const soon = items.filter((x) => x.status !== "done" && x.status !== "archived" && x.timeHorizon === "soon");
 
   return (
     <main className={"us-bg theme-" + category}>
@@ -203,8 +204,8 @@ export default function Us() {
           <h1>What are we doing next?</h1>
           <div className="us-now">
             <small>NOW</small>
-            <b>{planned[0] ? planned[0].title : tonight[0] ? tonight[0].title : "Add something worth doing."}</b>
-            <p>{planned[0] ? "You already planned this." : tonight[0] ? "Easy enough for tonight." : "The lists are waiting."}</p>
+            <b>{planned[0] ? planned[0].title : tonight[0] ? tonight[0].title : soon[0] ? soon[0].title : "Add something worth doing."}</b>
+            <p>{planned[0] ? "You already planned this." : tonight[0] ? "One for tonight." : soon[0] ? "One for soon." : "The lists are waiting."}</p>
           </div>
         </section>
 
