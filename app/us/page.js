@@ -27,7 +27,7 @@ export default function Us() {
   const [open, setOpen] = useState(null);
   const [quick, setQuick] = useState(false);
   const [quickMore, setQuickMore] = useState(false);
-  const [draft, setDraft] = useState({ title: "", category: "eat", list: "restaurants", effort: "normal", timeHorizon: "soon", mealType: "any", location:"", priority:"normal", budget:"", duration:"", tagsText:"", notes:"", isSurprise:false });
+  const [draft, setDraft] = useState({ title: "", category: "eat", list: "restaurants", effort: "normal", timeHorizon: "soon", mealType: "any", location:"", priority:"normal", budget:"", duration:"", tagsText:"", notes:"", isSurprise:false, surpriseDate:"", surpriseTime:"", surpriseDressCode:"", surpriseMeetMode:"meet", surprisePickupTime:"", surpriseLocation:"", surpriseTeaser:"", surpriseNote:"", surpriseRevealPreset:"start", surpriseRevealCustom:"" });
   const [wheel, setWheel] = useState(false);
   const [wheelPick, setWheelPick] = useState(null);
   const [pickerMode, setPickerMode] = useState(null);
@@ -106,7 +106,7 @@ export default function Us() {
     if (r.ok) {
       setQuick(false);
       setQuickMore(false);
-      setDraft({ title: "", category: "eat", list: "restaurants", effort: "normal", timeHorizon: "soon", mealType: "any", location:"", priority:"normal", budget:"", duration:"", tagsText:"", notes:"", isSurprise:false });
+      setDraft({ title: "", category: "eat", list: "restaurants", effort: "normal", timeHorizon: "soon", mealType: "any", location:"", priority:"normal", budget:"", duration:"", tagsText:"", notes:"", isSurprise:false, surpriseDate:"", surpriseTime:"", surpriseDressCode:"", surpriseMeetMode:"meet", surprisePickupTime:"", surpriseLocation:"", surpriseTeaser:"", surpriseNote:"", surpriseRevealPreset:"start", surpriseRevealCustom:"" });
       load();
     }
   }
@@ -762,7 +762,7 @@ export default function Us() {
             <button
               className="us-primary"
               onClick={() => {
-                setDraft({ title:"", category:"do", list:"date-ideas", effort:"normal", timeHorizon:"soon", mealType:undefined, isSurprise:true });
+                setDraft({ title:"", category:"do", list:"date-ideas", effort:"normal", timeHorizon:"soon", mealType:undefined, location:"", priority:"normal", budget:"", duration:"", tagsText:"", notes:"", isSurprise:true, surpriseDate:"", surpriseTime:"", surpriseDressCode:"", surpriseMeetMode:"meet", surprisePickupTime:"", surpriseLocation:"", surpriseTeaser:"", surpriseNote:"", surpriseRevealPreset:"start", surpriseRevealCustom:"" });
                 setQuick(true);
               }}
             >
@@ -804,6 +804,7 @@ export default function Us() {
                   </div>
                 </div>
                 <h3>{x.title}</h3>
+                {x.isSurprise && x.surprise?.teaser ? <p className="us-surprise-teaser">👀 ${x.surprise.teaser}</p> : null}
                 {itemSecondary(x) ? <p className="us-card-subtitle">{itemSecondary(x)}</p> : null}
                 <div className="us-reaction-row us-item-reactions" onClick={(e)=>e.stopPropagation()}>
                   {quickReactions.map((emoji)=>{
@@ -826,6 +827,32 @@ export default function Us() {
 
               {open === x.id ? (
                 <div className="us-detail us-detail-full" onClick={(e) => e.stopPropagation()}>
+                  {x.isSurprise ? (
+                    <div className={"us-surprise-detail"+(x.surprise?.isRevealed?" revealed":" locked")}>
+                      <div className="us-surprise-detail-head">
+                        <span>{x.surprise?.isRevealed ? "SURPRISE REVEALED" : "SURPRISE LOCKED"}</span>
+                        {x.surprise?.creator===user && !x.surprise?.isRevealed ? (
+                          <button onClick={()=>patch(x,{action:"revealSurprise"},"Surprise revealed ✨")}>Reveal early</button>
+                        ) : null}
+                      </div>
+                      {x.surprise?.isRevealed ? (
+                        <div className="us-surprise-revealed-grid">
+                          {x.surprise?.dressCode ? <div><small>Dress code</small><b>{x.surprise.dressCode}</b></div> : null}
+                          {x.surprise?.meetMode ? <div><small>Plan</small><b>{x.surprise.meetMode==="pickup"?"Pickup":"Meet there"}</b></div> : null}
+                          {x.surprise?.pickupTime ? <div><small>Pickup</small><b>{x.surprise.pickupTime}</b></div> : null}
+                          {x.surprise?.location ? <div><small>Location</small><b>{x.surprise.location}</b></div> : null}
+                          {x.surprise?.note ? <div><small>Note</small><b>{x.surprise.note}</b></div> : null}
+                        </div>
+                      ) : (
+                        <div className="us-surprise-locked-copy">
+                          <b>{x.surprise?.date || "Date TBC"}{x.surprise?.time ? " · "+x.surprise.time : ""}</b>
+                          <span>{x.surprise?.teaser || "No clues yet."}</span>
+                          {x.surprise?.revealAt ? <small>Unlocks {new Date(x.surprise.revealAt).toLocaleString()}</small> : null}
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
+
                   <div className="us-detail-audit">Added by {x.addedBy} · Last updated by {x.updatedBy}</div>
                   <div className="us-actions">
                     <button className={(x.status === "idea" || x.status === "maybe") ? "active" : ""} disabled={!!pendingIds[x.id]} onClick={() => patch(x, { status: "idea" }, "Saved as Idea")}>Idea</button>
@@ -1298,14 +1325,79 @@ export default function Us() {
               </div>
             </div>
 
-            <div className="us-quick-section">
+            {draft.isSurprise ? (
+              <div className="us-surprise-fields">
+                <div className="us-plan-grid">
+                  <label>Date
+                    <input type="date" value={draft.surpriseDate || ""} onChange={(e)=>setDraft({...draft,surpriseDate:e.target.value})} />
+                  </label>
+                  <label>Time <span>optional</span>
+                    <input type="time" value={draft.surpriseTime || ""} onChange={(e)=>setDraft({...draft,surpriseTime:e.target.value})} />
+                  </label>
+                </div>
+
+                <div className="us-quick-section">
+                  <span>Dress code <em>hidden</em></span>
+                  <input placeholder="e.g. Smart casual, trainers…" value={draft.surpriseDressCode || ""} onChange={(e)=>setDraft({...draft,surpriseDressCode:e.target.value})} />
+                </div>
+
+                <div className="us-quick-section">
+                  <span>How are we getting there?</span>
+                  <div className="us-picker-chips">
+                    {[["meet","Meet there"],["pickup","I’m picking you up"]].map(([value,label])=>(
+                      <button key={value} className={draft.surpriseMeetMode===value?"active":""} onClick={()=>setDraft({...draft,surpriseMeetMode:value})}>{label}</button>
+                    ))}
+                  </div>
+                </div>
+
+                {draft.surpriseMeetMode==="pickup" ? (
+                  <div className="us-quick-section">
+                    <span>Pickup time <em>hidden</em></span>
+                    <input type="time" value={draft.surprisePickupTime || ""} onChange={(e)=>setDraft({...draft,surprisePickupTime:e.target.value})} />
+                  </div>
+                ) : null}
+
+                <div className="us-quick-section">
+                  <span>Location <em>hidden</em></span>
+                  <input placeholder="Where are you actually going?" value={draft.surpriseLocation || ""} onChange={(e)=>setDraft({...draft,surpriseLocation:e.target.value})} />
+                </div>
+
+                <div className="us-quick-section">
+                  <span>Clue / teaser <em>safe to show</em></span>
+                  <input placeholder="Optional clue for Tayla…" value={draft.surpriseTeaser || ""} onChange={(e)=>setDraft({...draft,surpriseTeaser:e.target.value})} />
+                </div>
+
+                <div className="us-quick-section">
+                  <span>Practical note <em>hidden</em></span>
+                  <input placeholder="Bring trainers, don’t eat beforehand…" value={draft.surpriseNote || ""} onChange={(e)=>setDraft({...draft,surpriseNote:e.target.value})} />
+                </div>
+
+                <div className="us-quick-section">
+                  <span>Reveal timing</span>
+                  <div className="us-picker-chips">
+                    {[["start","At start"],["10m","10 mins before"],["30m","30 mins before"],["1h","1 hour before"],["custom","Custom"]].map(([value,label])=>(
+                      <button key={value} className={draft.surpriseRevealPreset===value?"active":""} onClick={()=>setDraft({...draft,surpriseRevealPreset:value})}>{label}</button>
+                    ))}
+                  </div>
+                </div>
+
+                {draft.surpriseRevealPreset==="custom" ? (
+                  <div className="us-quick-section">
+                    <span>Custom reveal</span>
+                    <input type="datetime-local" value={draft.surpriseRevealCustom || ""} onChange={(e)=>setDraft({...draft,surpriseRevealCustom:e.target.value})} />
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            {!draft.isSurprise ? (            <div className="us-quick-section">
               <span>Location</span>
               <input
                 placeholder="e.g. JVC, Home, Hatta, London"
                 value={draft.location || ""}
                 onChange={(e)=>setDraft({...draft,location:e.target.value})}
               />
-            </div>
+            </div>) : null}
 
             <button className="us-more-toggle" onClick={()=>setQuickMore(!quickMore)}>
               <span>{quickMore ? "Hide details" : "More details"}</span>
@@ -1353,7 +1445,7 @@ export default function Us() {
               </div>
             ) : null}
 
-            <button className="us-primary us-quick-submit" onClick={add} disabled={!draft.title.trim()}>
+            <button className="us-primary us-quick-submit" onClick={add} disabled={!draft.title.trim() || (draft.isSurprise && !draft.surpriseDate)}>
               {draft.isSurprise ? "SAVE SURPRISE →" : "ADD TO US →"}
             </button>
           </div>
