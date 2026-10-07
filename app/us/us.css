@@ -387,3 +387,20 @@
   border-color:#ddb3c1!important;
   transform:none!important;
 }
+
+/* Match favourites to the app's top accent pink */
+.us-favourite-filter button.active{
+  background:#fff4f8!important;
+  color:#e65a8d!important;
+  border-color:#e65a8d!important;
+}
+.us-card-badges .us-heart.active{
+  background:#fff4f8!important;
+  color:#e65a8d!important;
+  border-color:#e65a8d!important;
+}
+.us-card-top .us-mutual-badge{
+  color:#e65a8d!important;
+  border-color:#e65a8d!important;
+  background:#fff4f8!important;
+}
