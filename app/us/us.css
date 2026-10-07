@@ -173,3 +173,13 @@
   .us-detail-grid{grid-template-columns:1fr}
   .us-media-controls{grid-template-columns:90px minmax(0,1fr)}
 }
+
+.us-sublist-wrap{display:inline-flex;align-items:stretch;border:1px solid #e3d7d8;border-radius:999px;background:#ffffffa8;overflow:hidden;flex:0 0 auto}
+.us-sublist-wrap.active{background:#2d2829;border-color:#2d2829}
+.us-sublist-wrap>button{border:0!important;background:transparent!important;border-radius:0!important;margin:0!important}
+.us-sublist-wrap .us-sublist-main{display:flex;align-items:center;gap:8px;width:auto;white-space:nowrap;min-height:38px;padding:0 10px 0 12px;color:#685a5e;font-size:9px}
+.us-sublist-wrap .us-sublist-main small{font-size:8px;color:#a29296}
+.us-sublist-wrap.active .us-sublist-main{color:#fff!important}
+.us-sublist-wrap.active .us-sublist-main small{color:#d8ced1!important}
+.us-sublist-wrap .us-sublist-edit{width:31px;min-height:38px;padding:0;color:#9d8f93;font-size:13px;border-left:1px solid #eadfe0!important}
+.us-sublist-wrap.active .us-sublist-edit{color:#d8ced1;border-left-color:#51474a!important}
