@@ -54,7 +54,7 @@ export default function Us() {
   const [navOpen,setNavOpen]=useState(false);
   const [saveOpen,setSaveOpen]=useState(false);
   const [inboxOpen,setInboxOpen]=useState(false);
-  const [saveDraft,setSaveDraft]=useState({title:"",content:"",to:"Tayla"});
+  const [saveDraft,setSaveDraft]=useState({title:"",content:""});
 
   async function load() {
     setLoading(true);
@@ -615,7 +615,7 @@ export default function Us() {
     const r=await fetch("/api/us",{
       method:"POST",
       headers:{"content-type":"application/json"},
-      body:JSON.stringify({action:"createInbox",title,content,to:saveDraft.to||null})
+      body:JSON.stringify({action:"createInbox",title,content,to:user==="Charlie"?"Tayla":"Charlie"})
     });
     if(!r.ok){
       setToast("Couldn’t save that");
@@ -624,7 +624,7 @@ export default function Us() {
     }
     const d=await r.json();
     setInbox(current=>[d.inbox,...current]);
-    setSaveDraft({title:"",content:"",to:user==="Charlie"?"Tayla":"Charlie"});
+    setSaveDraft({title:"",content:""});
     setSaveOpen(false);
     setToast("Saved for later ✓");
     setTimeout(()=>setToast(""),1500);
@@ -1819,15 +1819,7 @@ export default function Us() {
             <label>Link or note
               <textarea autoFocus placeholder="Paste a TikTok / Instagram / website link, or just type ‘we should do this’…" value={saveDraft.content} onChange={e=>setSaveDraft({...saveDraft,content:e.target.value})}/>
             </label>
-            <div className="us-save-to">
-              <span>Send to</span>
-              <div className="us-picker-chips">
-                {[user==="Charlie"?"Tayla":"Charlie","Both"].map(person=>(
-                  <button key={person} className={saveDraft.to===person?"active":""} onClick={()=>setSaveDraft({...saveDraft,to:person})}>{person}</button>
-                ))}
-              </div>
-            </div>
-            <p className="us-save-help">It lands in Inbox with the link intact. Either of you can turn it into Eat, Watch, Go or Do.</p>
+            <p className="us-save-help">This goes straight to {user==="Charlie"?"Tayla":"Charlie"}’s Inbox with the link intact. Either of you can turn it into Eat, Watch, Go or Do.</p>
             <button className="us-primary us-quick-submit" disabled={!saveDraft.title.trim()&&!saveDraft.content.trim()} onClick={saveToInbox}>SAVE FOR LATER →</button>
           </div>
         </div>
