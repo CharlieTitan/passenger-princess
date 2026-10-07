@@ -571,3 +571,6 @@
 .us-poll-ideas{margin-top:14px}
 .us-poll-ideas>span{display:block;font-size:9px;color:#7c6d71;margin-bottom:8px}
 .us-poll-ideas>small{display:block;margin-top:8px;font-size:8px;color:#aaa0a3}
+
+.us-poll-winner{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.us-poll-winner button{width:auto!important;min-height:28px!important;padding:0 9px!important;border-radius:999px!important;border:1px solid #e65a8d!important;background:#fff4f8!important;color:#e65a8d!important;font-size:8px!important}
