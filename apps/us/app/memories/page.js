@@ -8,6 +8,7 @@ export default function Memories(){
   const [lightbox,setLightbox]=useState(null);
   const [tab,setTab]=useState("memories");
   const [memoryFilter,setMemoryFilter]=useState(null);
+  const [navOpen,setNavOpen]=useState(false);
 
   useEffect(()=>{
     fetch("/api/us",{cache:"no-store"})
@@ -83,10 +84,31 @@ export default function Memories(){
   if(!state.user) return <main className="us-bg"><div className="us-login"><div className="us-brand">US</div><h1>Just us.</h1><p>Please log in first.</p><a href="/">Back to login</a></div></main>;
 
   return <main className="us-bg us-memories-bg">
+    <div className="us-top-strip" aria-hidden="true" />
     <div className="us-shell">
       <header className="us-header">
-        <div><small>OUR PRIVATE SPACE</small><b>MEMORIES</b></div>
-        <a className="us-back-pill" href="/">← US</a>
+        <div className="us-memory-header-left">
+          <button
+            className="us-back-arrow"
+            aria-label="Back"
+            onClick={()=>{
+              if(memoryFilter){setMemoryFilter(null);setTab("numbers");}
+              else if(tab==="numbers") setTab("memories");
+              else window.location.href="/";
+            }}
+          >←</button>
+          <div className="us-header-brand"><small>OUR PRIVATE SPACE</small><b>{tab==="numbers"?"US IN NUMBERS":"MEMORIES"}</b></div>
+        </div>
+        <div className="us-header-actions">
+          <button className="us-nav-toggle" aria-label="Open navigation" onClick={()=>setNavOpen(!navOpen)}>☰</button>
+        </div>
+        {navOpen ? (
+          <div className="us-nav-menu">
+            <a href="/">US</a>
+            <button className={tab==="memories"?"active":""} onClick={()=>{setTab("memories");setMemoryFilter(null);setNavOpen(false);}}>Memories</button>
+            <button className={tab==="numbers"?"active":""} onClick={()=>{setTab("numbers");setMemoryFilter(null);setNavOpen(false);}}>Us in Numbers</button>
+          </div>
+        ) : null}
       </header>
 
       <section className="us-memories-hero">
@@ -95,10 +117,6 @@ export default function Memories(){
         <p>{memories.length} memor{memories.length===1?"y":"ies"} so far.</p>
       </section>
 
-      <nav className="us-memory-tabs">
-        <button className={tab==="memories"?"active":""} onClick={()=>{setTab("memories");setMemoryFilter(null);}}>Memories</button>
-        <button className={tab==="numbers"?"active":""} onClick={()=>setTab("numbers")}>Us in Numbers</button>
-      </nav>
 
       {tab==="numbers" ? (
         <section className="us-numbers">
