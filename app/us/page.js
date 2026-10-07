@@ -47,7 +47,7 @@ export default function Us() {
   const [planningItem, setPlanningItem] = useState(null);
   const [planDraft, setPlanDraft] = useState({ date:"", time:"", location:"", bookingUrl:"", notes:"", recurrence:"none", reminderPreset:"none" });
   const [pollOpen, setPollOpen] = useState(false);
-  const [pollDraft, setPollDraft] = useState({ question:"", options:["",""] });
+  const [pollDraft, setPollDraft] = useState({ question:"", options:[{label:"",itemId:null},{label:"",itemId:null}] });
 
   async function load() {
     setLoading(true);
@@ -426,7 +426,7 @@ export default function Us() {
 
   async function createPoll() {
     const question=pollDraft.question.trim();
-    const options=pollDraft.options.map((x)=>x.trim()).filter(Boolean);
+    const options=pollDraft.options.map((x)=>({label:(x.label||"").trim(),itemId:x.itemId||null})).filter((x)=>x.label);
     if(!question || options.length<2) return;
     const r=await fetch("/api/us",{
       method:"POST",
@@ -441,7 +441,7 @@ export default function Us() {
     const d=await r.json();
     setPolls((current)=>[d.poll,...current]);
     setPollOpen(false);
-    setPollDraft({question:"",options:["",""]});
+    setPollDraft({question:"",options:[{label:"",itemId:null},{label:"",itemId:null}]});
     setToast("Poll created ✓");
     setTimeout(()=>setToast(""),1600);
   }
@@ -491,6 +491,46 @@ export default function Us() {
     const max=Math.max(...Object.values(counts));
     const winners=(poll.options||[]).filter((o)=>(counts[o.id]||0)===max);
     return {tie:winners.length>1,winners,counts};
+  }
+
+  async function planPollWinner(poll, winner) {
+    if (!winner) return;
+    let item = winner.itemId ? items.find((x)=>x.id===winner.itemId) : null;
+
+    // Keep completed memories intact: repeats become a fresh plan rather than rewriting history.
+    if (!item || item.status === "done") {
+      const source=item;
+      const r=await fetch("/api/us",{
+        method:"POST",
+        headers:{"content-type":"application/json"},
+        body:JSON.stringify({
+          title:winner.label,
+          category:source?.category || "do",
+          list:source?.list || "date-ideas",
+          effort:source?.effort || "normal",
+          timeHorizon:"soon",
+          mealType:source?.mealType,
+          location:source?.location || "",
+          priority:source?.priority || "normal",
+          budget:source?.budget || "",
+          duration:source?.duration || "",
+          tags:source?.tags || [],
+          notes:source?.notes || "",
+          emoji:source?.emoji || null,
+          repeatOf:source?.id || null
+        })
+      });
+      if(!r.ok){
+        setToast("Couldn’t turn that into a plan");
+        setTimeout(()=>setToast(""),1800);
+        return;
+      }
+      const d=await r.json();
+      item=d.item;
+      setItems((current)=>[...current,item]);
+    }
+
+    openPlan(item);
   }
 
   const filtered = useMemo(() => {
@@ -697,7 +737,7 @@ export default function Us() {
                       {result ? (
                         result.tie
                           ? <span>Tie. Very helpful 😂</span>
-                          : <span>Winner: <b>{result.winners[0]?.label}</b></span>
+                          : <span className="us-poll-winner">Winner: <b>{result.winners[0]?.label}</b><button onClick={()=>planPollWinner(poll,result.winners[0])}>PLAN IT →</button></span>
                       ) : (
                         <span>{myVote ? "Your vote is in. Waiting for the other one." : "Vote once. You can change it until both have voted."}</span>
                       )}
@@ -1283,23 +1323,23 @@ export default function Us() {
               <span>Pick from our ideas</span>
               <div className="us-picker-chips">
                 {items
-                  .filter((item)=>item.status!=="done" && item.status!=="archived" && !item.isSurprise)
+                  .filter((item)=>item.status!=="archived" && !item.isSurprise)
                   .slice(0,12)
                   .map((item)=>{
-                    const selected=pollDraft.options.includes(item.title);
+                    const selected=pollDraft.options.some((x)=>x.itemId===item.id);
                     return (
                       <button
                         key={item.id}
                         className={selected?"active":""}
                         onClick={()=>{
-                          const options=selected
-                            ? pollDraft.options.filter((x)=>x!==item.title)
-                            : [...pollDraft.options.filter(Boolean),item.title];
-                          while(options.length<2) options.push("");
+                          let options=selected
+                            ? pollDraft.options.filter((x)=>x.itemId!==item.id)
+                            : [...pollDraft.options.filter((x)=>x.label),{label:item.title,itemId:item.id}];
+                          while(options.length<2) options.push({label:"",itemId:null});
                           setPollDraft({...pollDraft,options});
                         }}
                       >
-                        {item.emoji || categoryMeta[item.category]?.emoji || "✨"} {item.title}
+                        {item.emoji || categoryMeta[item.category]?.emoji || "✨"} {item.title}{item.status==="done" ? " ↻" : ""}
                       </button>
                     );
                   })}
@@ -1312,10 +1352,10 @@ export default function Us() {
                 <div key={index}>
                   <input
                     placeholder={"Option "+(index+1)}
-                    value={option}
+                    value={option.label}
                     onChange={(e)=>{
                       const options=[...pollDraft.options];
-                      options[index]=e.target.value;
+                      options[index]={label:e.target.value,itemId:null};
                       setPollDraft({...pollDraft,options});
                     }}
                   />
@@ -1326,14 +1366,14 @@ export default function Us() {
 
             <button
               className="us-poll-add-option"
-              onClick={()=>setPollDraft({...pollDraft,options:[...pollDraft.options,""]})}
+              onClick={()=>setPollDraft({...pollDraft,options:[...pollDraft.options,{label:"",itemId:null}]})}
             >
               + Add option
             </button>
 
             <button
               className="us-primary us-quick-submit"
-              disabled={!pollDraft.question.trim() || pollDraft.options.filter((x)=>x.trim()).length<2}
+              disabled={!pollDraft.question.trim() || pollDraft.options.filter((x)=>x.label.trim()).length<2}
               onClick={createPoll}
             >
               CREATE POLL →
