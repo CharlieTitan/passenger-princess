@@ -790,24 +790,26 @@ export default function Us() {
 
   return (
     <main className={"us-bg theme-" + category}>
-      <div className="us-top-strip" aria-hidden="true" />
-      <div className="us-shell">
-        <header className="us-header">
-          <div className="us-header-brand"><small>OUR PRIVATE SPACE</small><b>US</b></div>
-          <div className="us-header-actions">
-            <button className="us-nav-toggle" aria-label="Open navigation" onClick={()=>setNavOpen(!navOpen)}>☰</button>
-            <button className="us-logout" onClick={doLogout}>Log out</button>
-            <button onClick={() => setQuick(true)}>＋</button>
-          </div>
+      <header className="us-appbar">
+        <div className="us-appbar-inner">
+          <div className="us-appbar-brand">US</div>
+          <button className="us-nav-toggle" aria-label="Open navigation" onClick={()=>setNavOpen(!navOpen)}>☰</button>
           {navOpen ? (
-            <div className="us-nav-menu">
-              <button className="active" onClick={()=>setNavOpen(false)}>US</button>
-              <a href="/memories">Memories</a>
+            <div className="us-nav-drawer">
+              <div className="us-nav-links">
+                <button className="active" onClick={()=>setNavOpen(false)}>US</button>
+                <a href="/memories">Memories</a>
+              </div>
+              <button className="us-nav-logout" onClick={doLogout}>Log out</button>
             </div>
           ) : null}
-        </header>
+        </div>
+      </header>
+      <div className="us-top-strip" aria-hidden="true" />
+      <div className="us-shell">
 
         <section className="us-hero">
+          <button className="us-hero-add" aria-label="Quick add" onClick={() => setQuick(true)}>＋</button>
           <span>{greet}, {user}</span>
           <h1>What are we doing next?</h1>
           <div className="us-now">
