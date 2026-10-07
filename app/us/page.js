@@ -450,10 +450,7 @@ export default function Us() {
                   <div className="us-surprise-empty-icon">🎁</div>
                   <b>No surprises hiding here yet.</b>
                   <span>Create one when you want to plan something without giving the game away.</span>
-                  <button className="us-primary us-empty-cta" onClick={() => {
-                    setDraft({ title:"", category:"do", list:"date-ideas", effort:"normal", timeHorizon:"soon", mealType:undefined, isSurprise:true });
-                    setQuick(true);
-                  }}>CREATE A SURPRISE →</button>
+
                 </>
               ) : shortcut === "Planned" ? (
                 <>
