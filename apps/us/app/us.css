@@ -760,3 +760,29 @@ body:before{display:none!important}
 .us-appbar{width:100%}
 .us-appbar-inner{width:min(100%,920px);margin:0 auto}
 .us-shell{width:min(100%,920px);margin:0 auto}
+
+.us-save-shortcut,.us-inbox-shortcut{background:#fff4f8!important;color:#a56a7e!important;border-color:#e8cbd5!important}
+.us-inbox-panel{margin:0 0 18px;padding:16px;border:1px solid #e5dadd;border-radius:20px;background:#ffffffb8}
+.us-inbox-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.us-inbox-head small{font-size:8px;letter-spacing:1.3px;color:#9d8b91}
+.us-inbox-head h2{font-family:Georgia,serif;font-size:26px;margin:4px 0 0;color:#443a3e}
+.us-inbox-head>button{width:34px;min-height:34px;border-radius:50%;padding:0;background:#f4eeee;color:#796a6f;font-size:16px}
+.us-inbox-list{display:grid;gap:10px;margin-top:12px}
+.us-inbox-card{padding:13px;border:1px solid #e8dcdf;border-radius:15px;background:#fff}
+.us-inbox-copy small{font-size:8px;color:#a09397}
+.us-inbox-copy h3{font-family:Georgia,serif;font-size:18px;margin:5px 0;color:#473d41}
+.us-inbox-copy p{font-size:10px;line-height:1.45;color:#817277;margin:6px 0}
+.us-inbox-copy a{display:block;margin-top:6px;color:#a45f77;font-size:9px;word-break:break-all;text-decoration:none}
+.us-inbox-convert{margin-top:12px}
+.us-inbox-convert>span{display:block;font-size:8px;color:#9b898f;margin-bottom:7px}
+.us-inbox-convert>div{display:flex;gap:6px;flex-wrap:wrap}
+.us-inbox-convert button{width:auto;min-height:30px;padding:0 9px;border-radius:999px;background:#f7f1f2;color:#6f6064;border:1px solid #e5d9dc;font-size:8px}
+.us-inbox-actions{display:flex;gap:10px;margin-top:10px}
+.us-inbox-actions button{width:auto;min-height:0;padding:0;background:transparent;color:#9a8a8f;border:0;font-size:8px;text-decoration:underline;text-underline-offset:2px}
+.us-inbox-empty{padding:18px 4px 4px;font-size:10px;color:#9a8d91}
+.us-save-modal h2{font-family:Georgia,serif;font-size:30px;margin:6px 0 18px}
+.us-save-modal label{display:block;margin-top:12px;font-size:9px;color:#75676b}
+.us-save-modal label span{color:#a99ba0}
+.us-save-modal input,.us-save-modal textarea{display:block;margin-top:6px}
+.us-save-modal textarea{min-height:120px}
+.us-save-help{font-size:9px;line-height:1.45;color:#9d8f94}
