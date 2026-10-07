@@ -132,7 +132,6 @@ export default function Us() {
         <div className="us-login">
           <div className="us-brand">US</div>
           <h1>Just us.</h1>
-          <p>Private shared space for Charlie and Tayla.</p>
           <label className="us-login-label">Name</label>
           <div className="us-user-switch">
             <button
