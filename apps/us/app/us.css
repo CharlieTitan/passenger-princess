@@ -836,3 +836,5 @@ body:before{display:none!important}
 .us-thread-page{max-height:none;overflow:visible;padding:8px 2px 18px}
 .us-thread-compose-page{position:sticky;bottom:0;z-index:20;margin-top:10px;padding:12px 0 calc(12px + env(safe-area-inset-bottom));background:linear-gradient(180deg,transparent 0,#f4efe9 22%,#f4efe9 100%)}
 .us-back-arrow{text-decoration:none;display:grid;place-items:center}
+
+.us-message-linked{margin-top:9px;font-size:8px;color:#7e8f78;font-weight:700}
