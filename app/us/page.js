@@ -284,6 +284,7 @@ export default function Us() {
       if (shortcut === "Try Again" && !x.tryAgain) return false;
       if (shortcut === "Surprises" && !x.isSurprise) return false;
       if (!shortcut && x.category !== category) return false;
+      if (!shortcut && lifecycleFilter === "all" && x.status === "archived") return false;
       if (!shortcut && sublist !== "all" && x.list !== sublist) return false;
       if (!shortcut && lifecycleFilter !== "all") {
         const status = x.status === "maybe" ? "idea" : x.status;
@@ -478,7 +479,7 @@ export default function Us() {
 
         {!shortcut ? (
           <section className="us-lifecycle-filter" aria-label="Item status">
-            {[["all","All"],["idea","Ideas"],["planned","Planned"],["done","Done"]].map(([value,label]) => (
+            {[["all","All"],["idea","Ideas"],["planned","Planned"],["done","Done"],["archived","Archived"]].map(([value,label]) => (
               <button
                 key={value}
                 className={lifecycleFilter===value?"active":""}
@@ -487,7 +488,7 @@ export default function Us() {
                 {label}
                 <small>
                   {value==="all"
-                    ? items.filter((x)=>x.category===category && (sublist==="all" || x.list===sublist)).length
+                    ? items.filter((x)=>x.category===category && x.status!=="archived" && (sublist==="all" || x.list===sublist)).length
                     : items.filter((x)=>{
                         const status=x.status==="maybe"?"idea":x.status;
                         return x.category===category && (sublist==="all" || x.list===sublist) && status===value;
@@ -649,6 +650,25 @@ export default function Us() {
                     <button className={(x.status === "idea" || x.status === "maybe") ? "active" : ""} disabled={!!pendingIds[x.id]} onClick={() => patch(x, { status: "idea" }, "Saved as Idea")}>Idea</button>
                     <button className={x.status === "planned" ? "active" : ""} disabled={!!pendingIds[x.id]} onClick={() => openPlan(x)}>Planned</button>
                     <button className={x.status === "done" ? "active" : ""} disabled={!!pendingIds[x.id]} onClick={() => patch(x, { status: "done", doneAt: new Date().toISOString() }, "Done ✓")}>Done</button>
+                  </div>
+                  <div className="us-archive-row">
+                    {x.status === "archived" ? (
+                      <button
+                        className="us-restore-btn"
+                        disabled={!!pendingIds[x.id]}
+                        onClick={() => patch(x, { status: x.archivedFrom || "idea", archivedFrom: null }, "Restored ✓")}
+                      >
+                        RESTORE ITEM
+                      </button>
+                    ) : (
+                      <button
+                        className="us-archive-btn"
+                        disabled={!!pendingIds[x.id]}
+                        onClick={() => patch(x, { archivedFrom: x.status, status: "archived" }, "Archived")}
+                      >
+                        ARCHIVE
+                      </button>
+                    )}
                   </div>
 
                   <div className="us-detail-grid">
