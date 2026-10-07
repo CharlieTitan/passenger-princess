@@ -117,7 +117,6 @@ export default function Memories(){
               <button className="active" onClick={()=>{setTab("memories");setMemoryFilter(null);setNavOpen(false);}}>Memories</button>
             </div>
             <div className="us-nav-bottom">
-              <a className="us-nav-send" href="/?send=1">Send to {state.user==="Charlie"?"Tayla":"Charlie"}</a>
               <button className="us-nav-logout" onClick={doLogout}>Log out</button>
             </div>
           </div>
