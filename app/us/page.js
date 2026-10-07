@@ -243,12 +243,12 @@ export default function Us() {
     return parts.join(" · ");
   }
 
-  async function handleCoverUpload(item, file) {
-    if (!file) return;
+  async function compressImageFile(file) {
+    if (!file) return null;
     if (!file.type.startsWith("image/")) {
       setToast("Pick an image file");
       setTimeout(()=>setToast(""),1600);
-      return;
+      return null;
     }
 
     const dataUrl = await new Promise((resolve, reject) => {
@@ -272,9 +272,30 @@ export default function Us() {
     canvas.height = Math.round(img.height * scale);
     const ctx = canvas.getContext("2d");
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    const compressed = canvas.toDataURL("image/jpeg", 0.78);
+    return canvas.toDataURL("image/jpeg", 0.78);
+  }
 
+  async function handleCoverUpload(item, file) {
+    const compressed = await compressImageFile(file);
+    if (!compressed) return;
     await patch(item, { cover: compressed }, "Photo added ✓");
+  }
+
+  async function handleGalleryUpload(item, files) {
+    const selected = Array.from(files || []).slice(0, 6);
+    if (!selected.length) return;
+    const additions=[];
+    for (const file of selected) {
+      const compressed=await compressImageFile(file);
+      if (compressed) additions.push({id:(globalThis.crypto?.randomUUID?.()||String(Date.now()+additions.length)),src:compressed,addedBy:user,at:new Date().toISOString()});
+    }
+    if (!additions.length) return;
+    await patch(item,{gallery:[...(item.gallery||[]),...additions]},"Gallery updated ✓");
+  }
+
+  async function removeGalleryPhoto(item, photoId) {
+    const gallery=(item.gallery||[]).filter((photo)=>photo.id!==photoId);
+    await patch(item,{gallery},"Photo removed");
   }
 
 
@@ -906,6 +927,39 @@ export default function Us() {
                         Send
                       </button>
                     </div>
+                  </div>
+
+                  <div className="us-gallery-section">
+                    <div className="us-gallery-head">
+                      <span>Gallery</span>
+                      <small>{(x.gallery || []).length} photo{(x.gallery || []).length===1?"":"s"}</small>
+                    </div>
+
+                    {(x.gallery || []).length ? (
+                      <div className="us-gallery-grid">
+                        {(x.gallery || []).map((photo)=>(
+                          <div className="us-gallery-tile" key={photo.id}>
+                            <img src={photo.src} alt="" />
+                            <button
+                              aria-label="Remove photo"
+                              onClick={()=>removeGalleryPhoto(x,photo.id)}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : <p className="us-gallery-empty">Add a few photos when you’ve got them.</p>}
+
+                    <label className="us-gallery-add">
+                      + Add gallery photos
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={(e)=>handleGalleryUpload(x,e.target.files)}
+                      />
+                    </label>
                   </div>
 
                   <div className="us-rating-section">
