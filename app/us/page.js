@@ -21,7 +21,7 @@ export default function Us() {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(null);
   const [quick, setQuick] = useState(false);
-  const [draft, setDraft] = useState({ title: "", category: "eat", list: "restaurants", effort: "normal", timeHorizon: "soon", mealType: "any" });
+  const [draft, setDraft] = useState({ title: "", category: "eat", list: "restaurants", effort: "normal", timeHorizon: "soon", mealType: "any", isSurprise:false });
   const [wheel, setWheel] = useState(false);
   const [wheelPick, setWheelPick] = useState(null);
   const [pickerMode, setPickerMode] = useState(null);
@@ -90,7 +90,7 @@ export default function Us() {
     });
     if (r.ok) {
       setQuick(false);
-      setDraft({ title: "", category: "eat", list: "restaurants", effort: "normal", timeHorizon: "soon", mealType: "any" });
+      setDraft({ title: "", category: "eat", list: "restaurants", effort: "normal", timeHorizon: "soon", mealType: "any", isSurprise:false });
       load();
     }
   }
@@ -386,15 +386,28 @@ export default function Us() {
         ) : null}
 
         {shortcut === "Surprises" ? (
-          <section className="us-view-head">
-            <div><small>SURPRISES</small><h2>Keep something up your sleeve.</h2></div>
+          <section className="us-surprise-head">
+            <div>
+              <small>SURPRISES</small>
+              <h2>Keep something up your sleeve.</h2>
+              <p>Plan it here. Tayla only sees the safe teaser until you reveal it.</p>
+            </div>
+            <button
+              className="us-primary"
+              onClick={() => {
+                setDraft({ title:"", category:"do", list:"date-ideas", effort:"normal", timeHorizon:"soon", mealType:undefined, isSurprise:true });
+                setQuick(true);
+              }}
+            >
+              + NEW SURPRISE
+            </button>
           </section>
         ) : null}
 
-        <section className="us-toolbar">
+        {shortcut !== "Surprises" ? <section className="us-toolbar">
           <input placeholder="Search our lists…" value={query} onChange={(e) => setQuery(e.target.value)} />
           <button onClick={() => setQuick(true)}>Quick add</button>
-        </section>
+        </section> : null}
 
         <section className="us-list">
           {filtered.map((x, i) => (
@@ -434,8 +447,13 @@ export default function Us() {
             <div className="us-empty">
               {shortcut === "Surprises" ? (
                 <>
+                  <div className="us-surprise-empty-icon">🎁</div>
                   <b>No surprises hiding here yet.</b>
                   <span>Create one when you want to plan something without giving the game away.</span>
+                  <button className="us-primary us-empty-cta" onClick={() => {
+                    setDraft({ title:"", category:"do", list:"date-ideas", effort:"normal", timeHorizon:"soon", mealType:undefined, isSurprise:true });
+                    setQuick(true);
+                  }}>CREATE A SURPRISE →</button>
                 </>
               ) : shortcut === "Planned" ? (
                 <>
@@ -471,11 +489,11 @@ export default function Us() {
         <div className="us-modal">
           <div className="us-modal-card us-quick-card">
             <button className="us-close" onClick={() => setQuick(false)}>×</button>
-            <small>QUICK ADD</small>
-            <h2>Add something</h2>
+            {draft.isSurprise ? <small>SURPRISE PLAN</small> : <small>QUICK ADD</small>}
+            <h2>{draft.isSurprise ? "Keep it under wraps." : "Add something"}</h2>
 
             <input
-              placeholder={draft.category==="eat"?"Where / what are we eating?":draft.category==="watch"?"What are we watching?":draft.category==="go"?"Where are we going?":"What should we do?"}
+              placeholder={draft.isSurprise?"Give the surprise a private title":draft.category==="eat"?"Where / what are we eating?":draft.category==="watch"?"What are we watching?":draft.category==="go"?"Where are we going?":"What should we do?"}
               value={draft.title}
               onChange={(e) => setDraft({ ...draft, title: e.target.value })}
             />
@@ -536,7 +554,7 @@ export default function Us() {
             </div>
 
             <button className="us-primary us-quick-submit" onClick={add} disabled={!draft.title.trim()}>
-              ADD TO US →
+              {draft.isSurprise ? "SAVE SURPRISE →" : "ADD TO US →"}
             </button>
           </div>
         </div>
