@@ -6,6 +6,7 @@ import { categoryMeta } from "../../lib/usData";
 export default function Memories(){
   const [state,setState]=useState({loading:true,user:null,items:[]});
   const [lightbox,setLightbox]=useState(null);
+  const [tab,setTab]=useState("memories");
 
   useEffect(()=>{
     fetch("/api/us",{cache:"no-store"})
@@ -20,6 +21,39 @@ export default function Memories(){
   const memories=useMemo(()=>state.items
     .filter((x)=>x.status==="done")
     .sort((a,b)=>new Date(b.doneAt||b.updatedAt||0)-new Date(a.doneAt||a.updatedAt||0)),[state.items]);
+
+  const stats=useMemo(()=>{
+    const done=memories;
+    const withDates=done.filter(x=>x.doneAt).sort((a,b)=>new Date(a.doneAt)-new Date(b.doneAt));
+    const first=withDates[0]||done[done.length-1]||null;
+    const movies=done.filter(x=>x.category==="watch"&&x.list==="films").length;
+    const series=done.filter(x=>x.category==="watch"&&x.list==="series").length;
+    const cooked=done.filter(x=>x.category==="eat"&&x.list==="cook-together").length;
+    const restaurants=done.filter(x=>x.category==="eat"&&x.list==="restaurants").length;
+    const coffee=done.filter(x=>x.category==="eat"&&["coffee","dessert"].includes(x.list)).length;
+    const trips=done.filter(x=>x.category==="go").length;
+    const rematches=done.filter(x=>x.list==="rematches").length;
+    const mutual=state.items.filter(x=>x.favourites?.Charlie&&x.favourites?.Tayla).length;
+    const photos=state.items.reduce((n,x)=>n+(x.cover?1:0)+(x.gallery||[]).length,0);
+    const ratings={Charlie:[],Tayla:[]};
+    done.forEach(x=>["Charlie","Tayla"].forEach(p=>{if(x.ratings?.[p])ratings[p].push(Number(x.ratings[p]));}));
+    const avg=p=>ratings[p].length?(ratings[p].reduce((a,b)=>a+b,0)/ratings[p].length).toFixed(1):"—";
+    const now=new Date();
+    const thisMonth=done.filter(x=>{
+      const d=new Date(x.doneAt||0);
+      return d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth();
+    }).length;
+    const wins={Charlie:0,Tayla:0,Draw:0};
+    done.forEach(x=>{const w=x.challenge?.winner;if(w&&wins[w]!==undefined)wins[w]++;});
+    const titles={};
+    done.forEach(x=>{
+      const k=(x.title||"").toLowerCase().replace(/\s+/g," ").trim();
+      if(k) titles[k]=(titles[k]||0)+1;
+    });
+    const repeatKey=Object.keys(titles).sort((a,b)=>titles[b]-titles[a])[0];
+    const repeated=repeatKey&&titles[repeatKey]>1?done.find(x=>(x.title||"").toLowerCase().replace(/\s+/g," ").trim()===repeatKey):null;
+    return {first,total:done.length,movies,series,cooked,restaurants,coffee,trips,rematches,mutual,photos,avgCharlie:avg("Charlie"),avgTayla:avg("Tayla"),thisMonth,wins,repeated,repeatedCount:repeatKey?titles[repeatKey]:0};
+  },[memories,state.items]);
 
   if(state.loading) return <main className="us-bg"><div className="us-shell"><div className="us-skeleton hero"/><div className="us-skeleton list"/></div></main>;
   if(!state.user) return <main className="us-bg"><div className="us-login"><div className="us-brand">US</div><h1>Just us.</h1><p>Please log in first.</p><a href="/">Back to login</a></div></main>;
@@ -37,6 +71,57 @@ export default function Memories(){
         <p>{memories.length} memor{memories.length===1?"y":"ies"} so far.</p>
       </section>
 
+      <nav className="us-memory-tabs">
+        <button className={tab==="memories"?"active":""} onClick={()=>setTab("memories")}>Memories</button>
+        <button className={tab==="numbers"?"active":""} onClick={()=>setTab("numbers")}>Us in Numbers</button>
+      </nav>
+
+      {tab==="numbers" ? (
+        <section className="us-numbers">
+          <article className="us-first-date">
+            <small>FIRST DATE</small>
+            <h2>{stats.first?.title || "Not dated yet"}</h2>
+            <p>{stats.first ? [stats.first.doneAt?new Date(stats.first.doneAt).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}):null,stats.first.location].filter(Boolean).join(" · ") : "Add completion dates and it’ll appear here."}</p>
+          </article>
+
+          <div className="us-number-grid">
+            {[
+              [stats.total,"things done"],
+              [stats.movies,"movies watched"],
+              [stats.series,"series finished"],
+              [stats.cooked,"meals cooked"],
+              [stats.restaurants,"restaurants tried"],
+              [stats.coffee,"coffee / sweet stops"],
+              [stats.trips,"trips & staycations"],
+              [stats.rematches,"rematches completed"],
+              [stats.mutual,"mutual favourites"],
+              [stats.photos,"photos captured"],
+              [stats.thisMonth,"done this month"]
+            ].map(([value,label])=>(
+              <article className="us-number-card" key={label}><b>{value}</b><span>{label}</span></article>
+            ))}
+          </div>
+
+          <article className="us-score-card">
+            <small>CHALLENGE RECORD</small>
+            <h2>Charlie {stats.wins.Charlie} — {stats.wins.Tayla} Tayla</h2>
+            {stats.wins.Draw ? <p>{stats.wins.Draw} draw{stats.wins.Draw===1?"":"s"}</p> : <p>No draws. Serious business.</p>}
+          </article>
+
+          <div className="us-number-wide-grid">
+            <article>
+              <small>AVERAGE RATING</small>
+              <b>Charlie {stats.avgCharlie}/10</b>
+              <span>Tayla {stats.avgTayla}/10</span>
+            </article>
+            <article>
+              <small>MOST REPEATED</small>
+              <b>{stats.repeated?.title || "Nothing yet"}</b>
+              <span>{stats.repeated ? stats.repeatedCount+" times" : "One-offs so far"}</span>
+            </article>
+          </div>
+        </section>
+      ) : (
       <section className="us-memory-timeline">
         {memories.map((x,i)=>{
           const images=[...(x.cover?[x.cover]:[]),...(x.gallery||[]).map(g=>g.src)];
@@ -69,6 +154,7 @@ export default function Memories(){
         })}
         {!memories.length?<div className="us-empty"><b>No memories yet.</b><span>Mark something Done and it’ll land here.</span></div>:null}
       </section>
+      )}
     </div>
 
     {lightbox?<div className="us-lightbox" onClick={()=>setLightbox(null)}>
