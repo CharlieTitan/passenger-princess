@@ -143,6 +143,7 @@ export default function Us() {
     return items.filter((x) => {
       if (shortcut === "Planned" && x.status !== "planned") return false;
       if (shortcut === "Try Again" && !x.tryAgain) return false;
+      if (shortcut === "Surprises" && !x.isSurprise) return false;
       if (!shortcut && x.category !== category) return false;
       if (query && !x.title.toLowerCase().includes(query.toLowerCase())) return false;
       return true;
@@ -282,7 +283,7 @@ export default function Us() {
 
         <section className="us-cats">
           {Object.entries(categoryMeta).map(([k, v]) => (
-            <button key={k} className={category === k && !shortcut ? "active" : ""} onClick={() => { setCategory(k); setShortcut(""); }}>
+            <button key={k} className={category === k && !shortcut ? "active" : ""} onClick={() => { setCategory(k); setShortcut(""); setPickerMode(null); setWheelPick(null); }}>
               <span>{v.emoji}</span><b>{v.label}</b><small>{items.filter((x) => x.category === k).length} items</small>
             </button>
           ))}
@@ -296,8 +297,15 @@ export default function Us() {
               onClick={() => {
                 if (s === "Pick for us") { openPicker("pick"); setShortcut(""); }
                 else if (s === "Tonight") { openPicker("tonight"); setShortcut(""); }
-                else if (s === "Quick add") setQuick(true);
-                else setShortcut(shortcut === s ? "" : s);
+                else if (s === "Quick add") { setPickerMode(null); setWheelPick(null); setQuick(true); }
+                else if (s === "Recent activity") {
+                  setPickerMode(null); setWheelPick(null); setShortcut("");
+                  setTimeout(() => document.querySelector(".us-activity")?.scrollIntoView({behavior:"smooth",block:"start"}), 0);
+                }
+                else {
+                  setPickerMode(null); setWheelPick(null);
+                  setShortcut(shortcut === s ? "" : s);
+                }
               }}
             >
               {s}
@@ -377,6 +385,12 @@ export default function Us() {
           </section>
         ) : null}
 
+        {shortcut === "Surprises" ? (
+          <section className="us-view-head">
+            <div><small>SURPRISES</small><h2>Keep something up your sleeve.</h2></div>
+          </section>
+        ) : null}
+
         <section className="us-toolbar">
           <input placeholder="Search our lists…" value={query} onChange={(e) => setQuery(e.target.value)} />
           <button onClick={() => setQuick(true)}>Quick add</button>
@@ -416,7 +430,31 @@ export default function Us() {
               </div>
             </article>
           ))}
-          {!filtered.length ? <div className="us-empty">Nothing here yet. That feels temporary.</div> : null}
+          {!filtered.length ? (
+            <div className="us-empty">
+              {shortcut === "Surprises" ? (
+                <>
+                  <b>No surprises hiding here yet.</b>
+                  <span>Create one when you want to plan something without giving the game away.</span>
+                </>
+              ) : shortcut === "Planned" ? (
+                <>
+                  <b>Nothing planned yet.</b>
+                  <span>Lock something in and it’ll appear here.</span>
+                </>
+              ) : shortcut === "Try Again" ? (
+                <>
+                  <b>Nothing queued for a rematch.</b>
+                  <span>Mark a Done item as Try Again and it’ll show up here.</span>
+                </>
+              ) : (
+                <>
+                  <b>Nothing here yet.</b>
+                  <span>That feels temporary.</span>
+                </>
+              )}
+            </div>
+          ) : null}
         </section>
 
         <section className="us-activity">
