@@ -21,3 +21,21 @@
 .us-bg textarea{
   font-size:16px;
 }
+
+/* Mobile Chrome/WebKit form stability */
+.us-bg{
+  -webkit-text-size-adjust:100%;
+  text-size-adjust:100%;
+}
+.us-bg input,
+.us-bg select,
+.us-bg textarea,
+.us-bg button{
+  touch-action:manipulation;
+}
+.us-detail input:focus,
+.us-detail select:focus,
+.us-detail textarea:focus{
+  transform:none;
+  zoom:1;
+}
