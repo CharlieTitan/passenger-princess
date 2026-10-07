@@ -32,6 +32,14 @@ export default function Us() {
 
   useEffect(() => { load(); }, []);
 
+  async function doLogout() {
+    await fetch("/api/us-auth", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "logout" }) });
+    setUser(null);
+    setItems([]);
+    setActivity([]);
+    setLogin({ username: "Charlie", password: "" });
+  }
+
   async function doLogin() {
     const r = await fetch("/api/us-auth", {
       method: "POST",
@@ -144,7 +152,7 @@ export default function Us() {
       <div className="us-shell">
         <header className="us-header">
           <div><small>OUR PRIVATE SPACE</small><b>US</b></div>
-          <button onClick={() => setQuick(true)}>＋</button>
+          <div className="us-header-actions"><button className="us-logout" onClick={doLogout}>Log out</button><button onClick={() => setQuick(true)}>＋</button></div>
         </header>
 
         <section className="us-hero">
