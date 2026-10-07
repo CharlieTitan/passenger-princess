@@ -447,3 +447,7 @@
 .us-rating-readonly b{font-size:18px;color:#4b4044}
 .us-rating-readonly span{font-size:10px;color:#aa9da1}
 .us-rating-card.locked{opacity:.9}
+
+.us-review-input{margin-top:8px!important}
+.us-rating-readonly{flex-direction:column;align-items:flex-start;justify-content:center;gap:3px}
+.us-rating-readonly p{margin:0!important;font-size:10px!important;color:#7f7074!important}
