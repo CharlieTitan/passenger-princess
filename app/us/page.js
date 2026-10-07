@@ -17,6 +17,9 @@ export default function Us() {
   const [draft, setDraft] = useState({ title: "", category: "eat", list: "restaurants", effort: "normal", timeHorizon: "soon" });
   const [wheel, setWheel] = useState(false);
   const [wheelPick, setWheelPick] = useState(null);
+  const [recovering, setRecovering] = useState(false);
+  const [recovery, setRecovery] = useState({ recoveryCode: "", newPassword: "" });
+  const [recoveryMessage, setRecoveryMessage] = useState("");
 
   async function load() {
     setLoading(true);
@@ -38,6 +41,22 @@ export default function Us() {
     setItems([]);
     setActivity([]);
     setLogin({ username: "Charlie", password: "" });
+  }
+
+  async function doRecover() {
+    setRecoveryMessage("");
+    const r = await fetch("/api/us-auth", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action: "recover", username: login.username, recoveryCode: recovery.recoveryCode, newPassword: recovery.newPassword })
+    });
+    if (r.ok) {
+      setRecoveryMessage("Password updated. You can log in now.");
+      setLogin({ ...login, password: "" });
+      setRecovery({ recoveryCode: "", newPassword: "" });
+    } else {
+      setRecoveryMessage("That recovery code did not work.");
+    }
   }
 
   async function doLogin() {
@@ -137,6 +156,31 @@ export default function Us() {
           />
           {login.username === "Tayla" ? <p className="us-login-hint">Hint: your Instagram handle 👀</p> : null}
           <button className="us-primary" onClick={doLogin}>ENTER →</button>
+          <button className="us-forgot" onClick={() => { setRecovering(!recovering); setRecoveryMessage(""); }}>
+            {recovering ? "Back to login" : "Forgot password?"}
+          </button>
+          {recovering ? (
+            <div className="us-recovery">
+              <small>RECOVER {login.username.toUpperCase()}</small>
+              <input
+                type="password"
+                inputMode="numeric"
+                placeholder="Recovery code"
+                value={recovery.recoveryCode}
+                onChange={(e) => setRecovery({ ...recovery, recoveryCode: e.target.value })}
+              />
+              <input
+                type="password"
+                placeholder="New password"
+                value={recovery.newPassword}
+                onChange={(e) => setRecovery({ ...recovery, newPassword: e.target.value })}
+              />
+              <button className="us-primary" disabled={!recovery.recoveryCode || recovery.newPassword.length < 4} onClick={doRecover}>
+                RESET PASSWORD
+              </button>
+              {recoveryMessage ? <p className="us-recovery-message">{recoveryMessage}</p> : null}
+            </div>
+          ) : null}
         </div>
       </main>
     );
