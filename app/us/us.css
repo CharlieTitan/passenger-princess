@@ -342,3 +342,48 @@
 .us-favourite-filter{display:flex;margin:-4px 0 12px}
 .us-favourite-filter button{width:auto;min-height:32px;border-radius:999px;padding:0 11px;background:transparent;color:#8e7d82;border:1px solid #dfd2d5;font-size:9px}
 .us-favourite-filter button.active{background:#2d2829;color:#fff;border-color:#2d2829}
+
+/* Refine favourites UI: subtle filter chip + compact heart */
+.us-favourite-filter{
+  margin:-4px 0 12px!important;
+}
+.us-favourite-filter button{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:6px!important;
+  width:auto!important;
+  min-height:34px!important;
+  padding:0 12px!important;
+  border-radius:999px!important;
+  background:transparent!important;
+  color:#8f8084!important;
+  border:1px solid #dfd2d5!important;
+  font-size:9px!important;
+  font-weight:500!important;
+  box-shadow:none!important;
+}
+.us-favourite-filter button.active{
+  background:#fff7fa!important;
+  color:#a44e6b!important;
+  border-color:#dfb6c3!important;
+}
+
+.us-card-badges .us-heart{
+  width:34px!important;
+  height:34px!important;
+  min-height:34px!important;
+  flex:0 0 34px!important;
+  padding:0!important;
+  border-radius:50%!important;
+  background:transparent!important;
+  color:#a9989d!important;
+  border:1px solid #e2d6d9!important;
+  box-shadow:none!important;
+  font-size:20px!important;
+}
+.us-card-badges .us-heart.active{
+  background:#fff7fa!important;
+  color:#b24f70!important;
+  border-color:#ddb3c1!important;
+  transform:none!important;
+}
