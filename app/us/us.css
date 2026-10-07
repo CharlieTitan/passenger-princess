@@ -75,3 +75,10 @@
 .us-quick-section>span{display:block;font-size:9px;color:#8b7c80;margin-bottom:7px}
 .us-quick-submit{width:100%;margin-top:18px;min-height:48px;border-radius:13px}
 .us-quick-submit:disabled{opacity:.45}
+
+.us-view-head{margin:8px 0 12px;padding:0 2px}
+.us-view-head small{font-size:8px;letter-spacing:1.5px;color:#9a8c90}
+.us-view-head h2{font-family:Georgia,serif;font-size:24px;line-height:1.1;margin:5px 0 0;color:#2d2729}
+.us-empty{display:flex;flex-direction:column;gap:6px}
+.us-empty b{font-family:Georgia,serif;font-size:22px;color:#4b4144}
+.us-empty span{font-size:12px;color:#998b8f}
