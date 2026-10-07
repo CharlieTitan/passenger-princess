@@ -198,3 +198,9 @@
 .us-lifecycle-filter button small{font-size:8px;color:#a89a9e}
 .us-lifecycle-filter button.active{background:#2d2829;color:#fff;border-color:#2d2829}
 .us-lifecycle-filter button.active small{color:#d8ced1}
+
+.us-archive-row{display:flex;justify-content:flex-end;margin-top:9px}
+.us-archive-row button{width:auto;min-height:32px;border-radius:999px;padding:0 11px;font-size:8px;letter-spacing:.5px}
+.us-archive-btn{background:transparent;color:#9a7f86;border:1px solid #e2d4d7}
+.us-restore-btn{background:#2d2829;color:#fff;border:1px solid #2d2829}
+.us-archive-row button:disabled{opacity:.55}
