@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { categoryMeta } from "../../lib/usData";
 
 export default function Memories(){
-  const [state,setState]=useState({loading:true,user:null,items:[]});
+  const [state,setState]=useState({loading:true,user:null,items:[],inbox:[]});
   const [lightbox,setLightbox]=useState(null);
   const [tab,setTab]=useState("memories");
   const [memoryFilter,setMemoryFilter]=useState(null);
@@ -18,12 +18,14 @@ export default function Memories(){
   useEffect(()=>{
     fetch("/api/us",{cache:"no-store"})
       .then(async r=>{
-        if(!r.ok){setState({loading:false,user:null,items:[]});return;}
+        if(!r.ok){setState({loading:false,user:null,items:[],inbox:[]});return;}
         const d=await r.json();
-        setState({loading:false,user:d.user,items:d.items||[]});
+        setState({loading:false,user:d.user,items:d.items||[],inbox:d.inbox||[]});
       })
-      .catch(()=>setState({loading:false,user:null,items:[]}));
+      .catch(()=>setState({loading:false,user:null,items:[],inbox:[]}));
   },[]);
+
+  const unreadInbox=(state.inbox||[]).filter(x=>x.to===state.user&&!x.readAt).length;
 
   const memories=useMemo(()=>state.items
     .filter((x)=>x.status==="done")
@@ -103,15 +105,21 @@ export default function Memories(){
           >←</button>
           <div className="us-appbar-brand">MEMORIES</div>
         </div>
-        <button className="us-nav-toggle" aria-label="Open navigation" onClick={()=>setNavOpen(!navOpen)}>☰</button>
+        <button className="us-nav-toggle" aria-label="Open navigation" onClick={()=>setNavOpen(!navOpen)}>
+          ☰
+          {unreadInbox ? <span className="us-nav-badge">{unreadInbox}</span> : null}
+        </button>
         {navOpen ? (
           <div className="us-nav-drawer">
             <div className="us-nav-links">
               <a href="/">US</a>
-              <a href="/?inbox=1">Inbox</a>
+              <a href="/?inbox=1"><span>Inbox</span>{unreadInbox ? <span className="us-menu-badge">{unreadInbox}</span> : null}</a>
               <button className="active" onClick={()=>{setTab("memories");setMemoryFilter(null);setNavOpen(false);}}>Memories</button>
             </div>
-            <button className="us-nav-logout" onClick={doLogout}>Log out</button>
+            <div className="us-nav-bottom">
+              <a className="us-nav-send" href="/?send=1">Send to {state.user==="Charlie"?"Tayla":"Charlie"}</a>
+              <button className="us-nav-logout" onClick={doLogout}>Log out</button>
+            </div>
           </div>
         ) : null}
       </div>
