@@ -190,6 +190,40 @@ export default function Us() {
     return parts.join(" · ");
   }
 
+  async function handleCoverUpload(item, file) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setToast("Pick an image file");
+      setTimeout(()=>setToast(""),1600);
+      return;
+    }
+
+    const dataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    const img = await new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = reject;
+      image.src = dataUrl;
+    });
+
+    const max = 1000;
+    const scale = Math.min(1, max / Math.max(img.width, img.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(img.width * scale);
+    canvas.height = Math.round(img.height * scale);
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    const compressed = canvas.toDataURL("image/jpeg", 0.78);
+
+    await patch(item, { cover: compressed }, "Photo added ✓");
+  }
+
   const filtered = useMemo(() => {
     return items.filter((x) => {
       if (shortcut === "Planned" && x.status !== "planned") return false;
@@ -483,12 +517,14 @@ export default function Us() {
         <section className="us-list">
           {filtered.map((x, i) => (
             <article className={"us-card status-" + x.status + (x.cover ? " has-photo" : " no-photo")} key={x.id} onClick={() => setOpen(open === x.id ? null : x.id)}>
-              {x.cover ? (
-                <div className={"us-polaroid " + (i % 2 ? "tilt-r" : "tilt-l")}>
+              <div className={"us-polaroid " + (i % 2 ? "tilt-r" : "tilt-l")}>
+                {x.cover ? (
                   <img className="us-cover-img" src={x.cover} alt="" />
-                  <small>{x.location || itemListLabel(x)}</small>
-                </div>
-              ) : null}
+                ) : (
+                  <div className="us-photo-placeholder">{x.emoji || categoryMeta[x.category]?.emoji || "✦"}</div>
+                )}
+                <small>{x.location || itemListLabel(x)}</small>
+              </div>
               <div className="us-card-body">
                 <div className="us-card-top">
                   <small>{categoryMeta[x.category]?.emoji} {x.status.toUpperCase()} · {x.effort}</small>
@@ -508,6 +544,25 @@ export default function Us() {
                     </div>
                     <label>Try Again <input type="checkbox" checked={!!x.tryAgain} disabled={!!pendingIds[x.id]} onChange={(e) => patch(x, { tryAgain: e.target.checked }, e.target.checked ? "Added to Try Again" : "Removed from Try Again")} /></label>
                     <label>Location <input value={editValue(x,"location")} onChange={(e) => setEditValue(x,"location",e.target.value)} onBlur={() => saveTextField(x,"location","Location saved")} onKeyDown={(e) => { if(e.key==="Enter"){ e.currentTarget.blur(); } }} /></label>{x.category === "eat" ? <label>Meal type <select value={x.mealType || "any"} onChange={(e) => patch(x,{mealType:e.target.value},"Meal type updated")}>{mealTypes.map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label> : null}
+                    <div className="us-media-controls">
+                      <label>Card emoji
+                        <input
+                          className="us-emoji-input"
+                          value={x.emoji || categoryMeta[x.category]?.emoji || "✦"}
+                          maxLength={4}
+                          onChange={(e) => patch(x,{emoji:e.target.value},"Emoji updated")}
+                        />
+                      </label>
+                      <label className="us-photo-control">
+                        {x.cover ? "Change photo" : "Add photo"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleCoverUpload(x,e.target.files?.[0])}
+                        />
+                      </label>
+                      {x.cover ? <button className="us-remove-photo" onClick={()=>patch(x,{cover:null},"Photo removed")}>Remove photo</button> : null}
+                    </div>
                     <div className="us-ratings">
                       <label>Charlie /10 <input type="number" min="1" max="10" value={x.ratings?.Charlie || ""} onChange={(e) => patch(x, { ratings: { ...x.ratings, Charlie: Number(e.target.value) || null } }, "Charlie rating saved")} /></label>
                       <label>Tayla /10 <input type="number" min="1" max="10" value={x.ratings?.Tayla || ""} onChange={(e) => patch(x, { ratings: { ...x.ratings, Tayla: Number(e.target.value) || null } }, "Tayla rating saved")} /></label>
