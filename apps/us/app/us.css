@@ -596,3 +596,12 @@
 .us-challenge-field input{display:block;margin-top:6px}
 .us-challenge-result-form{margin-top:18px;padding-top:16px;border-top:1px solid #eadfe1}
 .us-challenge-result-form>span{display:block;font-size:9px;color:#7c6d71;margin-bottom:8px}
+
+body:before{display:none!important}
+.us-challenge-series{margin-top:10px;padding:10px 11px;border-radius:12px;background:#fff7f9;border:1px solid #efd9df}
+.us-challenge-series>div:first-child{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.us-challenge-series small{font-size:8px;letter-spacing:1.2px;color:#a58f96}
+.us-challenge-series b{font-family:Georgia,serif;font-size:16px;color:#493f43}
+.us-challenge-series span{font-size:8px;color:#94858a}
+.us-challenge-rounds{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.us-challenge-rounds span{padding:5px 7px;border-radius:999px;background:#fff;color:#7f6d73;border:1px solid #eadce0}
