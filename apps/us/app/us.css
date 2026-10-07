@@ -574,3 +574,25 @@
 
 .us-poll-winner{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .us-poll-winner button{width:auto!important;min-height:28px!important;padding:0 9px!important;border-radius:999px!important;border:1px solid #e65a8d!important;background:#fff4f8!important;color:#e65a8d!important;font-size:8px!important}
+
+.us-challenge-card{margin-top:14px;padding:14px;border:1px dashed #dfd4d7;border-radius:16px;background:#fffaf9}
+.us-challenge-card.active{border-style:solid;background:#fff}
+.us-challenge-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}
+.us-challenge-head>div{display:grid;gap:4px}
+.us-challenge-head small{font-size:8px;letter-spacing:1.3px;color:#9c8e92}
+.us-challenge-head b{font-family:Georgia,serif;font-size:18px;color:#493f43}
+.us-challenge-head button,.us-challenge-result-btn{width:auto;min-height:30px;padding:0 9px;border-radius:999px;background:#fff4f8;color:#e65a8d;border:1px solid #e65a8d;font-size:8px}
+.us-challenge-meta{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.us-challenge-meta span{font-size:8px;padding:6px 8px;border-radius:999px;background:#f7f1f2;color:#806f74}
+.us-challenge-result{margin-top:12px;padding:11px;border-radius:12px;background:#f9f4f5;display:grid;gap:4px}
+.us-challenge-result b{font-family:Georgia,serif;font-size:17px}
+.us-challenge-result span,.us-challenge-result small,.us-challenge-waiting{font-size:9px;color:#8e7f84}
+.us-challenge-result-btn{margin-top:10px}
+.us-challenge-actions{display:flex;gap:10px;margin-top:10px}
+.us-challenge-actions button{width:auto;min-height:0;padding:0;background:transparent;color:#9b8d91;border:0;font-size:8px;text-decoration:underline;text-underline-offset:2px}
+.us-challenge-modal h2{font-family:Georgia,serif;font-size:30px;margin:6px 0 18px}
+.us-challenge-field{display:block;margin-top:14px;font-size:9px;color:#7c6d71}
+.us-challenge-field span{color:#aaa0a3}
+.us-challenge-field input{display:block;margin-top:6px}
+.us-challenge-result-form{margin-top:18px;padding-top:16px;border-top:1px solid #eadfe1}
+.us-challenge-result-form>span{display:block;font-size:9px;color:#7c6d71;margin-bottom:8px}
