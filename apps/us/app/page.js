@@ -73,10 +73,31 @@ export default function Us() {
 
   useEffect(() => {
     load();
-    if (typeof window!=="undefined" && new URLSearchParams(window.location.search).get("inbox")==="1") {
-      setInboxOpen(true);
+    if (typeof window!=="undefined") {
+      const params=new URLSearchParams(window.location.search);
+      if(params.get("inbox")==="1") setInboxOpen(true);
+      if(params.get("send")==="1") setSaveOpen(true);
     }
   }, []);
+
+  const unreadInbox=inbox.filter(x=>x.to===user&&!x.readAt).length;
+
+  useEffect(()=>{
+    if(!inboxOpen||!user) return;
+    const unread=inbox.filter(x=>x.to===user&&!x.readAt);
+    if(!unread.length) return;
+    const ids=unread.map(x=>x.id);
+    fetch("/api/us",{
+      method:"PATCH",
+      headers:{"content-type":"application/json"},
+      body:JSON.stringify({action:"markInboxRead",ids})
+    }).then(r=>{
+      if(r.ok){
+        const readAt=new Date().toISOString();
+        setInbox(current=>current.map(x=>ids.includes(x.id)?{...x,readAt}:x));
+      }
+    });
+  },[inboxOpen,user]);
 
   async function doLogout() {
     await fetch("/api/us-auth", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "logout" }) });
@@ -626,7 +647,7 @@ export default function Us() {
     setInbox(current=>[d.inbox,...current]);
     setSaveDraft({title:"",content:""});
     setSaveOpen(false);
-    setToast("Saved for later ✓");
+    setToast("Sent to "+(user==="Charlie"?"Tayla":"Charlie")+" ✓");
     setTimeout(()=>setToast(""),1500);
   }
 
@@ -869,15 +890,24 @@ export default function Us() {
       <header className="us-appbar">
         <div className="us-appbar-inner">
           <div className="us-appbar-brand">US</div>
-          <button className="us-nav-toggle" aria-label="Open navigation" onClick={()=>setNavOpen(!navOpen)}>☰</button>
+          <button className="us-nav-toggle" aria-label="Open navigation" onClick={()=>setNavOpen(!navOpen)}>
+            ☰
+            {unreadInbox ? <span className="us-nav-badge">{unreadInbox}</span> : null}
+          </button>
           {navOpen ? (
             <div className="us-nav-drawer">
               <div className="us-nav-links">
                 <button className="active" onClick={()=>setNavOpen(false)}>US</button>
-                <button onClick={()=>{setInboxOpen(true);setNavOpen(false);}}>Inbox{inbox.filter(x=>!x.to||x.to===user||x.to==="Both").length ? " · "+inbox.filter(x=>!x.to||x.to===user||x.to==="Both").length : ""}</button>
+                <button onClick={()=>{setInboxOpen(true);setNavOpen(false);}}>
+                  <span>Inbox</span>
+                  {unreadInbox ? <span className="us-menu-badge">{unreadInbox}</span> : null}
+                </button>
                 <a href="/memories">Memories</a>
               </div>
-              <button className="us-nav-logout" onClick={doLogout}>Log out</button>
+              <div className="us-nav-bottom">
+                <button className="us-nav-send" onClick={()=>{setSaveOpen(true);setNavOpen(false);}}>Send to {user==="Charlie"?"Tayla":"Charlie"}</button>
+                <button className="us-nav-logout" onClick={doLogout}>Log out</button>
+              </div>
             </div>
           ) : null}
         </div>
@@ -1028,8 +1058,6 @@ export default function Us() {
         ) : null}
 
         <section className="us-shortcuts">
-          <button className="us-save-shortcut" onClick={()=>setSaveOpen(true)}>Save something</button>
-          <button className="us-inbox-shortcut" onClick={()=>setInboxOpen(!inboxOpen)}>Inbox{inbox.filter(x=>!x.to||x.to===user||x.to==="Both").length ? " · "+inbox.filter(x=>!x.to||x.to===user||x.to==="Both").length : ""}</button>
           {quickShortcuts.map((s) => (
             <button
               key={s}
@@ -1058,7 +1086,7 @@ export default function Us() {
         {inboxOpen ? (
           <section className="us-inbox-panel">
             <div className="us-inbox-head">
-              <div><small>SAVED FOR LATER</small><h2>Inbox</h2></div>
+              <div><small>FROM EACH OTHER</small><h2>Inbox</h2></div>
               <button onClick={()=>setInboxOpen(false)}>×</button>
             </div>
             {inbox.length ? (
@@ -1072,7 +1100,7 @@ export default function Us() {
                     {group.entries.map(entry=>(
                   <article className="us-inbox-card" key={entry.id}>
                     <div className="us-inbox-copy">
-                      <small>{entry.to ? entry.addedBy+" → "+entry.to : "Shared by "+entry.addedBy}</small>
+                      <small>{entry.to ? entry.addedBy+" → "+entry.to : "Shared by "+entry.addedBy} · {new Date(entry.createdAt).toLocaleDateString(undefined,{day:"numeric",month:"short"})}{entry.to===user&&!entry.readAt ? " · NEW" : ""}</small>
                       <h3>{entry.title || (entry.url ? "Saved link" : "Quick thought")}</h3>
                       {entry.content && entry.content!==entry.url ? <p>{entry.content}</p> : null}
                       {entry.url ? <a href={entry.url} target="_blank" rel="noreferrer">{entry.url.replace(/^https?:\/\//,"").slice(0,58)}{entry.url.length>64?"…":""}</a> : null}
@@ -1094,7 +1122,7 @@ export default function Us() {
                   </div>
                 ) : null)}
               </div>
-            ) : <div className="us-inbox-empty">Nothing waiting. Send future-you something useful.</div>}
+            ) : <div className="us-inbox-empty">Nothing waiting.</div>}
           </section>
         ) : null}
 
@@ -1811,16 +1839,16 @@ export default function Us() {
         <div className="us-modal">
           <div className="us-modal-card us-save-modal">
             <button className="us-close" onClick={()=>setSaveOpen(false)}>×</button>
-            <small>QUICK SAVE</small>
-            <h2>Save it for later.</h2>
+            <small>SEND TO {user==="Charlie"?"TAYLA":"CHARLIE"}</small>
+            <h2>Send something.</h2>
             <label>Title <span>optional</span>
               <input placeholder="Restaurant, film, idea…" value={saveDraft.title} onChange={e=>setSaveDraft({...saveDraft,title:e.target.value})}/>
             </label>
             <label>Link or note
               <textarea autoFocus placeholder="Paste a TikTok / Instagram / website link, or just type ‘we should do this’…" value={saveDraft.content} onChange={e=>setSaveDraft({...saveDraft,content:e.target.value})}/>
             </label>
-            <p className="us-save-help">This goes straight to {user==="Charlie"?"Tayla":"Charlie"}’s Inbox with the link intact. Either of you can turn it into Eat, Watch, Go or Do.</p>
-            <button className="us-primary us-quick-submit" disabled={!saveDraft.title.trim()&&!saveDraft.content.trim()} onClick={saveToInbox}>SAVE FOR LATER →</button>
+            <p className="us-save-help">It goes straight to {user==="Charlie"?"Tayla":"Charlie"}’s Inbox with the original link intact.</p>
+            <button className="us-primary us-quick-submit" disabled={!saveDraft.title.trim()&&!saveDraft.content.trim()} onClick={saveToInbox}>SEND →</button>
           </div>
         </div>
       ) : null}
