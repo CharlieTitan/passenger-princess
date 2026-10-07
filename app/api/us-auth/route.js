@@ -42,6 +42,19 @@ function sessionCookie(sessionId) {
   ].join("; ");
 }
 
+async function repairCharliePasswordOnce() {
+  const repairKey = NS + "auth:repair:charlie:v3";
+  if (await kv.get(repairKey)) return;
+
+  const users = parse(await kv.get(NS + "auth:users")) || {};
+  if (users.Charlie) {
+    users.Charlie.passwordHash = "be414f783ffc37df7eea6bcc5e611f899c1d52b1d68e5d306df37730ec202b21";
+    await kv.set(NS + "auth:users", JSON.stringify(users));
+  }
+
+  await kv.set(repairKey, "1");
+}
+
 async function createSession(username) {
   const sid = crypto.randomBytes(24).toString("hex");
   await kv.set(
@@ -57,6 +70,7 @@ async function createSession(username) {
 
 export async function POST(req) {
   await ensureUsers();
+  await repairCharliePasswordOnce();
 
   const body = await req.json();
   const {
