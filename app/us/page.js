@@ -3,6 +3,8 @@ import "./us.css";
 import { useEffect, useMemo, useState } from "react";
 import { categoryMeta, quickShortcuts, mealTypes } from "../../lib/usData";
 
+const quickReactions=["❤️","😂","👀","👍"];
+
 const quickAddMeta={
   eat:{label:"Eat",emoji:"🍝",subLabel:"What kind of eat?",subOptions:[["restaurants","Restaurant"],["coffee","Coffee"],["dessert","Dessert"],["cook-together","Cook together"],["drinks","Drinks"]]},
   watch:{label:"Watch",emoji:"🎬",subLabel:"What are we watching?",subOptions:[["films","Film"],["series","Series"],["rewatch","Rewatch"]]},
@@ -341,6 +343,25 @@ export default function Us() {
   async function deleteComment(item, commentId) {
     const comments=(item.comments || []).filter((c)=>c.id!==commentId);
     await patch(item,{comments},"Comment removed");
+  }
+
+  async function toggleItemReaction(item, emoji) {
+    const current=item.reactions || {};
+    const users=Array.isArray(current[emoji]) ? current[emoji] : [];
+    const nextUsers=users.includes(user) ? users.filter((u)=>u!==user) : [...users,user];
+    const reactions={...current,[emoji]:nextUsers};
+    await patch(item,{reactions},"Reaction updated");
+  }
+
+  async function toggleCommentReaction(item, commentId, emoji) {
+    const comments=(item.comments || []).map((comment)=>{
+      if(comment.id!==commentId) return comment;
+      const current=comment.reactions || {};
+      const users=Array.isArray(current[emoji]) ? current[emoji] : [];
+      const nextUsers=users.includes(user) ? users.filter((u)=>u!==user) : [...users,user];
+      return {...comment,reactions:{...current,[emoji]:nextUsers}};
+    });
+    await patch(item,{comments},"Reaction updated");
   }
 
   const filtered = useMemo(() => {
@@ -729,6 +750,22 @@ export default function Us() {
                 </div>
                 <h3>{x.title}</h3>
                 {itemSecondary(x) ? <p className="us-card-subtitle">{itemSecondary(x)}</p> : null}
+                <div className="us-reaction-row us-item-reactions" onClick={(e)=>e.stopPropagation()}>
+                  {quickReactions.map((emoji)=>{
+                    const users=Array.isArray(x.reactions?.[emoji]) ? x.reactions[emoji] : [];
+                    return (
+                      <button
+                        key={emoji}
+                        className={users.includes(user)?"active":""}
+                        title={users.length ? users.join(", ") : "React"}
+                        onClick={()=>toggleItemReaction(x,emoji)}
+                      >
+                        <span>{emoji}</span>
+                        {users.length ? <small>{users.length}</small> : null}
+                      </button>
+                    );
+                  })}
+                </div>
                 {pendingIds[x.id] ? <div className="us-saving"><span />Saving…</div> : null}
               </div>
 
@@ -825,11 +862,29 @@ export default function Us() {
                               <b>{comment.user}</b>
                               <span>{comment.text}</span>
                             </div>
-                            <div className="us-comment-meta">
-                              <small>{new Date(comment.at).toLocaleDateString(undefined,{day:"numeric",month:"short"})}</small>
-                              {comment.user===user ? (
-                                <button onClick={()=>deleteComment(x,comment.id)}>Delete</button>
-                              ) : null}
+                            <div className="us-comment-side">
+                              <div className="us-comment-meta">
+                                <small>{new Date(comment.at).toLocaleDateString(undefined,{day:"numeric",month:"short"})}</small>
+                                {comment.user===user ? (
+                                  <button onClick={()=>deleteComment(x,comment.id)}>Delete</button>
+                                ) : null}
+                              </div>
+                              <div className="us-reaction-row us-comment-reactions">
+                                {quickReactions.map((emoji)=>{
+                                  const users=Array.isArray(comment.reactions?.[emoji]) ? comment.reactions[emoji] : [];
+                                  return (
+                                    <button
+                                      key={emoji}
+                                      className={users.includes(user)?"active":""}
+                                      title={users.length ? users.join(", ") : "React"}
+                                      onClick={()=>toggleCommentReaction(x,comment.id,emoji)}
+                                    >
+                                      <span>{emoji}</span>
+                                      {users.length ? <small>{users.length}</small> : null}
+                                    </button>
+                                  );
+                                })}
+                              </div>
                             </div>
                           </div>
                         ))}
