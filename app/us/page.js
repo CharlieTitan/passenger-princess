@@ -463,6 +463,25 @@ export default function Us() {
     setTimeout(()=>setToast(""),1400);
   }
 
+  async function deletePoll(poll) {
+    if (!window.confirm("Delete this poll?")) return;
+    const previous=polls;
+    setPolls((current)=>current.filter((x)=>x.id!==poll.id));
+    const r=await fetch("/api/us",{
+      method:"DELETE",
+      headers:{"content-type":"application/json"},
+      body:JSON.stringify({type:"poll",id:poll.id})
+    });
+    if(!r.ok){
+      setPolls(previous);
+      setToast("Couldn’t delete poll");
+      setTimeout(()=>setToast(""),1800);
+      return;
+    }
+    setToast("Poll deleted");
+    setTimeout(()=>setToast(""),1400);
+  }
+
   function pollResult(poll){
     const votes=poll.votes||{};
     const both=!!votes.Charlie && !!votes.Tayla;
@@ -638,6 +657,60 @@ export default function Us() {
             ) : null}
           </div>
         </section>
+
+        <section className="us-polls">
+          <div className="us-polls-head">
+            <div>
+              <small>POLL IT</small>
+              <h2>Can’t decide?</h2>
+            </div>
+            <button onClick={()=>setPollOpen(true)}>+ New poll</button>
+          </div>
+
+          {polls.length ? (
+            <div className="us-poll-list">
+              {polls.slice(0,3).map((poll)=>{
+                const result=pollResult(poll);
+                const myVote=poll.votes?.[user];
+                return (
+                  <article className="us-poll-card" key={poll.id}>
+                    <div className="us-poll-title-row">
+                      <h3>{poll.question}</h3>
+                      <div className="us-poll-meta">
+                        <small>{poll.createdBy}</small>
+                        <button className="us-poll-delete" onClick={()=>deletePoll(poll)}>Delete</button>
+                      </div>
+                    </div>
+                    <div className="us-poll-options">
+                      {(poll.options||[]).map((option)=>(
+                        <button
+                          key={option.id}
+                          className={myVote===option.id?"active":""}
+                          onClick={()=>votePoll(poll,option.id)}
+                        >
+                          <span>{option.label}</span>
+                          {result ? <small>{result.counts[option.id]||0}</small> : null}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="us-poll-status">
+                      {result ? (
+                        result.tie
+                          ? <span>Tie. Very helpful 😂</span>
+                          : <span>Winner: <b>{result.winners[0]?.label}</b></span>
+                      ) : (
+                        <span>{myVote ? "Your vote is in. Waiting for the other one." : "Vote once. You can change it until both have voted."}</span>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="us-poll-empty">Film? Restaurant? Date? Make it democratic.</div>
+          )}
+        </section>
+
 
         <section className="us-cats">
           {Object.entries(categoryMeta).map(([k, v]) => (
@@ -1180,56 +1253,6 @@ export default function Us() {
           ) : null}
         </section>
 
-        <section className="us-polls">
-          <div className="us-polls-head">
-            <div>
-              <small>POLL IT</small>
-              <h2>Can’t decide?</h2>
-            </div>
-            <button onClick={()=>setPollOpen(true)}>+ New poll</button>
-          </div>
-
-          {polls.length ? (
-            <div className="us-poll-list">
-              {polls.slice(0,3).map((poll)=>{
-                const result=pollResult(poll);
-                const myVote=poll.votes?.[user];
-                return (
-                  <article className="us-poll-card" key={poll.id}>
-                    <div className="us-poll-title-row">
-                      <h3>{poll.question}</h3>
-                      <small>{poll.createdBy}</small>
-                    </div>
-                    <div className="us-poll-options">
-                      {(poll.options||[]).map((option)=>(
-                        <button
-                          key={option.id}
-                          className={myVote===option.id?"active":""}
-                          onClick={()=>votePoll(poll,option.id)}
-                        >
-                          <span>{option.label}</span>
-                          {result ? <small>{result.counts[option.id]||0}</small> : null}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="us-poll-status">
-                      {result ? (
-                        result.tie
-                          ? <span>Tie. Very helpful 😂</span>
-                          : <span>Winner: <b>{result.winners[0]?.label}</b></span>
-                      ) : (
-                        <span>{myVote ? "Your vote is in. Waiting for the other one." : "Vote once. You can change it until both have voted."}</span>
-                      )}
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="us-poll-empty">Film? Restaurant? Date? Make it democratic.</div>
-          )}
-        </section>
-
         <a className="us-memories-link" href="/us/memories"><span>Memories</span><small>Done, but not gone →</small></a><section className="us-activity">
           <div className="us-section-title"><span>Recent activity</span></div>
           {activity.slice(0, 8).map((a) => (
@@ -1255,6 +1278,34 @@ export default function Us() {
                 onChange={(e)=>setPollDraft({...pollDraft,question:e.target.value})}
               />
             </label>
+
+            <div className="us-poll-ideas">
+              <span>Pick from our ideas</span>
+              <div className="us-picker-chips">
+                {items
+                  .filter((item)=>item.status!=="done" && item.status!=="archived" && !item.isSurprise)
+                  .slice(0,12)
+                  .map((item)=>{
+                    const selected=pollDraft.options.includes(item.title);
+                    return (
+                      <button
+                        key={item.id}
+                        className={selected?"active":""}
+                        onClick={()=>{
+                          const options=selected
+                            ? pollDraft.options.filter((x)=>x!==item.title)
+                            : [...pollDraft.options.filter(Boolean),item.title];
+                          while(options.length<2) options.push("");
+                          setPollDraft({...pollDraft,options});
+                        }}
+                      >
+                        {item.emoji || categoryMeta[item.category]?.emoji || "✨"} {item.title}
+                      </button>
+                    );
+                  })}
+              </div>
+              <small>Or add your own below.</small>
+            </div>
 
             <div className="us-poll-option-edit">
               {pollDraft.options.map((option,index)=>(
