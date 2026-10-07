@@ -1,3 +1,4 @@
+import "./globals.css";
 import "./us.css";
 export const metadata={
   title:"US",
