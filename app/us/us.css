@@ -45,3 +45,27 @@
 .us-filter-banner small{font-size:8px;letter-spacing:1.4px;color:#cbbfc2}
 .us-filter-banner b{font-size:14px}
 .us-filter-banner button{width:auto;min-height:30px;border-radius:999px;padding:0 10px;background:#fff;color:#2d2829;font-size:9px}
+
+.us-picker-panel{background:#fff;border:1px solid #e3d8d6;border-radius:22px;padding:18px;margin:4px 0 16px;box-shadow:0 12px 34px #6e4a4a0d;animation:usFade .2s ease}
+.us-picker-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.us-picker-head small{font-size:8px;letter-spacing:1.5px;color:#9b8b90}
+.us-picker-head h2{font-family:Georgia,serif;font-size:22px;line-height:1.1;margin:5px 0 0;color:#2d2729}
+.us-picker-close{width:34px;height:34px;min-height:34px;border-radius:50%;padding:0;background:#f2ecea;color:#5f5256}
+.us-picker-group{margin-top:16px}
+.us-picker-group>span{display:block;font-size:9px;color:#8b7c80;margin-bottom:7px}
+.us-picker-chips{display:flex;gap:7px;flex-wrap:wrap}
+.us-picker-chips button{width:auto;min-height:34px;border-radius:999px;padding:0 12px;background:#f6f1ef;color:#66585c;border:1px solid #e5dada;font-size:9px}
+.us-picker-chips button.active{background:#2d2829;color:#fff;border-color:#2d2829}
+.us-picker-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.us-picker-row label{font-size:9px;color:#8b7c80}
+.us-picker-row select{width:100%;margin-top:6px;padding:12px;border-radius:12px;border:1px solid #ddd3d1;background:#fff}
+.us-picker-count{font-size:10px;color:#9b8e91;margin:14px 0 10px}
+.us-picker-go{width:100%;min-height:46px;border-radius:13px}
+.us-wheel-inline{display:flex;align-items:center;justify-content:center;gap:8px;padding:18px 0 3px;font-size:10px;color:#7f7074}
+.us-wheel-inline span{width:14px;height:14px;border:2px solid #d7cccf;border-top-color:#4c4245;border-radius:50%;animation:usSpin .7s linear infinite}
+.us-picker-result-inline{margin-top:14px;padding-top:14px;border-top:1px solid #eee3e1}
+.us-picker-result-inline small{font-size:8px;letter-spacing:1.4px;color:#9b8b90}
+.us-picker-result-inline h3{font-family:Georgia,serif;font-size:28px;margin:5px 0 3px}
+.us-picker-result-inline p{font-size:10px;color:#8c7c80;margin:0 0 12px}
+.us-picker-result-inline>div{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:700px){.us-picker-row{grid-template-columns:1fr 1fr}}
