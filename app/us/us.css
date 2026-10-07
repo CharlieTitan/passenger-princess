@@ -192,3 +192,9 @@
 .us-plan-grid label span{color:#aaa0a3}
 .us-plan-grid input{display:block;width:100%;margin-top:6px}
 @media(max-width:700px){.us-plan-grid{grid-template-columns:1fr}}
+
+.us-lifecycle-filter{display:flex;gap:7px;margin:-2px 0 14px;flex-wrap:wrap}
+.us-lifecycle-filter button{display:flex;align-items:center;gap:7px;width:auto;min-height:34px;border-radius:999px;padding:0 11px;background:transparent;color:#75686c;border:1px solid #ddd1d4;font-size:9px}
+.us-lifecycle-filter button small{font-size:8px;color:#a89a9e}
+.us-lifecycle-filter button.active{background:#2d2829;color:#fff;border-color:#2d2829}
+.us-lifecycle-filter button.active small{color:#d8ced1}
