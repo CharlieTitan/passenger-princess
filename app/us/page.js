@@ -560,7 +560,7 @@ export default function Us() {
 
               <div className="us-card-summary">
                 <div className="us-card-top">
-                  <small>{categoryMeta[x.category]?.emoji} {x.status.toUpperCase()} · {x.effort}</small>
+                  <small>{categoryMeta[x.category]?.emoji} {(x.status === "maybe" ? "IDEA" : x.status.toUpperCase())} · {x.effort}</small>
                   {x.tryAgain ? <span>TRY AGAIN</span> : null}
                 </div>
                 <h3>{x.title}</h3>
@@ -572,8 +572,7 @@ export default function Us() {
                 <div className="us-detail us-detail-full" onClick={(e) => e.stopPropagation()}>
                   <div className="us-detail-audit">Added by {x.addedBy} · Last updated by {x.updatedBy}</div>
                   <div className="us-actions">
-                    <button className={x.status === "maybe" ? "active" : ""} disabled={!!pendingIds[x.id]} onClick={() => patch(x, { status: "maybe" }, "Moved to Maybe")}>Maybe</button>
-                    <button className={x.status === "idea" ? "active" : ""} disabled={!!pendingIds[x.id]} onClick={() => patch(x, { status: "idea" }, "Moved to Idea")}>Idea</button>
+                    <button className={(x.status === "idea" || x.status === "maybe") ? "active" : ""} disabled={!!pendingIds[x.id]} onClick={() => patch(x, { status: "idea" }, "Saved as Idea")}>Idea</button>
                     <button className={x.status === "planned" ? "active" : ""} disabled={!!pendingIds[x.id]} onClick={() => patch(x, { status: "planned" }, "Planned ✓")}>Planned</button>
                     <button className={x.status === "done" ? "active" : ""} disabled={!!pendingIds[x.id]} onClick={() => patch(x, { status: "done", doneAt: new Date().toISOString() }, "Done ✓")}>Done</button>
                   </div>
