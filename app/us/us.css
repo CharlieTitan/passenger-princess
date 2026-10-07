@@ -98,3 +98,15 @@
   .us-surprise-head h2{font-size:24px}
   .us-surprise-head>button{width:100%;margin-top:14px}
 }
+
+@media(max-width:700px){
+  .us-shortcuts{
+    display:flex;
+    flex-wrap:wrap;
+    overflow:visible;
+    gap:8px;
+  }
+  .us-shortcuts button{
+    flex:0 0 auto;
+  }
+}
