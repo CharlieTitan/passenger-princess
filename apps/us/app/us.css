@@ -627,3 +627,95 @@ body:before{display:none!important}
   .us-number-grid{grid-template-columns:repeat(2,1fr)}
   .us-number-wide-grid{grid-template-columns:1fr}
 }
+
+/* Us in Numbers refinements */
+.us-first-date,.us-score-card,.us-number-card,.us-number-wide-grid>button{
+  text-align:left;
+}
+.us-first-date,.us-score-card{
+  width:100%;
+  min-height:0;
+  color:inherit;
+}
+.us-first-date>span,.us-score-card>span{
+  display:block;
+  margin-top:10px;
+  font-size:8px;
+  letter-spacing:1px;
+  color:#a36f80;
+}
+.us-number-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+}
+.us-number-card{
+  min-height:94px;
+  padding:13px;
+  width:100%;
+  background:#fff;
+  color:inherit;
+  justify-content:flex-end;
+  border:1px solid #e7dcdf;
+  box-shadow:none;
+}
+.us-number-card b{
+  font-size:31px;
+}
+.us-number-card span{
+  min-height:22px;
+}
+.us-number-card small{
+  margin-top:8px;
+  font-size:7px;
+  letter-spacing:1px;
+  color:#b27a8d;
+}
+.us-number-card.empty{
+  opacity:.45;
+  background:#fbf8f7;
+}
+.us-number-card:not(.empty):active,.us-first-date:active,.us-score-card:active,.us-number-wide-grid>button:active{
+  transform:scale(.985);
+}
+.us-number-wide-grid>button{
+  width:100%;
+  min-height:0;
+  padding:18px;
+  border-radius:20px;
+  background:#ffffffc9;
+  color:inherit;
+  border:1px solid #e5dadd;
+  display:grid;
+  gap:6px;
+}
+.us-number-wide-static{
+  background:#ffffffc9;
+  border:1px solid #e5dadd;
+  border-radius:20px;
+  padding:18px;
+}
+.us-memory-filter{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  margin-bottom:12px;
+  border-radius:14px;
+  background:#fff7f9;
+  border:1px solid #ead8de;
+  font-size:9px;
+  color:#7f6f74;
+}
+.us-memory-filter button{
+  width:auto;
+  min-height:28px;
+  padding:0;
+  background:transparent;
+  color:#a36f80;
+  font-size:8px;
+}
+@media(max-width:600px){
+  .us-number-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .us-number-card{min-height:86px}
+  .us-number-card b{font-size:29px}
+}
