@@ -39,7 +39,7 @@ const NS="us:";const parse=x=>!x?null:(typeof x==="string"?JSON.parse(x):x);cons
       isRevealed:false
     }
   };
-}const itemsKey=NS+"items";const activityKey=NS+"activity";const listsKey=NS+"customLists";
+}const itemsKey=NS+"items";const activityKey=NS+"activity";const listsKey=NS+"customLists";const pollsKey=NS+"polls";
 async function ensureSeed(){const seeded=await kv.get(NS+"seeded");if(seeded)return;for(const item of seedItems)await kv.hset(itemsKey,{[item.id]:JSON.stringify({...item,createdAt:now(),updatedAt:now()})});await kv.set(NS+"seeded","1")}
 function sessionId(req){return req.cookies.get("us_session")?.value||null}
 async function sessionUser(req){const sid=sessionId(req);if(!sid)return null;const s=parse(await kv.get(NS+"session:"+sid));if(!s||s.expiresAt<Date.now())return null;return s.user}
