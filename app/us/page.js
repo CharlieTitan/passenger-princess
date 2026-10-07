@@ -304,6 +304,25 @@ export default function Us() {
     return Number.isNaN(ts)?Number.POSITIVE_INFINITY:ts;
   }
 
+  function favouriteState(item) {
+    const favs = item.favourites || { Charlie:false, Tayla:false };
+    return {
+      mine: !!favs[user],
+      mutual: !!favs.Charlie && !!favs.Tayla,
+      favs
+    };
+  }
+
+  async function toggleFavourite(item) {
+    const state = favouriteState(item);
+    const favourites = { ...state.favs, [user]: !state.mine };
+    await patch(
+      item,
+      { favourites },
+      favourites.Charlie && favourites.Tayla ? "Mutual favourite ❤️" : (!state.mine ? "Favourited ❤️" : "Favourite removed")
+    );
+  }
+
   const filtered = useMemo(() => {
     return items.filter((x) => {
       if (shortcut === "Planned" && x.status !== "planned") return false;
@@ -312,7 +331,10 @@ export default function Us() {
       if (!shortcut && x.category !== category) return false;
       if (!shortcut && lifecycleFilter === "all" && x.status === "archived") return false;
       if (!shortcut && sublist !== "all" && x.list !== sublist) return false;
-      if (!shortcut && lifecycleFilter !== "all") {
+      if (!shortcut && lifecycleFilter === "favourites") {
+        const favs = x.favourites || {};
+        if (!(favs.Charlie || favs.Tayla)) return false;
+      } else if (!shortcut && lifecycleFilter !== "all") {
         const status = x.status === "maybe" ? "idea" : x.status;
         if (status !== lifecycleFilter) return false;
       }
@@ -525,6 +547,17 @@ export default function Us() {
           </section>
         ) : null}
 
+        {!shortcut ? (
+          <section className="us-favourite-filter">
+            <button
+              className={lifecycleFilter==="favourites"?"active":""}
+              onClick={()=>setLifecycleFilter(lifecycleFilter==="favourites"?"all":"favourites")}
+            >
+              ♥ Favourites
+            </button>
+          </section>
+        ) : null}
+
         <section className="us-shortcuts">
           {quickShortcuts.map((s) => (
             <button
@@ -662,7 +695,17 @@ export default function Us() {
               <div className="us-card-summary">
                 <div className="us-card-top">
                   <small>{categoryMeta[x.category]?.emoji} {(x.status === "maybe" ? "IDEA" : x.status.toUpperCase())} · {x.effort}</small>
-                  {x.tryAgain ? <span>TRY AGAIN</span> : null}
+                  <div className="us-card-badges">
+                    {x.tryAgain ? <span>TRY AGAIN</span> : null}
+                    {favouriteState(x).mutual ? <span className="us-mutual-badge">MUTUAL FAVOURITE</span> : null}
+                    <button
+                      className={"us-heart"+(favouriteState(x).mine?" active":"")}
+                      aria-label={favouriteState(x).mine ? "Remove favourite" : "Add favourite"}
+                      onClick={(e)=>{e.stopPropagation();toggleFavourite(x);}}
+                    >
+                      {favouriteState(x).mine ? "♥" : "♡"}
+                    </button>
+                  </div>
                 </div>
                 <h3>{x.title}</h3>
                 {itemSecondary(x) ? <p className="us-card-subtitle">{itemSecondary(x)}</p> : null}
