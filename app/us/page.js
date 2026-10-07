@@ -14,6 +14,7 @@ export default function Us() {
   const [user, setUser] = useState(null);
   const [items, setItems] = useState([]);
   const [activity, setActivity] = useState([]);
+  const [customLists, setCustomLists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [login, setLogin] = useState({ username: "Charlie", password: "" });
   const [category, setCategory] = useState("eat");
@@ -33,6 +34,8 @@ export default function Us() {
   const [recovering, setRecovering] = useState(false);
   const [recovery, setRecovery] = useState({ recoveryCode: "", newPassword: "" });
   const [recoveryMessage, setRecoveryMessage] = useState("");
+  const [newListOpen, setNewListOpen] = useState(false);
+  const [newList, setNewList] = useState({ name:"", emoji:"✨" });
 
   async function load() {
     setLoading(true);
@@ -42,6 +45,7 @@ export default function Us() {
       setUser(d.user);
       setItems(d.items);
       setActivity(d.activity);
+      setCustomLists(d.customLists || []);
     }
     setLoading(false);
   }
@@ -53,6 +57,7 @@ export default function Us() {
     setUser(null);
     setItems([]);
     setActivity([]);
+    setCustomLists([]);
     setLogin({ username: "Charlie", password: "" });
   }
 
@@ -138,6 +143,35 @@ export default function Us() {
     const value = editValues[key];
     const ok = await patch(item, { [field]: value }, message);
     if (ok) setEditValues((s) => { const n = { ...s }; delete n[key]; return n; });
+  }
+
+
+  function listsForCategory(cat) {
+    const defaults = categoryMeta[cat].sublists.map(([value,label,emoji]) => ({ id:value, label, emoji, custom:false }));
+    const extras = customLists.filter((x) => x.category === cat).map((x) => ({ id:x.id, label:x.name, emoji:x.emoji || "✨", custom:true }));
+    return [...defaults, ...extras];
+  }
+
+  async function createCustomList() {
+    const name = newList.name.trim();
+    if (!name) return;
+    const r = await fetch("/api/us", {
+      method:"POST",
+      headers:{"content-type":"application/json"},
+      body:JSON.stringify({ action:"createList", category, name, emoji:newList.emoji || "✨" })
+    });
+    if (!r.ok) {
+      setToast("Couldn’t create that list");
+      setTimeout(()=>setToast(""),1800);
+      return;
+    }
+    const d = await r.json();
+    setCustomLists((x)=>[...x,d.list]);
+    setSublist(d.list.id);
+    setNewList({name:"",emoji:"✨"});
+    setNewListOpen(false);
+    setToast("List created ✓");
+    setTimeout(()=>setToast(""),1600);
   }
 
   const filtered = useMemo(() => {
@@ -297,12 +331,15 @@ export default function Us() {
               <span>All</span>
               <small>{items.filter((x)=>x.category===category).length}</small>
             </button>
-            {categoryMeta[category].sublists.map(([value,label,emoji]) => (
-              <button key={value} className={sublist===value?"active":""} onClick={()=>setSublist(value)}>
-                <span>{emoji} {label}</span>
-                <small>{items.filter((x)=>x.category===category && x.list===value).length}</small>
+            {listsForCategory(category).map((list) => (
+              <button key={list.id} className={sublist===list.id?"active":""} onClick={()=>setSublist(list.id)}>
+                <span>{list.emoji} {list.label}</span>
+                <small>{items.filter((x)=>x.category===category && x.list===list.id).length}</small>
               </button>
             ))}
+            <button className="us-new-list-btn" onClick={()=>setNewListOpen(true)}>
+              <span>＋ New list</span>
+            </button>
           </section>
         ) : null}
 
@@ -500,6 +537,23 @@ export default function Us() {
 
       {toast ? <div className="us-toast">{toast}</div> : null}
 
+      {newListOpen ? (
+        <div className="us-modal">
+          <div className="us-modal-card us-list-modal">
+            <button className="us-close" onClick={()=>setNewListOpen(false)}>×</button>
+            <small>NEW {categoryMeta[category].label.toUpperCase()} LIST</small>
+            <h2>Make it yours.</h2>
+            <label className="us-list-field">Emoji
+              <input value={newList.emoji} maxLength={4} onChange={(e)=>setNewList({...newList,emoji:e.target.value})} />
+            </label>
+            <label className="us-list-field">List name
+              <input autoFocus placeholder="e.g. Late night spots" value={newList.name} onChange={(e)=>setNewList({...newList,name:e.target.value})} onKeyDown={(e)=>{if(e.key==="Enter")createCustomList();}} />
+            </label>
+            <button className="us-primary us-quick-submit" disabled={!newList.name.trim()} onClick={createCustomList}>CREATE LIST →</button>
+          </div>
+        </div>
+      ) : null}
+
       {quick ? (
         <div className="us-modal">
           <div className="us-modal-card us-quick-card">
@@ -521,7 +575,7 @@ export default function Us() {
                   onClick={() => setDraft({
                     ...draft,
                     category: k,
-                    list: quickAddMeta[k].subOptions[0][0],
+                    list: listsForCategory(k)[0]?.id || categoryMeta[k].sublists[0][0],
                     mealType: k === "eat" ? (draft.mealType || "any") : undefined
                   })}
                 >
@@ -533,8 +587,8 @@ export default function Us() {
             <div className="us-quick-section">
               <span>{quickAddMeta[draft.category].subLabel}</span>
               <div className="us-picker-chips">
-                {quickAddMeta[draft.category].subOptions.map(([value,label]) => (
-                  <button key={value} className={draft.list===value?"active":""} onClick={() => setDraft({...draft,list:value})}>{label}</button>
+                {listsForCategory(draft.category).map((list) => (
+                  <button key={list.id} className={draft.list===list.id?"active":""} onClick={() => setDraft({...draft,list:list.id})}>{list.emoji} {list.label}</button>
                 ))}
               </div>
             </div>
