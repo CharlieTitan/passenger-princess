@@ -229,3 +229,19 @@
 
 .us-completion-date{display:block;margin:12px 0!important;font-size:9px;color:#75676b}
 .us-completion-date input{display:block;width:100%;margin-top:6px}
+
+/* Keep completion date control contained on mobile browsers */
+.us-completion-date{
+  width:100%;
+  max-width:100%;
+  min-width:0;
+}
+.us-completion-date input[type="date"]{
+  display:block;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
+  -webkit-appearance:none;
+  appearance:none;
+}
