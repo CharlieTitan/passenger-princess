@@ -174,6 +174,22 @@ export default function Us() {
     setTimeout(()=>setToast(""),1600);
   }
 
+  function itemListLabel(item) {
+    return listsForCategory(item.category).find((list) => list.id === item.list)?.label || item.list || "";
+  }
+
+  function itemSecondary(item) {
+    const parts = [];
+    const listLabel = itemListLabel(item);
+    if (listLabel) parts.push(listLabel);
+    if (item.category === "eat" && item.mealType && item.mealType !== "any") {
+      const meal = mealTypes.find(([value]) => value === item.mealType)?.[1];
+      if (meal) parts.push(meal);
+    }
+    if (item.location && !item.title.toLowerCase().includes(item.location.toLowerCase())) parts.push(item.location);
+    return parts.join(" · ");
+  }
+
   const filtered = useMemo(() => {
     return items.filter((x) => {
       if (shortcut === "Planned" && x.status !== "planned") return false;
@@ -466,21 +482,24 @@ export default function Us() {
 
         <section className="us-list">
           {filtered.map((x, i) => (
-            <article className={"us-card status-" + x.status} key={x.id} onClick={() => setOpen(open === x.id ? null : x.id)}>
-              <div className={"us-polaroid " + (i % 2 ? "tilt-r" : "tilt-l")}>
-                <div className="us-photo-placeholder">{categoryMeta[x.category]?.emoji || "✦"}</div>
-                <small>{x.location || x.list}</small>
-              </div>
+            <article className={"us-card status-" + x.status + (x.cover ? " has-photo" : " no-photo")} key={x.id} onClick={() => setOpen(open === x.id ? null : x.id)}>
+              {x.cover ? (
+                <div className={"us-polaroid " + (i % 2 ? "tilt-r" : "tilt-l")}>
+                  <img className="us-cover-img" src={x.cover} alt="" />
+                  <small>{x.location || itemListLabel(x)}</small>
+                </div>
+              ) : null}
               <div className="us-card-body">
                 <div className="us-card-top">
-                  <small>{x.status.toUpperCase()} · {x.effort}</small>
+                  <small>{categoryMeta[x.category]?.emoji} {x.status.toUpperCase()} · {x.effort}</small>
                   {x.tryAgain ? <span>TRY AGAIN</span> : null}
                 </div>
                 <h3>{x.title}</h3>
+                {itemSecondary(x) ? <p className="us-card-subtitle">{itemSecondary(x)}</p> : null}
                 {pendingIds[x.id] ? <div className="us-saving"><span />Saving…</div> : null}
-                <p>Added by {x.addedBy} · Updated by {x.updatedBy}</p>
                 {open === x.id ? (
                   <div className="us-detail" onClick={(e) => e.stopPropagation()}>
+                    <div className="us-detail-audit">Added by {x.addedBy} · Last updated by {x.updatedBy}</div>
                     <div className="us-actions">
                       <button className={x.status === "maybe" ? "active" : ""} disabled={!!pendingIds[x.id]} onClick={() => patch(x, { status: "maybe" }, "Moved to Maybe")}>Maybe</button>
                       <button className={x.status === "idea" ? "active" : ""} disabled={!!pendingIds[x.id]} onClick={() => patch(x, { status: "idea" }, "Moved to Idea")}>Idea</button>
