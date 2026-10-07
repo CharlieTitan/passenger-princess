@@ -699,6 +699,20 @@ export default function Us() {
                     {x.cover ? <button className="us-remove-photo" onClick={()=>patch(x,{cover:null},"Photo removed")}>Remove photo</button> : null}
                   </div>
 
+                  {x.status === "done" ? (
+                    <label className="us-completion-date">Completion date
+                      <input
+                        type="date"
+                        value={x.doneAt ? String(x.doneAt).slice(0,10) : ""}
+                        onChange={(e) => patch(
+                          x,
+                          { doneAt: e.target.value ? e.target.value + "T12:00:00.000Z" : null },
+                          "Completion date saved"
+                        )}
+                      />
+                    </label>
+                  ) : null}
+
                   <div className="us-ratings">
                     <label>Charlie /10 <input type="number" min="1" max="10" value={x.ratings?.Charlie || ""} onChange={(e) => patch(x, { ratings: { ...x.ratings, Charlie: Number(e.target.value) || null } }, "Charlie rating saved")} /></label>
                     <label>Tayla /10 <input type="number" min="1" max="10" value={x.ratings?.Tayla || ""} onChange={(e) => patch(x, { ratings: { ...x.ratings, Tayla: Number(e.target.value) || null } }, "Tayla rating saved")} /></label>
