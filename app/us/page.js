@@ -24,7 +24,8 @@ export default function Us() {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(null);
   const [quick, setQuick] = useState(false);
-  const [draft, setDraft] = useState({ title: "", category: "eat", list: "restaurants", effort: "normal", timeHorizon: "soon", mealType: "any", isSurprise:false });
+  const [quickMore, setQuickMore] = useState(false);
+  const [draft, setDraft] = useState({ title: "", category: "eat", list: "restaurants", effort: "normal", timeHorizon: "soon", mealType: "any", location:"", priority:"normal", budget:"", duration:"", tagsText:"", notes:"", isSurprise:false });
   const [wheel, setWheel] = useState(false);
   const [wheelPick, setWheelPick] = useState(null);
   const [pickerMode, setPickerMode] = useState(null);
@@ -96,11 +97,12 @@ export default function Us() {
     const r = await fetch("/api/us", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(draft)
+      body: JSON.stringify({ ...draft, tags: draft.tagsText ? draft.tagsText.split(",").map((x)=>x.trim()).filter(Boolean) : [] })
     });
     if (r.ok) {
       setQuick(false);
-      setDraft({ title: "", category: "eat", list: "restaurants", effort: "normal", timeHorizon: "soon", mealType: "any", isSurprise:false });
+      setQuickMore(false);
+      setDraft({ title: "", category: "eat", list: "restaurants", effort: "normal", timeHorizon: "soon", mealType: "any", location:"", priority:"normal", budget:"", duration:"", tagsText:"", notes:"", isSurprise:false });
       load();
     }
   }
@@ -914,6 +916,62 @@ export default function Us() {
                 ))}
               </div>
             </div>
+
+            <div className="us-quick-section">
+              <span>Location</span>
+              <input
+                placeholder="e.g. JVC, Home, Hatta, London"
+                value={draft.location || ""}
+                onChange={(e)=>setDraft({...draft,location:e.target.value})}
+              />
+            </div>
+
+            <button className="us-more-toggle" onClick={()=>setQuickMore(!quickMore)}>
+              {quickMore ? "Hide details" : "More details"}
+            </button>
+
+            {quickMore ? (
+              <div className="us-quick-more">
+                <div className="us-quick-row">
+                  <label>Priority
+                    <select value={draft.priority || "normal"} onChange={(e)=>setDraft({...draft,priority:e.target.value})}>
+                      <option value="low">Low</option>
+                      <option value="normal">Normal</option>
+                      <option value="high">High</option>
+                    </select>
+                  </label>
+                  <label>Budget
+                    <select value={draft.budget || ""} onChange={(e)=>setDraft({...draft,budget:e.target.value})}>
+                      <option value="">Not set</option>
+                      <option value="free">Free</option>
+                      <option value="cheap">Cheap</option>
+                      <option value="mid">Mid</option>
+                      <option value="spenny">Spenny</option>
+                    </select>
+                  </label>
+                </div>
+
+                <div className="us-quick-row">
+                  <label>Duration
+                    <select value={draft.duration || ""} onChange={(e)=>setDraft({...draft,duration:e.target.value})}>
+                      <option value="">Not set</option>
+                      <option value="30m">30 mins</option>
+                      <option value="1-2h">1–2 hours</option>
+                      <option value="half-day">Half day</option>
+                      <option value="full-day">Full day</option>
+                      <option value="overnight">Overnight / Trip</option>
+                    </select>
+                  </label>
+                  <label>Tags
+                    <input placeholder="romantic, outdoors…" value={draft.tagsText || ""} onChange={(e)=>setDraft({...draft,tagsText:e.target.value})} />
+                  </label>
+                </div>
+
+                <label className="us-quick-notes">Notes
+                  <textarea placeholder="Anything useful to remember…" value={draft.notes || ""} onChange={(e)=>setDraft({...draft,notes:e.target.value})} />
+                </label>
+              </div>
+            ) : null}
 
             <button className="us-primary us-quick-submit" onClick={add} disabled={!draft.title.trim()}>
               {draft.isSurprise ? "SAVE SURPRISE →" : "ADD TO US →"}
