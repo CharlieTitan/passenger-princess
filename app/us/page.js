@@ -525,7 +525,8 @@ export default function Us() {
                 )}
                 <small>{x.location || itemListLabel(x)}</small>
               </div>
-              <div className="us-card-body">
+
+              <div className="us-card-summary">
                 <div className="us-card-top">
                   <small>{categoryMeta[x.category]?.emoji} {x.status.toUpperCase()} · {x.effort}</small>
                   {x.tryAgain ? <span>TRY AGAIN</span> : null}
@@ -533,43 +534,46 @@ export default function Us() {
                 <h3>{x.title}</h3>
                 {itemSecondary(x) ? <p className="us-card-subtitle">{itemSecondary(x)}</p> : null}
                 {pendingIds[x.id] ? <div className="us-saving"><span />Saving…</div> : null}
-                {open === x.id ? (
-                  <div className="us-detail" onClick={(e) => e.stopPropagation()}>
-                    <div className="us-detail-audit">Added by {x.addedBy} · Last updated by {x.updatedBy}</div>
-                    <div className="us-actions">
-                      <button className={x.status === "maybe" ? "active" : ""} disabled={!!pendingIds[x.id]} onClick={() => patch(x, { status: "maybe" }, "Moved to Maybe")}>Maybe</button>
-                      <button className={x.status === "idea" ? "active" : ""} disabled={!!pendingIds[x.id]} onClick={() => patch(x, { status: "idea" }, "Moved to Idea")}>Idea</button>
-                      <button className={x.status === "planned" ? "active" : ""} disabled={!!pendingIds[x.id]} onClick={() => patch(x, { status: "planned" }, "Planned ✓")}>Planned</button>
-                      <button className={x.status === "done" ? "active" : ""} disabled={!!pendingIds[x.id]} onClick={() => patch(x, { status: "done", doneAt: new Date().toISOString() }, "Done ✓")}>Done</button>
-                    </div>
-                    <label>Try Again <input type="checkbox" checked={!!x.tryAgain} disabled={!!pendingIds[x.id]} onChange={(e) => patch(x, { tryAgain: e.target.checked }, e.target.checked ? "Added to Try Again" : "Removed from Try Again")} /></label>
-                    <label>Location <input value={editValue(x,"location")} onChange={(e) => setEditValue(x,"location",e.target.value)} onBlur={() => saveTextField(x,"location","Location saved")} onKeyDown={(e) => { if(e.key==="Enter"){ e.currentTarget.blur(); } }} /></label>{x.category === "eat" ? <label>Meal type <select value={x.mealType || "any"} onChange={(e) => patch(x,{mealType:e.target.value},"Meal type updated")}>{mealTypes.map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label> : null}
-                    <div className="us-media-controls">
-                      <label>Card emoji
-                        <input
-                          className="us-emoji-input"
-                          value={x.emoji || categoryMeta[x.category]?.emoji || "✦"}
-                          maxLength={4}
-                          onChange={(e) => patch(x,{emoji:e.target.value},"Emoji updated")}
-                        />
-                      </label>
-                      <label className="us-photo-control">
-                        {x.cover ? "Change photo" : "Add photo"}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleCoverUpload(x,e.target.files?.[0])}
-                        />
-                      </label>
-                      {x.cover ? <button className="us-remove-photo" onClick={()=>patch(x,{cover:null},"Photo removed")}>Remove photo</button> : null}
-                    </div>
-                    <div className="us-ratings">
-                      <label>Charlie /10 <input type="number" min="1" max="10" value={x.ratings?.Charlie || ""} onChange={(e) => patch(x, { ratings: { ...x.ratings, Charlie: Number(e.target.value) || null } }, "Charlie rating saved")} /></label>
-                      <label>Tayla /10 <input type="number" min="1" max="10" value={x.ratings?.Tayla || ""} onChange={(e) => patch(x, { ratings: { ...x.ratings, Tayla: Number(e.target.value) || null } }, "Tayla rating saved")} /></label>
-                    </div>
-                  </div>
-                ) : null}
               </div>
+
+              {open === x.id ? (
+                <div className="us-detail us-detail-full" onClick={(e) => e.stopPropagation()}>
+                  <div className="us-detail-audit">Added by {x.addedBy} · Last updated by {x.updatedBy}</div>
+                  <div className="us-actions">
+                    <button className={x.status === "maybe" ? "active" : ""} disabled={!!pendingIds[x.id]} onClick={() => patch(x, { status: "maybe" }, "Moved to Maybe")}>Maybe</button>
+                    <button className={x.status === "idea" ? "active" : ""} disabled={!!pendingIds[x.id]} onClick={() => patch(x, { status: "idea" }, "Moved to Idea")}>Idea</button>
+                    <button className={x.status === "planned" ? "active" : ""} disabled={!!pendingIds[x.id]} onClick={() => patch(x, { status: "planned" }, "Planned ✓")}>Planned</button>
+                    <button className={x.status === "done" ? "active" : ""} disabled={!!pendingIds[x.id]} onClick={() => patch(x, { status: "done", doneAt: new Date().toISOString() }, "Done ✓")}>Done</button>
+                  </div>
+
+                  <div className="us-detail-grid">
+                    <label>Try Again <input type="checkbox" checked={!!x.tryAgain} disabled={!!pendingIds[x.id]} onChange={(e) => patch(x, { tryAgain: e.target.checked }, e.target.checked ? "Added to Try Again" : "Removed from Try Again")} /></label>
+                    <label>Location <input value={editValue(x,"location")} onChange={(e) => setEditValue(x,"location",e.target.value)} onBlur={() => saveTextField(x,"location","Location saved")} onKeyDown={(e) => { if(e.key==="Enter"){ e.currentTarget.blur(); } }} /></label>
+                    {x.category === "eat" ? <label>Meal type <select value={x.mealType || "any"} onChange={(e) => patch(x,{mealType:e.target.value},"Meal type updated")}>{mealTypes.map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label> : null}
+                  </div>
+
+                  <div className="us-media-controls">
+                    <label>Card emoji
+                      <input
+                        className="us-emoji-input"
+                        value={x.emoji || categoryMeta[x.category]?.emoji || "✦"}
+                        maxLength={4}
+                        onChange={(e) => patch(x,{emoji:e.target.value},"Emoji updated")}
+                      />
+                    </label>
+                    <label className="us-photo-control">
+                      {x.cover ? "Change photo" : "Add photo"}
+                      <input type="file" accept="image/*" onChange={(e) => handleCoverUpload(x,e.target.files?.[0])} />
+                    </label>
+                    {x.cover ? <button className="us-remove-photo" onClick={()=>patch(x,{cover:null},"Photo removed")}>Remove photo</button> : null}
+                  </div>
+
+                  <div className="us-ratings">
+                    <label>Charlie /10 <input type="number" min="1" max="10" value={x.ratings?.Charlie || ""} onChange={(e) => patch(x, { ratings: { ...x.ratings, Charlie: Number(e.target.value) || null } }, "Charlie rating saved")} /></label>
+                    <label>Tayla /10 <input type="number" min="1" max="10" value={x.ratings?.Tayla || ""} onChange={(e) => patch(x, { ratings: { ...x.ratings, Tayla: Number(e.target.value) || null } }, "Tayla rating saved")} /></label>
+                  </div>
+                </div>
+              ) : null}
             </article>
           ))}
           {!filtered.length ? (
