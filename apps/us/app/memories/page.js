@@ -108,6 +108,7 @@ export default function Memories(){
           <div className="us-nav-drawer">
             <div className="us-nav-links">
               <a href="/">US</a>
+              <a href="/?inbox=1">Inbox</a>
               <button className="active" onClick={()=>{setTab("memories");setMemoryFilter(null);setNavOpen(false);}}>Memories</button>
             </div>
             <button className="us-nav-logout" onClick={doLogout}>Log out</button>
