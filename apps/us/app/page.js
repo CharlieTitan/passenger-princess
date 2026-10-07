@@ -508,7 +508,8 @@ export default function Us() {
       charlieScore:challengeDraft.charlieScore === "" ? null : challengeDraft.charlieScore,
       taylaScore:challengeDraft.taylaScore === "" ? null : challengeDraft.taylaScore,
       outcome:challengeDraft.outcome.trim(),
-      resultAt:(challengeDraft.winner || challengeDraft.charlieScore !== "" || challengeDraft.taylaScore !== "" || challengeDraft.outcome.trim()) ? (previous.resultAt || new Date().toISOString()) : null
+      resultAt:(challengeDraft.winner || challengeDraft.charlieScore !== "" || challengeDraft.taylaScore !== "" || challengeDraft.outcome.trim()) ? (previous.resultAt || new Date().toISOString()) : null,
+      seriesId: previous.seriesId || challengeItem.repeatOf || challengeItem.id
     };
     const ok=await patch(challengeItem,{challenge,list:challengeItem.list==="date-ideas"?"challenges":challengeItem.list},"Challenge saved 🏆");
     if(ok) setChallengeItem(null);
@@ -546,7 +547,8 @@ export default function Us() {
           taylaScore:null,
           outcome:"",
           resultAt:null,
-          rematchOf:item.id
+          rematchOf:item.id,
+          seriesId:c.seriesId || item.repeatOf || item.id
         }
       })
     });
@@ -559,6 +561,29 @@ export default function Us() {
     setItems((current)=>[...current,d.item]);
     setToast("Rematch added 🏆");
     setTimeout(()=>setToast(""),1600);
+  }
+
+  function challengeSeries(item) {
+    const explicit=item.challenge?.seriesId;
+    const rootId=explicit || item.repeatOf || item.challenge?.rematchOf || item.id;
+    const related=items.filter((candidate)=>{
+      if(!candidate.challenge) return false;
+      const candidateRoot=candidate.challenge.seriesId || candidate.repeatOf || candidate.challenge?.rematchOf || candidate.id;
+      return candidateRoot===rootId || candidate.id===rootId;
+    });
+    if(item.challenge && !related.some((x)=>x.id===item.id)) related.push(item);
+
+    const wins={Charlie:0,Tayla:0,Draw:0};
+    related.forEach((round)=>{
+      const winner=round.challenge?.winner;
+      if(winner && wins[winner]!==undefined) wins[winner]+=1;
+    });
+
+    const completed=related
+      .filter((round)=>round.challenge?.winner || round.challenge?.charlieScore!=null || round.challenge?.taylaScore!=null)
+      .sort((a,b)=>new Date(a.challenge?.resultAt || a.doneAt || a.createdAt || 0)-new Date(b.challenge?.resultAt || b.doneAt || b.createdAt || 0));
+
+    return {wins,completed,rounds:related.length};
   }
 
   function pollResult(poll){
@@ -1156,6 +1181,28 @@ export default function Us() {
                             <span>{x.challenge.scoring==="winner"?"Winner only":x.challenge.scoring==="points"?"Points":"Score"}</span>
                             {x.challenge.stakes ? <span>Stakes: {x.challenge.stakes}</span> : null}
                           </div>
+                          {(()=>{
+                            const series=challengeSeries(x);
+                            return series.completed.length ? (
+                              <div className="us-challenge-series">
+                                <div>
+                                  <small>SERIES</small>
+                                  <b>Charlie {series.wins.Charlie} — {series.wins.Tayla} Tayla</b>
+                                  {series.wins.Draw ? <span>{series.wins.Draw} draw{series.wins.Draw===1?"":"s"}</span> : null}
+                                </div>
+                                <div className="us-challenge-rounds">
+                                  {series.completed.map((round,index)=>(
+                                    <span key={round.id}>
+                                      R{index+1} · {round.challenge?.winner || "Result"}
+                                      {(round.challenge?.charlieScore!=null || round.challenge?.taylaScore!=null)
+                                        ? " · "+(round.challenge?.charlieScore ?? "—")+"–"+(round.challenge?.taylaScore ?? "—")
+                                        : ""}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            ) : null;
+                          })()}
                           {(x.challenge.winner || x.challenge.charlieScore!=null || x.challenge.taylaScore!=null || x.challenge.outcome) ? (
                             <div className="us-challenge-result">
                               {x.challenge.winner ? <b>🏆 {x.challenge.winner}</b> : null}
