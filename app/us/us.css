@@ -39,3 +39,9 @@
   transform:none;
   zoom:1;
 }
+
+.us-filter-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#2d2829;color:#fff;border-radius:16px;padding:12px 14px;margin:2px 0 12px;animation:usFade .2s ease}
+.us-filter-banner div{display:flex;flex-direction:column;gap:2px}
+.us-filter-banner small{font-size:8px;letter-spacing:1.4px;color:#cbbfc2}
+.us-filter-banner b{font-size:14px}
+.us-filter-banner button{width:auto;min-height:30px;border-radius:999px;padding:0 10px;background:#fff;color:#2d2829;font-size:9px}
