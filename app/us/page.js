@@ -134,7 +134,7 @@ export default function Us() {
     return items.filter((x) => {
       if (shortcut === "Try Again" && !x.tryAgain) return false;
       if (shortcut === "Planned" && x.status !== "planned") return false;
-      if (shortcut === "Tonight" && !(x.status !== "done" && (x.effort === "low" || x.effort === "normal"))) return false;
+      if (shortcut === "Tonight" && !(x.status !== "done" && x.status !== "archived" && x.timeHorizon === "tonight")) return false;
       if (!shortcut && x.category !== category) return false;
       if (query && !x.title.toLowerCase().includes(query.toLowerCase())) return false;
       return true;
@@ -282,6 +282,16 @@ export default function Us() {
           </section>
         ) : null}
         {wheel ? <section className="us-wheel">SPINNING…</section> : null}
+
+        {shortcut ? (
+          <section className="us-filter-banner">
+            <div>
+              <small>FILTERING</small>
+              <b>{shortcut}</b>
+            </div>
+            <button onClick={() => setShortcut("")}>Clear</button>
+          </section>
+        ) : null}
 
         <section className="us-toolbar">
           <input placeholder="Search our lists…" value={query} onChange={(e) => setQuery(e.target.value)} />
