@@ -18,6 +18,7 @@ export default function Us() {
   const [activity, setActivity] = useState([]);
   const [polls, setPolls] = useState([]);
   const [customLists, setCustomLists] = useState([]);
+  const [inbox,setInbox]=useState([]);
   const [loading, setLoading] = useState(true);
   const [login, setLogin] = useState({ username: "Charlie", password: "" });
   const [category, setCategory] = useState("eat");
@@ -51,6 +52,9 @@ export default function Us() {
   const [challengeItem, setChallengeItem] = useState(null);
   const [challengeDraft, setChallengeDraft] = useState({scoring:"winner",stakes:"",winner:"",charlieScore:"",taylaScore:"",outcome:""});
   const [navOpen,setNavOpen]=useState(false);
+  const [saveOpen,setSaveOpen]=useState(false);
+  const [inboxOpen,setInboxOpen]=useState(false);
+  const [saveDraft,setSaveDraft]=useState({title:"",content:""});
 
   async function load() {
     setLoading(true);
@@ -62,6 +66,7 @@ export default function Us() {
       setActivity(d.activity);
       setPolls(d.polls || []);
       setCustomLists(d.customLists || []);
+      setInbox(d.inbox || []);
     }
     setLoading(false);
   }
@@ -75,6 +80,7 @@ export default function Us() {
     setActivity([]);
     setPolls([]);
     setCustomLists([]);
+    setInbox([]);
     setLogin({ username: "Charlie", password: "" });
   }
 
@@ -597,6 +603,71 @@ export default function Us() {
     return {wins,completed,rounds:related.length};
   }
 
+  async function saveToInbox(){
+    const content=saveDraft.content.trim();
+    const title=saveDraft.title.trim();
+    if(!content && !title) return;
+    const r=await fetch("/api/us",{
+      method:"POST",
+      headers:{"content-type":"application/json"},
+      body:JSON.stringify({action:"createInbox",title,content})
+    });
+    if(!r.ok){
+      setToast("Couldn’t save that");
+      setTimeout(()=>setToast(""),1800);
+      return;
+    }
+    const d=await r.json();
+    setInbox(current=>[d.inbox,...current]);
+    setSaveDraft({title:"",content:""});
+    setSaveOpen(false);
+    setToast("Saved for later ✓");
+    setTimeout(()=>setToast(""),1500);
+  }
+
+  async function convertInbox(entry,category){
+    const r=await fetch("/api/us",{
+      method:"POST",
+      headers:{"content-type":"application/json"},
+      body:JSON.stringify({action:"convertInbox",id:entry.id,category})
+    });
+    if(!r.ok){
+      setToast("Couldn’t add that");
+      setTimeout(()=>setToast(""),1800);
+      return;
+    }
+    const d=await r.json();
+    setInbox(current=>current.filter(x=>x.id!==entry.id));
+    setItems(current=>[...current,d.item]);
+    setToast("Added to "+categoryMeta[category].label+" ✓");
+    setTimeout(()=>setToast(""),1500);
+  }
+
+  async function archiveInbox(entry){
+    const r=await fetch("/api/us",{
+      method:"PATCH",
+      headers:{"content-type":"application/json"},
+      body:JSON.stringify({action:"archiveInbox",id:entry.id})
+    });
+    if(!r.ok) return;
+    setInbox(current=>current.filter(x=>x.id!==entry.id));
+    setToast("Saved item archived");
+    setTimeout(()=>setToast(""),1400);
+  }
+
+  async function deleteInbox(entry){
+    if(!window.confirm("Delete this saved item?")) return;
+    const r=await fetch("/api/us",{
+      method:"DELETE",
+      headers:{"content-type":"application/json"},
+      body:JSON.stringify({type:"inbox",id:entry.id})
+    });
+    if(!r.ok) return;
+    setInbox(current=>current.filter(x=>x.id!==entry.id));
+    setToast("Deleted");
+    setTimeout(()=>setToast(""),1200);
+  }
+
   function pollResult(poll){
     const votes=poll.votes||{};
     const both=!!votes.Charlie && !!votes.Tayla;
@@ -951,6 +1022,8 @@ export default function Us() {
         ) : null}
 
         <section className="us-shortcuts">
+          <button className="us-save-shortcut" onClick={()=>setSaveOpen(true)}>Save something</button>
+          <button className="us-inbox-shortcut" onClick={()=>setInboxOpen(!inboxOpen)}>Inbox{inbox.length ? " · "+inbox.length : ""}</button>
           {quickShortcuts.map((s) => (
             <button
               key={s}
@@ -975,6 +1048,41 @@ export default function Us() {
             </button>
           ))}
         </section>
+
+        {inboxOpen ? (
+          <section className="us-inbox-panel">
+            <div className="us-inbox-head">
+              <div><small>SAVED FOR LATER</small><h2>Inbox</h2></div>
+              <button onClick={()=>setInboxOpen(false)}>×</button>
+            </div>
+            {inbox.length ? (
+              <div className="us-inbox-list">
+                {inbox.map(entry=>(
+                  <article className="us-inbox-card" key={entry.id}>
+                    <div className="us-inbox-copy">
+                      <small>Saved by {entry.addedBy}</small>
+                      <h3>{entry.title || (entry.url ? "Saved link" : "Quick thought")}</h3>
+                      {entry.content && entry.content!==entry.url ? <p>{entry.content}</p> : null}
+                      {entry.url ? <a href={entry.url} target="_blank" rel="noreferrer">{entry.url.replace(/^https?:\/\//,"").slice(0,58)}{entry.url.length>64?"…":""}</a> : null}
+                    </div>
+                    <div className="us-inbox-convert">
+                      <span>Turn into</span>
+                      <div>
+                        {Object.entries(categoryMeta).map(([key,value])=>(
+                          <button key={key} onClick={()=>convertInbox(entry,key)}>{value.emoji} {value.label}</button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="us-inbox-actions">
+                      <button onClick={()=>archiveInbox(entry)}>Archive</button>
+                      <button onClick={()=>deleteInbox(entry)}>Delete</button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : <div className="us-inbox-empty">Nothing waiting. Send future-you something useful.</div>}
+          </section>
+        ) : null}
 
                 {pickerMode ? (
           <section className="us-picker-panel">
@@ -1681,6 +1789,24 @@ export default function Us() {
                 >›</button>
               </>
             ) : null}
+          </div>
+        </div>
+      ) : null}
+
+      {saveOpen ? (
+        <div className="us-modal">
+          <div className="us-modal-card us-save-modal">
+            <button className="us-close" onClick={()=>setSaveOpen(false)}>×</button>
+            <small>QUICK SAVE</small>
+            <h2>Save it for later.</h2>
+            <label>Title <span>optional</span>
+              <input placeholder="Restaurant, film, idea…" value={saveDraft.title} onChange={e=>setSaveDraft({...saveDraft,title:e.target.value})}/>
+            </label>
+            <label>Link or note
+              <textarea autoFocus placeholder="Paste a TikTok / Instagram / website link, or just type ‘we should do this’…" value={saveDraft.content} onChange={e=>setSaveDraft({...saveDraft,content:e.target.value})}/>
+            </label>
+            <p className="us-save-help">No organising required. Sort it into Eat, Watch, Go or Do whenever you want.</p>
+            <button className="us-primary us-quick-submit" disabled={!saveDraft.title.trim()&&!saveDraft.content.trim()} onClick={saveToInbox}>SAVE FOR LATER →</button>
           </div>
         </div>
       ) : null}
