@@ -36,6 +36,7 @@ export default function Us() {
   const [recoveryMessage, setRecoveryMessage] = useState("");
   const [newListOpen, setNewListOpen] = useState(false);
   const [newList, setNewList] = useState({ name:"", emoji:"✨" });
+  const [editingList, setEditingList] = useState(null);
 
   async function load() {
     setLoading(true);
@@ -171,6 +172,26 @@ export default function Us() {
     setNewList({name:"",emoji:"✨"});
     setNewListOpen(false);
     setToast("List created ✓");
+    setTimeout(()=>setToast(""),1600);
+  }
+
+
+  async function updateCustomList() {
+    if (!editingList || !editingList.name.trim()) return;
+    const r = await fetch("/api/us", {
+      method:"PATCH",
+      headers:{"content-type":"application/json"},
+      body:JSON.stringify({ action:"updateList", id:editingList.id, name:editingList.name.trim(), emoji:editingList.emoji || "✨" })
+    });
+    if (!r.ok) {
+      setToast("Couldn’t update that list");
+      setTimeout(()=>setToast(""),1800);
+      return;
+    }
+    const d = await r.json();
+    setCustomLists((current)=>current.map((list)=>list.id===d.list.id?d.list:list));
+    setEditingList(null);
+    setToast("List updated ✓");
     setTimeout(()=>setToast(""),1600);
   }
 
@@ -382,10 +403,21 @@ export default function Us() {
               <small>{items.filter((x)=>x.category===category).length}</small>
             </button>
             {listsForCategory(category).map((list) => (
-              <button key={list.id} className={sublist===list.id?"active":""} onClick={()=>setSublist(list.id)}>
-                <span>{list.emoji} {list.label}</span>
-                <small>{items.filter((x)=>x.category===category && x.list===list.id).length}</small>
-              </button>
+              <div key={list.id} className={"us-sublist-wrap"+(sublist===list.id?" active":"")}>
+                <button className="us-sublist-main" onClick={()=>setSublist(list.id)}>
+                  <span>{list.emoji} {list.label}</span>
+                  <small>{items.filter((x)=>x.category===category && x.list===list.id).length}</small>
+                </button>
+                {list.custom ? (
+                  <button
+                    className="us-sublist-edit"
+                    aria-label={"Edit "+list.label}
+                    onClick={()=>setEditingList({id:list.id,name:list.label,emoji:list.emoji,category})}
+                  >
+                    ···
+                  </button>
+                ) : null}
+              </div>
             ))}
             <button className="us-new-list-btn" onClick={()=>setNewListOpen(true)}>
               <span>＋ New list</span>
@@ -620,6 +652,23 @@ export default function Us() {
       </div>
 
       {toast ? <div className="us-toast">{toast}</div> : null}
+
+      {editingList ? (
+        <div className="us-modal">
+          <div className="us-modal-card us-list-modal">
+            <button className="us-close" onClick={()=>setEditingList(null)}>×</button>
+            <small>EDIT LIST</small>
+            <h2>Make it yours.</h2>
+            <label className="us-list-field">Emoji
+              <input value={editingList.emoji} maxLength={4} onChange={(e)=>setEditingList({...editingList,emoji:e.target.value})} />
+            </label>
+            <label className="us-list-field">List name
+              <input value={editingList.name} onChange={(e)=>setEditingList({...editingList,name:e.target.value})} onKeyDown={(e)=>{if(e.key==="Enter")updateCustomList();}} />
+            </label>
+            <button className="us-primary us-quick-submit" disabled={!editingList.name.trim()} onClick={updateCustomList}>SAVE CHANGES →</button>
+          </div>
+        </div>
+      ) : null}
 
       {newListOpen ? (
         <div className="us-modal">
