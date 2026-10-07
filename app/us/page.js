@@ -1043,7 +1043,7 @@ export default function Us() {
           ) : null}
         </section>
 
-        <section className="us-activity">
+        <a className="us-memories-link" href="/us/memories"><span>Memories</span><small>Done, but not gone →</small></a><section className="us-activity">
           <div className="us-section-title"><span>Recent activity</span></div>
           {activity.slice(0, 8).map((a) => (
             <div key={a.id}><b>{a.user}</b> {a.type} {a.title || "an item"}</div>
