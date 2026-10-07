@@ -17,6 +17,9 @@ export default function Us() {
   const [draft, setDraft] = useState({ title: "", category: "eat", list: "restaurants", effort: "normal", timeHorizon: "soon", mealType: "any" });
   const [wheel, setWheel] = useState(false);
   const [wheelPick, setWheelPick] = useState(null);
+  const [pendingIds, setPendingIds] = useState({});
+  const [toast, setToast] = useState("");
+  const [editValues, setEditValues] = useState({});
   const [recovering, setRecovering] = useState(false);
   const [recovery, setRecovery] = useState({ recoveryCode: "", newPassword: "" });
   const [recoveryMessage, setRecoveryMessage] = useState("");
@@ -83,13 +86,48 @@ export default function Us() {
     }
   }
 
-  async function patch(item, changes) {
-    const r = await fetch("/api/us", {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ id: item.id, ...changes })
-    });
-    if (r.ok) load();
+  async function patch(item, changes, successMessage = "Saved") {
+    const previous = items;
+    setPendingIds((s) => ({ ...s, [item.id]: true }));
+    setItems((current) => current.map((x) => x.id === item.id ? { ...x, ...changes, updatedBy: user } : x));
+    try {
+      const r = await fetch("/api/us", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ id: item.id, ...changes })
+      });
+      if (!r.ok) throw new Error("Save failed");
+      const d = await r.json();
+      setItems((current) => current.map((x) => x.id === item.id ? d.item : x));
+      setToast(successMessage);
+      setTimeout(() => setToast(""), 1600);
+      return true;
+    } catch (e) {
+      setItems(previous);
+      setToast("Couldn’t save that");
+      setTimeout(() => setToast(""), 2200);
+      return false;
+    } finally {
+      setPendingIds((s) => ({ ...s, [item.id]: false }));
+    }
+  }
+
+  function editValue(item, field) {
+    const key = item.id + ":" + field;
+    return editValues[key] !== undefined ? editValues[key] : (item[field] || "");
+  }
+
+  function setEditValue(item, field, value) {
+    const key = item.id + ":" + field;
+    setEditValues((s) => ({ ...s, [key]: value }));
+  }
+
+  async function saveTextField(item, field, message) {
+    const key = item.id + ":" + field;
+    if (editValues[key] === undefined || editValues[key] === (item[field] || "")) return;
+    const value = editValues[key];
+    const ok = await patch(item, { [field]: value }, message);
+    if (ok) setEditValues((s) => { const n = { ...s }; delete n[key]; return n; });
   }
 
   const filtered = useMemo(() => {
@@ -263,20 +301,21 @@ export default function Us() {
                   {x.tryAgain ? <span>TRY AGAIN</span> : null}
                 </div>
                 <h3>{x.title}</h3>
+                {pendingIds[x.id] ? <div className="us-saving"><span />Saving…</div> : null}
                 <p>Added by {x.addedBy} · Updated by {x.updatedBy}</p>
                 {open === x.id ? (
                   <div className="us-detail" onClick={(e) => e.stopPropagation()}>
                     <div className="us-actions">
-                      <button onClick={() => patch(x, { status: "maybe" })}>Maybe</button>
-                      <button onClick={() => patch(x, { status: "idea" })}>Idea</button>
-                      <button onClick={() => patch(x, { status: "planned" })}>Planned</button>
-                      <button onClick={() => patch(x, { status: "done", doneAt: new Date().toISOString() })}>Done</button>
+                      <button className={x.status === "maybe" ? "active" : ""} disabled={!!pendingIds[x.id]} onClick={() => patch(x, { status: "maybe" }, "Moved to Maybe")}>Maybe</button>
+                      <button className={x.status === "idea" ? "active" : ""} disabled={!!pendingIds[x.id]} onClick={() => patch(x, { status: "idea" }, "Moved to Idea")}>Idea</button>
+                      <button className={x.status === "planned" ? "active" : ""} disabled={!!pendingIds[x.id]} onClick={() => patch(x, { status: "planned" }, "Planned ✓")}>Planned</button>
+                      <button className={x.status === "done" ? "active" : ""} disabled={!!pendingIds[x.id]} onClick={() => patch(x, { status: "done", doneAt: new Date().toISOString() }, "Done ✓")}>Done</button>
                     </div>
-                    <label>Try Again <input type="checkbox" checked={!!x.tryAgain} onChange={(e) => patch(x, { tryAgain: e.target.checked })} /></label>
-                    <label>Location <input value={x.location || ""} onChange={(e) => patch(x, { location: e.target.value })} /></label>{x.category === "eat" ? <label>Meal type <select value={x.mealType || "any"} onChange={(e) => patch(x,{mealType:e.target.value})}>{mealTypes.map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label> : null}
+                    <label>Try Again <input type="checkbox" checked={!!x.tryAgain} disabled={!!pendingIds[x.id]} onChange={(e) => patch(x, { tryAgain: e.target.checked }, e.target.checked ? "Added to Try Again" : "Removed from Try Again")} /></label>
+                    <label>Location <input value={editValue(x,"location")} onChange={(e) => setEditValue(x,"location",e.target.value)} onBlur={() => saveTextField(x,"location","Location saved")} onKeyDown={(e) => { if(e.key==="Enter"){ e.currentTarget.blur(); } }} /></label>{x.category === "eat" ? <label>Meal type <select value={x.mealType || "any"} onChange={(e) => patch(x,{mealType:e.target.value},"Meal type updated")}>{mealTypes.map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label> : null}
                     <div className="us-ratings">
-                      <label>Charlie /10 <input type="number" min="1" max="10" value={x.ratings?.Charlie || ""} onChange={(e) => patch(x, { ratings: { ...x.ratings, Charlie: Number(e.target.value) || null } })} /></label>
-                      <label>Tayla /10 <input type="number" min="1" max="10" value={x.ratings?.Tayla || ""} onChange={(e) => patch(x, { ratings: { ...x.ratings, Tayla: Number(e.target.value) || null } })} /></label>
+                      <label>Charlie /10 <input type="number" min="1" max="10" value={x.ratings?.Charlie || ""} onChange={(e) => patch(x, { ratings: { ...x.ratings, Charlie: Number(e.target.value) || null } }, "Charlie rating saved")} /></label>
+                      <label>Tayla /10 <input type="number" min="1" max="10" value={x.ratings?.Tayla || ""} onChange={(e) => patch(x, { ratings: { ...x.ratings, Tayla: Number(e.target.value) || null } }, "Tayla rating saved")} /></label>
                     </div>
                   </div>
                 ) : null}
@@ -293,6 +332,8 @@ export default function Us() {
           ))}
         </section>
       </div>
+
+      {toast ? <div className="us-toast">{toast}</div> : null}
 
       {quick ? (
         <div className="us-modal">
