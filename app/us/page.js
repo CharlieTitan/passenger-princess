@@ -908,9 +908,32 @@ export default function Us() {
                     </div>
                   </div>
 
-                  <div className="us-ratings">
-                    <label>Charlie /10 <input type="number" min="1" max="10" value={x.ratings?.Charlie || ""} onChange={(e) => patch(x, { ratings: { ...x.ratings, Charlie: Number(e.target.value) || null } }, "Charlie rating saved")} /></label>
-                    <label>Tayla /10 <input type="number" min="1" max="10" value={x.ratings?.Tayla || ""} onChange={(e) => patch(x, { ratings: { ...x.ratings, Tayla: Number(e.target.value) || null } }, "Tayla rating saved")} /></label>
+                  <div className="us-rating-section">
+                    <div className="us-rating-head">
+                      <span>Ratings</span>
+                      {x.ratings?.Charlie && x.ratings?.Tayla ? <small className="complete">Complete ✓</small> : <small>Waiting for both</small>}
+                    </div>
+                    <div className="us-ratings">
+                      {["Charlie","Tayla"].map((person)=>(
+                        <div className={"us-rating-card"+(person===user?" editable":" locked")} key={person}>
+                          <label>{person} /10</label>
+                          {person===user ? (
+                            <input
+                              type="number"
+                              min="1"
+                              max="10"
+                              value={x.ratings?.[person] || ""}
+                              placeholder="—"
+                              onChange={(e)=>patch(x,{ratings:{[person]:Number(e.target.value)||null}},person+" rating saved")}
+                            />
+                          ) : (
+                            <div className="us-rating-readonly">
+                              {x.ratings?.[person] ? <b>{x.ratings[person]}/10</b> : <span>Waiting for {person}</span>}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               ) : null}
