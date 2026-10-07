@@ -754,3 +754,9 @@ body:before{display:none!important}
   .us-hero{padding-top:24px}
   .us-hero-add{top:14px}
 }
+
+/* Fix standalone shell layout after moving the app header outside .us-shell */
+.us-bg{display:block!important;justify-content:initial!important;width:100%;overflow-x:hidden}
+.us-appbar{width:100%}
+.us-appbar-inner{width:min(100%,920px);margin:0 auto}
+.us-shell{width:min(100%,920px);margin:0 auto}
