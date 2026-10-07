@@ -69,3 +69,9 @@
 .us-picker-result-inline p{font-size:10px;color:#8c7c80;margin:0 0 12px}
 .us-picker-result-inline>div{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 @media(max-width:700px){.us-picker-row{grid-template-columns:1fr 1fr}}
+
+.us-quick-card{max-height:88svh;overflow:auto}
+.us-quick-section{margin-top:16px}
+.us-quick-section>span{display:block;font-size:9px;color:#8b7c80;margin-bottom:7px}
+.us-quick-submit{width:100%;margin-top:18px;min-height:48px;border-radius:13px}
+.us-quick-submit:disabled{opacity:.45}
