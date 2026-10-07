@@ -257,3 +257,29 @@
   font-weight:400!important;
 }
 .us-delete-btn:hover{color:#8f666f!important}
+
+/* Delete is a destructive text action, never a pill/button */
+.us-archive-actions .us-delete-btn{
+  display:inline!important;
+  width:auto!important;
+  height:auto!important;
+  min-height:0!important;
+  padding:0!important;
+  margin:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:#b9adb0!important;
+  font-size:9px!important;
+  font-weight:400!important;
+  letter-spacing:0!important;
+  line-height:1.2!important;
+  text-transform:none!important;
+}
+.us-archive-actions .us-delete-btn:hover,
+.us-archive-actions .us-delete-btn:focus{
+  background:transparent!important;
+  color:#8f6f77!important;
+  box-shadow:none!important;
+}
