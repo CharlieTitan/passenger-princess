@@ -566,11 +566,21 @@ export default function Us() {
   function challengeSeries(item) {
     const explicit=item.challenge?.seriesId;
     const rootId=explicit || item.repeatOf || item.challenge?.rematchOf || item.id;
+    const normalTitle=(value="")=>value.toLowerCase().replace(/\s+/g," ").trim();
+
     const related=items.filter((candidate)=>{
       if(!candidate.challenge) return false;
       const candidateRoot=candidate.challenge.seriesId || candidate.repeatOf || candidate.challenge?.rematchOf || candidate.id;
-      return candidateRoot===rootId || candidate.id===rootId;
+      if(candidateRoot===rootId || candidate.id===rootId) return true;
+
+      // Legacy challenge/rematch items created before seriesId was introduced.
+      const legacyPair =
+        ["challenges","rematches"].includes(item.list) &&
+        ["challenges","rematches"].includes(candidate.list) &&
+        normalTitle(candidate.title)===normalTitle(item.title);
+      return legacyPair;
     });
+
     if(item.challenge && !related.some((x)=>x.id===item.id)) related.push(item);
 
     const wins={Charlie:0,Tayla:0,Draw:0};
@@ -580,7 +590,7 @@ export default function Us() {
     });
 
     const completed=related
-      .filter((round)=>round.challenge?.winner || round.challenge?.charlieScore!=null || round.challenge?.taylaScore!=null)
+      .filter((round)=>round.challenge?.winner || round.challenge?.charlieScore!=null || round.challenge?.taylaScore!=null || round.challenge?.score!=null)
       .sort((a,b)=>new Date(a.challenge?.resultAt || a.doneAt || a.createdAt || 0)-new Date(b.challenge?.resultAt || b.doneAt || b.createdAt || 0));
 
     return {wins,completed,rounds:related.length};
@@ -1166,7 +1176,7 @@ export default function Us() {
                     {x.category === "eat" ? <label>Meal type <select value={x.mealType || "any"} onChange={(e) => patch(x,{mealType:e.target.value},"Meal type updated")}>{mealTypes.map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label> : null}
                   </div>
 
-                  {x.category === "do" ? (
+                  {(x.challenge || (x.category === "do" && ["challenges","rematches"].includes(x.list))) ? (
                     <div className={"us-challenge-card"+(x.challenge?" active":"")}>
                       <div className="us-challenge-head">
                         <div>
@@ -1196,7 +1206,7 @@ export default function Us() {
                                       R{index+1} · {round.challenge?.winner || "Result"}
                                       {(round.challenge?.charlieScore!=null || round.challenge?.taylaScore!=null)
                                         ? " · "+(round.challenge?.charlieScore ?? "—")+"–"+(round.challenge?.taylaScore ?? "—")
-                                        : ""}
+                                        : (round.challenge?.score!=null ? " · "+round.challenge.score : "")}
                                     </span>
                                   ))}
                                 </div>
