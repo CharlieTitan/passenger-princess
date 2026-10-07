@@ -44,7 +44,7 @@ export default function Us() {
   const [newList, setNewList] = useState({ name:"", emoji:"✨" });
   const [editingList, setEditingList] = useState(null);
   const [planningItem, setPlanningItem] = useState(null);
-  const [planDraft, setPlanDraft] = useState({ date:"", time:"" });
+  const [planDraft, setPlanDraft] = useState({ date:"", time:"", location:"", bookingUrl:"", notes:"", recurrence:"none", reminderPreset:"none" });
 
   async function load() {
     setLoading(true);
@@ -302,7 +302,15 @@ export default function Us() {
 
   function openPlan(item) {
     setPlanningItem(item);
-    setPlanDraft({ date:item.planDate || "", time:item.planTime || "" });
+    setPlanDraft({
+      date:item.planDate || "",
+      time:item.planTime || "",
+      location:item.location || "",
+      bookingUrl:item.bookingUrl || "",
+      notes:item.planNotes || "",
+      recurrence:item.recurrence || "none",
+      reminderPreset:item.reminderPreset || "none"
+    });
   }
 
   async function savePlan() {
@@ -314,12 +322,37 @@ export default function Us() {
     const ok = await patch(planningItem, {
       status:"planned",
       planDate:planDraft.date,
-      planTime:planDraft.time || ""
+      planTime:planDraft.time || "",
+      location:planDraft.location || planningItem.location || "",
+      bookingUrl:planDraft.bookingUrl || "",
+      planNotes:planDraft.notes || "",
+      recurrence:planDraft.recurrence || "none",
+      reminderPreset:planDraft.reminderPreset || "none"
     }, "Plan locked in ✓");
     if (ok) {
       setPlanningItem(null);
-      setPlanDraft({date:"",time:""});
+      setPlanDraft({ date:"", time:"", location:"", bookingUrl:"", notes:"", recurrence:"none", reminderPreset:"none" });
     }
+  }
+
+  function googleCalendarUrl(item) {
+    if (!item.planDate) return "#";
+    const start=(item.planDate.replaceAll("-",""))+"T"+((item.planTime||"1900").replace(":","")+"00");
+    let end=start;
+    try {
+      const d=new Date(item.planDate+"T"+(item.planTime||"19:00"));
+      d.setHours(d.getHours()+2);
+      const pad=(n)=>String(n).padStart(2,"0");
+      end=d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+"T"+pad(d.getHours())+pad(d.getMinutes())+"00";
+    } catch {}
+    const params=new URLSearchParams({
+      action:"TEMPLATE",
+      text:item.title,
+      dates:start+"/"+end,
+      details:item.planNotes||"",
+      location:item.location||""
+    });
+    return "https://calendar.google.com/calendar/render?"+params.toString();
   }
 
   function plannedTimestamp(item) {
@@ -834,6 +867,28 @@ export default function Us() {
                     {x.category === "eat" ? <label>Meal type <select value={x.mealType || "any"} onChange={(e) => patch(x,{mealType:e.target.value},"Meal type updated")}>{mealTypes.map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label> : null}
                   </div>
 
+                  {x.status === "planned" ? (
+                    <div className="us-planned-summary">
+                      <div className="us-planned-summary-head">
+                        <span>Plan</span>
+                        <button onClick={()=>openPlan(x)}>Edit plan</button>
+                      </div>
+                      <div className="us-planned-meta">
+                        <span>{x.planDate || "No date"}</span>
+                        {x.planTime ? <span>{x.planTime}</span> : null}
+                        {x.location ? <span>{x.location}</span> : null}
+                        {x.recurrence && x.recurrence!=="none" ? <span>{x.recurrence}</span> : null}
+                        {x.reminderPreset && x.reminderPreset!=="none" ? <span>Reminder: {x.reminderPreset}</span> : null}
+                      </div>
+                      {x.planNotes ? <p>{x.planNotes}</p> : null}
+                      <div className="us-calendar-actions">
+                        <a href={googleCalendarUrl(x)} target="_blank" rel="noreferrer">Google Calendar</a>
+                        <a href={"/api/us-calendar?id="+encodeURIComponent(x.id)}>Apple / .ics</a>
+                        {x.bookingUrl ? <a href={x.bookingUrl} target="_blank" rel="noreferrer">Booking / link</a> : null}
+                      </div>
+                    </div>
+                  ) : null}
+
                   <div className="us-media-controls">
                     <label>Card emoji
                       <input
@@ -1059,7 +1114,8 @@ export default function Us() {
             <button className="us-close" onClick={()=>setPlanningItem(null)}>×</button>
             <small>PLAN IT</small>
             <h2>{planningItem.title}</h2>
-            <p>Give it a date so it can become the next thing on your home screen.</p>
+            <p>Give it enough detail that Future Us doesn’t have to remember anything.</p>
+
             <div className="us-plan-grid">
               <label>Date
                 <input type="date" value={planDraft.date} onChange={(e)=>setPlanDraft({...planDraft,date:e.target.value})} />
@@ -1068,7 +1124,43 @@ export default function Us() {
                 <input type="time" value={planDraft.time} onChange={(e)=>setPlanDraft({...planDraft,time:e.target.value})} />
               </label>
             </div>
-            <button className="us-primary us-quick-submit" disabled={!planDraft.date} onClick={savePlan}>LOCK IN PLAN →</button>
+
+            <label className="us-plan-field">Location
+              <input placeholder="Where?" value={planDraft.location} onChange={(e)=>setPlanDraft({...planDraft,location:e.target.value})} />
+            </label>
+
+            <label className="us-plan-field">Booking / link <span>optional</span>
+              <input type="url" placeholder="Maps, booking, tickets…" value={planDraft.bookingUrl} onChange={(e)=>setPlanDraft({...planDraft,bookingUrl:e.target.value})} />
+            </label>
+
+            <label className="us-plan-field">Notes <span>optional</span>
+              <textarea placeholder="Anything useful…" value={planDraft.notes} onChange={(e)=>setPlanDraft({...planDraft,notes:e.target.value})} />
+            </label>
+
+            <div className="us-plan-grid">
+              <label>Recurrence
+                <select value={planDraft.recurrence} onChange={(e)=>setPlanDraft({...planDraft,recurrence:e.target.value})}>
+                  <option value="none">Doesn’t repeat</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="yearly">Yearly</option>
+                  <option value="every-2-weeks">Every 2 weeks</option>
+                </select>
+              </label>
+
+              <label>Reminder
+                <select value={planDraft.reminderPreset} onChange={(e)=>setPlanDraft({...planDraft,reminderPreset:e.target.value})}>
+                  <option value="none">No reminder</option>
+                  <option value="day-before">Day before</option>
+                  <option value="few-hours">A few hours before</option>
+                  <option value="one-hour">1 hour before</option>
+                </select>
+              </label>
+            </div>
+
+            <button className="us-primary us-quick-submit" disabled={!planDraft.date} onClick={savePlan}>
+              {planningItem.status==="planned" ? "SAVE PLAN →" : "LOCK IN PLAN →"}
+            </button>
           </div>
         </div>
       ) : null}
