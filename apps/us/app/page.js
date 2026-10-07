@@ -48,6 +48,8 @@ export default function Us() {
   const [planDraft, setPlanDraft] = useState({ date:"", time:"", location:"", bookingUrl:"", notes:"", recurrence:"none", reminderPreset:"none" });
   const [pollOpen, setPollOpen] = useState(false);
   const [pollDraft, setPollDraft] = useState({ question:"", options:[{label:"",itemId:null},{label:"",itemId:null}] });
+  const [challengeItem, setChallengeItem] = useState(null);
+  const [challengeDraft, setChallengeDraft] = useState({scoring:"winner",stakes:"",winner:"",charlieScore:"",taylaScore:"",outcome:""});
 
   async function load() {
     setLoading(true);
@@ -480,6 +482,83 @@ export default function Us() {
     }
     setToast("Poll deleted");
     setTimeout(()=>setToast(""),1400);
+  }
+
+  function openChallenge(item) {
+    const c=item.challenge || {};
+    setChallengeItem(item);
+    setChallengeDraft({
+      scoring:c.scoring || "winner",
+      stakes:c.stakes || "",
+      winner:c.winner || "",
+      charlieScore:c.charlieScore ?? "",
+      taylaScore:c.taylaScore ?? "",
+      outcome:c.outcome || ""
+    });
+  }
+
+  async function saveChallenge() {
+    if(!challengeItem) return;
+    const previous=challengeItem.challenge || {};
+    const challenge={
+      ...previous,
+      scoring:challengeDraft.scoring,
+      stakes:challengeDraft.stakes.trim(),
+      winner:challengeDraft.winner || null,
+      charlieScore:challengeDraft.charlieScore === "" ? null : challengeDraft.charlieScore,
+      taylaScore:challengeDraft.taylaScore === "" ? null : challengeDraft.taylaScore,
+      outcome:challengeDraft.outcome.trim(),
+      resultAt:(challengeDraft.winner || challengeDraft.charlieScore !== "" || challengeDraft.taylaScore !== "" || challengeDraft.outcome.trim()) ? (previous.resultAt || new Date().toISOString()) : null
+    };
+    const ok=await patch(challengeItem,{challenge,list:challengeItem.list==="date-ideas"?"challenges":challengeItem.list},"Challenge saved 🏆");
+    if(ok) setChallengeItem(null);
+  }
+
+  async function removeChallenge(item) {
+    await patch(item,{challenge:null},"Challenge removed");
+  }
+
+  async function rematchChallenge(item) {
+    const c=item.challenge || {};
+    const r=await fetch("/api/us",{
+      method:"POST",
+      headers:{"content-type":"application/json"},
+      body:JSON.stringify({
+        title:item.title,
+        category:"do",
+        list:"rematches",
+        status:"idea",
+        effort:item.effort || "normal",
+        timeHorizon:"soon",
+        priority:item.priority || "normal",
+        budget:item.budget || "",
+        duration:item.duration || "",
+        location:item.location || "",
+        tags:item.tags || [],
+        notes:item.notes || "",
+        emoji:item.emoji || null,
+        repeatOf:item.id,
+        challenge:{
+          scoring:c.scoring || "winner",
+          stakes:c.stakes || "",
+          winner:null,
+          charlieScore:null,
+          taylaScore:null,
+          outcome:"",
+          resultAt:null,
+          rematchOf:item.id
+        }
+      })
+    });
+    if(!r.ok){
+      setToast("Couldn’t create rematch");
+      setTimeout(()=>setToast(""),1800);
+      return;
+    }
+    const d=await r.json();
+    setItems((current)=>[...current,d.item]);
+    setToast("Rematch added 🏆");
+    setTimeout(()=>setToast(""),1600);
   }
 
   function pollResult(poll){
@@ -1062,6 +1141,37 @@ export default function Us() {
                     {x.category === "eat" ? <label>Meal type <select value={x.mealType || "any"} onChange={(e) => patch(x,{mealType:e.target.value},"Meal type updated")}>{mealTypes.map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label> : null}
                   </div>
 
+                  {x.category === "do" ? (
+                    <div className={"us-challenge-card"+(x.challenge?" active":"")}>
+                      <div className="us-challenge-head">
+                        <div>
+                          <small>CHALLENGE MODE</small>
+                          <b>{x.challenge ? "Charlie vs Tayla" : "Make this competitive?"}</b>
+                        </div>
+                        <button onClick={()=>openChallenge(x)}>{x.challenge ? "Edit" : "SET UP →"}</button>
+                      </div>
+                      {x.challenge ? (
+                        <>
+                          <div className="us-challenge-meta">
+                            <span>{x.challenge.scoring==="winner"?"Winner only":x.challenge.scoring==="points"?"Points":"Score"}</span>
+                            {x.challenge.stakes ? <span>Stakes: {x.challenge.stakes}</span> : null}
+                          </div>
+                          {(x.challenge.winner || x.challenge.charlieScore!=null || x.challenge.taylaScore!=null || x.challenge.outcome) ? (
+                            <div className="us-challenge-result">
+                              {x.challenge.winner ? <b>🏆 {x.challenge.winner}</b> : null}
+                              {(x.challenge.charlieScore!=null || x.challenge.taylaScore!=null) ? <span>Charlie {x.challenge.charlieScore ?? "—"} · {x.challenge.taylaScore ?? "—"} Tayla</span> : null}
+                              {x.challenge.outcome ? <small>{x.challenge.outcome}</small> : null}
+                            </div>
+                          ) : x.status==="done" ? <button className="us-challenge-result-btn" onClick={()=>openChallenge(x)}>ADD RESULT →</button> : <small className="us-challenge-waiting">Result goes in once it’s done.</small>}
+                          <div className="us-challenge-actions">
+                            {x.status==="done" ? <button onClick={()=>rematchChallenge(x)}>REMATCH →</button> : null}
+                            <button onClick={()=>removeChallenge(x)}>Remove challenge</button>
+                          </div>
+                        </>
+                      ) : null}
+                    </div>
+                  ) : null}
+
                   {x.status === "planned" ? (
                     <div className="us-planned-summary">
                       <div className="us-planned-summary-head">
@@ -1500,6 +1610,59 @@ export default function Us() {
                 >›</button>
               </>
             ) : null}
+          </div>
+        </div>
+      ) : null}
+
+      {challengeItem ? (
+        <div className="us-modal">
+          <div className="us-modal-card us-challenge-modal">
+            <button className="us-close" onClick={()=>setChallengeItem(null)}>×</button>
+            <small>CHALLENGE MODE</small>
+            <h2>Charlie vs Tayla.</h2>
+
+            <div className="us-quick-section">
+              <span>How are we scoring it?</span>
+              <div className="us-picker-chips">
+                {[["winner","Winner only"],["points","Points"],["score","Score"]].map(([value,label])=>(
+                  <button key={value} className={challengeDraft.scoring===value?"active":""} onClick={()=>setChallengeDraft({...challengeDraft,scoring:value})}>{label}</button>
+                ))}
+              </div>
+            </div>
+
+            <label className="us-challenge-field">Stakes <span>optional</span>
+              <input placeholder="Loser buys coffee, winner picks dinner…" value={challengeDraft.stakes} onChange={(e)=>setChallengeDraft({...challengeDraft,stakes:e.target.value})}/>
+            </label>
+
+            {challengeItem.status==="done" ? (
+              <div className="us-challenge-result-form">
+                <span>Result</span>
+                <div className="us-picker-chips">
+                  {[["Charlie","Charlie won"],["Tayla","Tayla won"],["Draw","Draw"]].map(([value,label])=>(
+                    <button key={value} className={challengeDraft.winner===value?"active":""} onClick={()=>setChallengeDraft({...challengeDraft,winner:value})}>{label}</button>
+                  ))}
+                </div>
+
+                {challengeDraft.scoring!=="winner" ? (
+                  <div className="us-plan-grid">
+                    <label>Charlie
+                      <input inputMode="decimal" placeholder="Score" value={challengeDraft.charlieScore} onChange={(e)=>setChallengeDraft({...challengeDraft,charlieScore:e.target.value})}/>
+                    </label>
+                    <label>Tayla
+                      <input inputMode="decimal" placeholder="Score" value={challengeDraft.taylaScore} onChange={(e)=>setChallengeDraft({...challengeDraft,taylaScore:e.target.value})}/>
+                    </label>
+                  </div>
+                ) : null}
+
+                <label className="us-challenge-field">Outcome <span>optional</span>
+                  <input placeholder="What happened to the stakes?" value={challengeDraft.outcome} onChange={(e)=>setChallengeDraft({...challengeDraft,outcome:e.target.value})}/>
+                </label>
+              </div>
+            ) : null}
+
+            <button className="us-primary us-quick-submit" onClick={saveChallenge}>
+              {challengeItem.challenge ? "SAVE CHALLENGE →" : "MAKE IT A CHALLENGE →"}
+            </button>
           </div>
         </div>
       ) : null}
