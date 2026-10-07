@@ -139,3 +139,20 @@
   .us-card.has-photo{grid-template-columns:92px 1fr}
   .us-cover-img{height:68px}
 }
+
+/* Polaroid stays as the visual identity, with either a photo or editable emoji */
+.us-card.no-photo{grid-template-columns:128px 1fr;padding:14px}
+.us-card.no-photo .us-card-body{min-width:0}
+.us-photo-placeholder{height:92px}
+.us-media-controls{display:grid;grid-template-columns:110px 1fr auto;gap:10px;align-items:end;margin:14px 0}
+.us-media-controls label{margin:0!important}
+.us-emoji-input{font-size:24px!important;text-align:center;padding:8px!important}
+.us-photo-control{display:flex!important;flex-direction:column;gap:5px}
+.us-photo-control input[type=file]{font-size:12px!important;padding:8px;border:1px dashed #d9cdcf;border-radius:10px;background:#faf7f5}
+.us-remove-photo{width:auto;min-height:40px;border-radius:10px;background:#f4eeee;color:#7b656b;padding:0 10px;font-size:9px}
+@media(max-width:700px){
+  .us-card.no-photo{grid-template-columns:92px 1fr}
+  .us-photo-placeholder{height:68px}
+  .us-media-controls{grid-template-columns:90px 1fr}
+  .us-remove-photo{grid-column:1/-1}
+}
