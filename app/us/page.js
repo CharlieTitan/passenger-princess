@@ -556,9 +556,15 @@ export default function Us() {
                     <label>Card emoji
                       <input
                         className="us-emoji-input"
-                        value={x.emoji || categoryMeta[x.category]?.emoji || "✦"}
+                        value={editValues[x.id + ":emoji"] !== undefined ? editValues[x.id + ":emoji"] : (x.emoji || categoryMeta[x.category]?.emoji || "✦")}
                         maxLength={4}
-                        onChange={(e) => patch(x,{emoji:e.target.value},"Emoji updated")}
+                        onFocus={() => {
+                          const key=x.id + ":emoji";
+                          if(editValues[key]===undefined) setEditValues((s)=>({...s,[key]:x.emoji || categoryMeta[x.category]?.emoji || "✦"}));
+                        }}
+                        onChange={(e) => setEditValue(x,"emoji",e.target.value)}
+                        onBlur={() => saveTextField(x,"emoji","Emoji updated")}
+                        onKeyDown={(e) => { if(e.key==="Enter") e.currentTarget.blur(); }}
                       />
                     </label>
                     <label className="us-photo-control">
