@@ -910,25 +910,45 @@ export default function Us() {
 
                   <div className="us-rating-section">
                     <div className="us-rating-head">
-                      <span>Ratings</span>
-                      {x.ratings?.Charlie && x.ratings?.Tayla ? <small className="complete">Complete ✓</small> : <small>Waiting for both</small>}
+                      <span>Afterwards</span>
+                      {x.ratings?.Charlie && x.ratings?.Tayla ? <small className="complete">Feedback complete ✓</small> : <small>Waiting for both</small>}
                     </div>
                     <div className="us-ratings">
                       {["Charlie","Tayla"].map((person)=>(
                         <div className={"us-rating-card"+(person===user?" editable":" locked")} key={person}>
                           <label>{person} /10</label>
                           {person===user ? (
-                            <input
-                              type="number"
-                              min="1"
-                              max="10"
-                              value={x.ratings?.[person] || ""}
-                              placeholder="—"
-                              onChange={(e)=>patch(x,{ratings:{[person]:Number(e.target.value)||null}},person+" rating saved")}
-                            />
+                            <>
+                              <input
+                                type="number"
+                                min="1"
+                                max="10"
+                                value={x.ratings?.[person] || ""}
+                                placeholder="—"
+                                onChange={(e)=>patch(x,{ratings:{[person]:Number(e.target.value)||null}},person+" rating saved")}
+                              />
+                              <input
+                                className="us-review-input"
+                                placeholder="Your note (optional)"
+                                value={editValues[x.id + ":review:" + person] !== undefined ? editValues[x.id + ":review:" + person] : (x.reviews?.[person] || "")}
+                                onFocus={() => {
+                                  const key=x.id + ":review:" + person;
+                                  if(editValues[key]===undefined) setEditValues((s)=>({...s,[key]:x.reviews?.[person] || ""}));
+                                }}
+                                onChange={(e)=>setEditValues((s)=>({...s,[x.id + ":review:" + person]:e.target.value}))}
+                                onBlur={async () => {
+                                  const key=x.id + ":review:" + person;
+                                  if(editValues[key]===undefined) return;
+                                  const ok=await patch(x,{reviews:{[person]:editValues[key]}},"Review saved");
+                                  if(ok) setEditValues((s)=>{const n={...s};delete n[key];return n;});
+                                }}
+                                onKeyDown={(e)=>{if(e.key==="Enter")e.currentTarget.blur();}}
+                              />
+                            </>
                           ) : (
                             <div className="us-rating-readonly">
                               {x.ratings?.[person] ? <b>{x.ratings[person]}/10</b> : <span>Waiting for {person}</span>}
+                              {x.reviews?.[person] ? <p>{x.reviews[person]}</p> : null}
                             </div>
                           )}
                         </div>
