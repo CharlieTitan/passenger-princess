@@ -927,49 +927,48 @@ export default function Us() {
             </div>
 
             <button className="us-more-toggle" onClick={()=>setQuickMore(!quickMore)}>
-              {quickMore ? "Hide details" : "More details"}
+              <span>{quickMore ? "Hide details" : "More details"}</span>
+              <span>{quickMore ? "−" : "+"}</span>
             </button>
 
             {quickMore ? (
               <div className="us-quick-more">
-                <div className="us-quick-row">
-                  <label>Priority
-                    <select value={draft.priority || "normal"} onChange={(e)=>setDraft({...draft,priority:e.target.value})}>
-                      <option value="low">Low</option>
-                      <option value="normal">Normal</option>
-                      <option value="high">High</option>
-                    </select>
-                  </label>
-                  <label>Budget
-                    <select value={draft.budget || ""} onChange={(e)=>setDraft({...draft,budget:e.target.value})}>
-                      <option value="">Not set</option>
-                      <option value="free">Free</option>
-                      <option value="cheap">Cheap</option>
-                      <option value="mid">Mid</option>
-                      <option value="spenny">Spenny</option>
-                    </select>
-                  </label>
+                <div className="us-quick-section">
+                  <span>Priority</span>
+                  <div className="us-picker-chips">
+                    {[["low","Low"],["normal","Normal"],["high","High"]].map(([value,label])=>(
+                      <button key={value} className={draft.priority===value?"active":""} onClick={()=>setDraft({...draft,priority:value})}>{label}</button>
+                    ))}
+                  </div>
                 </div>
 
-                <div className="us-quick-row">
-                  <label>Duration
-                    <select value={draft.duration || ""} onChange={(e)=>setDraft({...draft,duration:e.target.value})}>
-                      <option value="">Not set</option>
-                      <option value="30m">30 mins</option>
-                      <option value="1-2h">1–2 hours</option>
-                      <option value="half-day">Half day</option>
-                      <option value="full-day">Full day</option>
-                      <option value="overnight">Overnight / Trip</option>
-                    </select>
-                  </label>
-                  <label>Tags
-                    <input placeholder="romantic, outdoors…" value={draft.tagsText || ""} onChange={(e)=>setDraft({...draft,tagsText:e.target.value})} />
-                  </label>
+                <div className="us-quick-section">
+                  <span>Budget</span>
+                  <div className="us-picker-chips">
+                    {[["","Not set"],["free","Free"],["cheap","Cheap"],["mid","Mid"],["spenny","Spenny"]].map(([value,label])=>(
+                      <button key={value||"none"} className={(draft.budget||"")===value?"active":""} onClick={()=>setDraft({...draft,budget:value})}>{label}</button>
+                    ))}
+                  </div>
                 </div>
 
-                <label className="us-quick-notes">Notes
-                  <textarea placeholder="Anything useful to remember…" value={draft.notes || ""} onChange={(e)=>setDraft({...draft,notes:e.target.value})} />
-                </label>
+                <div className="us-quick-section">
+                  <span>Duration</span>
+                  <div className="us-picker-chips">
+                    {[["","Not set"],["30m","30 mins"],["1-2h","1–2 hours"],["half-day","Half day"],["full-day","Full day"],["overnight","Overnight / Trip"]].map(([value,label])=>(
+                      <button key={value||"none"} className={(draft.duration||"")===value?"active":""} onClick={()=>setDraft({...draft,duration:value})}>{label}</button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="us-quick-section">
+                  <span>Tags <em>optional</em></span>
+                  <input className="us-quick-input" placeholder="romantic, outdoors…" value={draft.tagsText || ""} onChange={(e)=>setDraft({...draft,tagsText:e.target.value})} />
+                </div>
+
+                <div className="us-quick-section">
+                  <span>Notes <em>optional</em></span>
+                  <textarea className="us-quick-notes" placeholder="Anything useful to remember…" value={draft.notes || ""} onChange={(e)=>setDraft({...draft,notes:e.target.value})} />
+                </div>
               </div>
             ) : null}
 
