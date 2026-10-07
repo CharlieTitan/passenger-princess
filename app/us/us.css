@@ -245,3 +245,15 @@
   -webkit-appearance:none;
   appearance:none;
 }
+
+.us-archive-actions{display:flex;gap:14px;align-items:center}
+.us-delete-btn{
+  background:transparent!important;
+  border:0!important;
+  color:#c0b5b8!important;
+  min-height:0!important;
+  padding:0!important;
+  font-size:9px!important;
+  font-weight:400!important;
+}
+.us-delete-btn:hover{color:#8f666f!important}
