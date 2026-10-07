@@ -19,6 +19,7 @@ export default function Us() {
   const [login, setLogin] = useState({ username: "Charlie", password: "" });
   const [category, setCategory] = useState("eat");
   const [sublist, setSublist] = useState("all");
+  const [lifecycleFilter, setLifecycleFilter] = useState("all");
   const [shortcut, setShortcut] = useState("");
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(null);
@@ -284,10 +285,14 @@ export default function Us() {
       if (shortcut === "Surprises" && !x.isSurprise) return false;
       if (!shortcut && x.category !== category) return false;
       if (!shortcut && sublist !== "all" && x.list !== sublist) return false;
+      if (!shortcut && lifecycleFilter !== "all") {
+        const status = x.status === "maybe" ? "idea" : x.status;
+        if (status !== lifecycleFilter) return false;
+      }
       if (query && !x.title.toLowerCase().includes(query.toLowerCase())) return false;
       return true;
     });
-  }, [items, category, sublist, shortcut, query]);
+  }, [items, category, sublist, lifecycleFilter, shortcut, query]);
 
   function eligibleForPicker(item, mode) {
     if (item.status === "done" || item.status === "archived") return false;
@@ -436,7 +441,7 @@ export default function Us() {
 
         <section className="us-cats">
           {Object.entries(categoryMeta).map(([k, v]) => (
-            <button key={k} className={category === k && !shortcut ? "active" : ""} onClick={() => { setCategory(k); setSublist("all"); setShortcut(""); setPickerMode(null); setWheelPick(null); }}>
+            <button key={k} className={category === k && !shortcut ? "active" : ""} onClick={() => { setCategory(k); setSublist("all"); setLifecycleFilter("all"); setShortcut(""); setPickerMode(null); setWheelPick(null); }}>
               <span>{v.emoji}</span><b>{v.label}</b><small>{items.filter((x) => x.category === k).length} items</small>
             </button>
           ))}
@@ -471,6 +476,28 @@ export default function Us() {
           </section>
         ) : null}
 
+        {!shortcut ? (
+          <section className="us-lifecycle-filter" aria-label="Item status">
+            {[["all","All"],["idea","Ideas"],["planned","Planned"],["done","Done"]].map(([value,label]) => (
+              <button
+                key={value}
+                className={lifecycleFilter===value?"active":""}
+                onClick={()=>setLifecycleFilter(value)}
+              >
+                {label}
+                <small>
+                  {value==="all"
+                    ? items.filter((x)=>x.category===category && (sublist==="all" || x.list===sublist)).length
+                    : items.filter((x)=>{
+                        const status=x.status==="maybe"?"idea":x.status;
+                        return x.category===category && (sublist==="all" || x.list===sublist) && status===value;
+                      }).length}
+                </small>
+              </button>
+            ))}
+          </section>
+        ) : null}
+
         <section className="us-shortcuts">
           {quickShortcuts.map((s) => (
             <button
@@ -487,6 +514,7 @@ export default function Us() {
                 else {
                   setPickerMode(null); setWheelPick(null);
                   setSublist("all");
+                  setLifecycleFilter("all");
                   setShortcut(shortcut === s ? "" : s);
                 }
               }}
