@@ -54,7 +54,7 @@ export default function Us() {
   const [navOpen,setNavOpen]=useState(false);
   const [saveOpen,setSaveOpen]=useState(false);
   const [inboxOpen,setInboxOpen]=useState(false);
-  const [saveDraft,setSaveDraft]=useState({title:"",content:""});
+  const [saveDraft,setSaveDraft]=useState({title:"",content:"",to:"Tayla"});
 
   async function load() {
     setLoading(true);
@@ -71,7 +71,12 @@ export default function Us() {
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    if (typeof window!=="undefined" && new URLSearchParams(window.location.search).get("inbox")==="1") {
+      setInboxOpen(true);
+    }
+  }, []);
 
   async function doLogout() {
     await fetch("/api/us-auth", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "logout" }) });
@@ -610,7 +615,7 @@ export default function Us() {
     const r=await fetch("/api/us",{
       method:"POST",
       headers:{"content-type":"application/json"},
-      body:JSON.stringify({action:"createInbox",title,content})
+      body:JSON.stringify({action:"createInbox",title,content,to:saveDraft.to||null})
     });
     if(!r.ok){
       setToast("Couldn’t save that");
@@ -619,7 +624,7 @@ export default function Us() {
     }
     const d=await r.json();
     setInbox(current=>[d.inbox,...current]);
-    setSaveDraft({title:"",content:""});
+    setSaveDraft({title:"",content:"",to:user==="Charlie"?"Tayla":"Charlie"});
     setSaveOpen(false);
     setToast("Saved for later ✓");
     setTimeout(()=>setToast(""),1500);
@@ -869,6 +874,7 @@ export default function Us() {
             <div className="us-nav-drawer">
               <div className="us-nav-links">
                 <button className="active" onClick={()=>setNavOpen(false)}>US</button>
+                <button onClick={()=>{setInboxOpen(true);setNavOpen(false);}}>Inbox{inbox.filter(x=>!x.to||x.to===user||x.to==="Both").length ? " · "+inbox.filter(x=>!x.to||x.to===user||x.to==="Both").length : ""}</button>
                 <a href="/memories">Memories</a>
               </div>
               <button className="us-nav-logout" onClick={doLogout}>Log out</button>
@@ -1023,7 +1029,7 @@ export default function Us() {
 
         <section className="us-shortcuts">
           <button className="us-save-shortcut" onClick={()=>setSaveOpen(true)}>Save something</button>
-          <button className="us-inbox-shortcut" onClick={()=>setInboxOpen(!inboxOpen)}>Inbox{inbox.length ? " · "+inbox.length : ""}</button>
+          <button className="us-inbox-shortcut" onClick={()=>setInboxOpen(!inboxOpen)}>Inbox{inbox.filter(x=>!x.to||x.to===user||x.to==="Both").length ? " · "+inbox.filter(x=>!x.to||x.to===user||x.to==="Both").length : ""}</button>
           {quickShortcuts.map((s) => (
             <button
               key={s}
@@ -1057,10 +1063,16 @@ export default function Us() {
             </div>
             {inbox.length ? (
               <div className="us-inbox-list">
-                {inbox.map(entry=>(
+                {[
+                  {label:"FOR YOU",entries:inbox.filter(x=>!x.to||x.to===user||x.to==="Both")},
+                  {label:"SENT BY YOU",entries:inbox.filter(x=>x.addedBy===user&&x.to&&x.to!==user)}
+                ].map(group=>group.entries.length ? (
+                  <div className="us-inbox-group" key={group.label}>
+                    <small className="us-inbox-group-label">{group.label}</small>
+                    {group.entries.map(entry=>(
                   <article className="us-inbox-card" key={entry.id}>
                     <div className="us-inbox-copy">
-                      <small>Saved by {entry.addedBy}</small>
+                      <small>{entry.to ? entry.addedBy+" → "+entry.to : "Shared by "+entry.addedBy}</small>
                       <h3>{entry.title || (entry.url ? "Saved link" : "Quick thought")}</h3>
                       {entry.content && entry.content!==entry.url ? <p>{entry.content}</p> : null}
                       {entry.url ? <a href={entry.url} target="_blank" rel="noreferrer">{entry.url.replace(/^https?:\/\//,"").slice(0,58)}{entry.url.length>64?"…":""}</a> : null}
@@ -1078,7 +1090,9 @@ export default function Us() {
                       <button onClick={()=>deleteInbox(entry)}>Delete</button>
                     </div>
                   </article>
-                ))}
+                    ))}
+                  </div>
+                ) : null)}
               </div>
             ) : <div className="us-inbox-empty">Nothing waiting. Send future-you something useful.</div>}
           </section>
@@ -1805,7 +1819,15 @@ export default function Us() {
             <label>Link or note
               <textarea autoFocus placeholder="Paste a TikTok / Instagram / website link, or just type ‘we should do this’…" value={saveDraft.content} onChange={e=>setSaveDraft({...saveDraft,content:e.target.value})}/>
             </label>
-            <p className="us-save-help">No organising required. Sort it into Eat, Watch, Go or Do whenever you want.</p>
+            <div className="us-save-to">
+              <span>Send to</span>
+              <div className="us-picker-chips">
+                {[user==="Charlie"?"Tayla":"Charlie","Both"].map(person=>(
+                  <button key={person} className={saveDraft.to===person?"active":""} onClick={()=>setSaveDraft({...saveDraft,to:person})}>{person}</button>
+                ))}
+              </div>
+            </div>
+            <p className="us-save-help">It lands in Inbox with the link intact. Either of you can turn it into Eat, Watch, Go or Do.</p>
             <button className="us-primary us-quick-submit" disabled={!saveDraft.title.trim()&&!saveDraft.content.trim()} onClick={saveToInbox}>SAVE FOR LATER →</button>
           </div>
         </div>
