@@ -719,3 +719,13 @@ body:before{display:none!important}
   .us-number-card{min-height:86px}
   .us-number-card b{font-size:29px}
 }
+
+.us-top-strip{position:fixed;top:0;left:0;right:0;height:4px;background:#e65a8d;z-index:100}
+.us-header{position:relative}
+.us-header-brand{display:flex;flex-direction:column}
+.us-nav-toggle{width:38px!important;height:38px!important;min-height:38px!important;border-radius:50%!important;padding:0!important;background:#ffffffa8!important;color:#66575c!important;border:1px solid #e2d7d7!important;font-size:18px!important}
+.us-nav-menu{position:absolute;top:58px;right:6px;z-index:40;min-width:180px;padding:8px;border-radius:16px;background:#fff;box-shadow:0 18px 50px #0002;border:1px solid #eadfe1;display:grid;gap:4px}
+.us-nav-menu a,.us-nav-menu button{display:flex;align-items:center;width:100%;min-height:38px;padding:0 12px;border-radius:10px;background:transparent;color:#5f5256;border:0;text-decoration:none;font-size:10px;font-weight:700;letter-spacing:.4px;text-align:left}
+.us-nav-menu .active{background:#fff4f8;color:#e65a8d}
+.us-memory-header-left{display:flex!important;flex-direction:row!important;align-items:center;gap:10px}
+.us-back-arrow{width:38px!important;height:38px!important;min-height:38px!important;border-radius:50%!important;padding:0!important;background:#ffffffa8!important;color:#66575c!important;border:1px solid #e2d7d7!important;font-size:18px!important}
