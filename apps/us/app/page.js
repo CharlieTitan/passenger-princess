@@ -998,10 +998,14 @@ export default function Us() {
                 ? [planned[0].planDate, planned[0].planTime].filter(Boolean).join(" · ") || "Planned — add a date when you know it."
                 : "Pick something and make a plan."}
             </p>
-            {!planned[0] ? (
-              <button className="us-now-cta" onClick={()=>openPicker("pick")}>PICK SOMETHING →</button>
-            ) : null}
+
           </div>
+        </section>
+
+        <section className="us-pick-feature">
+          <div className="us-pick-feature-mark">✦</div>
+          <div><small>NEED A LITTLE INSPIRATION?</small><h2>Pick for us.</h2><p>Discover a new date or let fate decide.</p></div>
+          <button onClick={()=>openPicker("pick")}>LET’S PICK →</button>
         </section>
 
         <section className="us-polls">

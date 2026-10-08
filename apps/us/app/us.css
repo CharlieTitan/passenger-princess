@@ -966,3 +966,20 @@ body:before{display:none!important}
 .us-surprise-result-actions{display:flex;justify-content:center;flex-wrap:wrap;gap:9px}
 .us-surprise-result-actions button{width:auto;min-height:34px;padding:7px 12px;font-size:10px;border-radius:999px}
 .us-surprise-result-actions button:not(.us-primary){border:1px solid #e4d6db;background:#fff;color:#9a5b74}
+
+.us-pick-feature{display:grid;grid-template-columns:46px minmax(0,1fr);gap:11px;align-items:center;padding:19px 18px;margin:14px 0;border-radius:20px;background:linear-gradient(125deg,#fceaf0,#fff8f4);border:1px solid #ebcdd8;box-shadow:0 6px 20px #a75d7910}
+.us-pick-feature-mark{width:45px;height:45px;display:grid;place-items:center;border-radius:13px;background:#f8dbe6;color:#c44875;font-size:29px}
+.us-pick-feature small{font-size:8px;letter-spacing:1.3px;color:#a6677c}
+.us-pick-feature h2{font:700 25px Georgia,serif;margin:3px 0;color:#43363b}
+.us-pick-feature p{font-size:10px;margin:0;color:#8c7a80}
+.us-pick-feature>button{grid-column:1/-1;width:100%;min-height:45px;border-radius:12px;background:#342b2f;color:white;font-size:11px;font-weight:700;letter-spacing:.7px}
+.us-gallery-return{display:block;width:auto;margin:0 0 13px;background:#fff7f9;border:1px solid #e8d9df;color:#965c72;padding:11px 15px;border-radius:999px;font-size:11px}
+.us-gallery-activity-trigger{width:100%;display:flex;justify-content:space-between;align-items:center;text-align:left;min-height:50px;padding:11px 15px;border:1px solid #e4d8dc;border-radius:10px;background:#fff;color:#44383d;font-size:14px}
+.us-gallery-activity-options{margin-top:7px;padding:9px;border:1px solid #e4d8dc;border-radius:13px;background:#fff}
+.us-gallery-activity-options>input{width:100%;font-size:16px;padding:12px;border:1px solid #e8dfe1;border-radius:9px}
+.us-gallery-activity-results{max-height:245px;overflow-y:auto}
+.us-gallery-activity-results>button{display:flex;align-items:center;width:100%;gap:10px;min-height:54px;text-align:left;padding:7px 5px;border:0;border-bottom:1px solid #f1eaec;background:white;color:#47383e;font-size:12px}
+.us-gallery-activity-results>button>span:nth-child(2){flex:1}
+.us-gallery-activity-results small{display:block;margin-top:3px;color:#9c8a90;font-size:9px}
+.us-gallery-activity-thumb{width:42px;height:42px;flex-shrink:0;display:grid;place-items:center;background:#f6edef;border-radius:8px;font-size:21px;overflow:hidden}
+.us-gallery-activity-thumb img{width:100%;height:100%;object-fit:cover}

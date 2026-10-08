@@ -13,6 +13,9 @@ export default function Memories(){
   const [galleryMonth,setGalleryMonth]=useState(null);
   const [uploadItemId,setUploadItemId]=useState("");
   const [uploadBusy,setUploadBusy]=useState(false);
+  const [uploadSearch,setUploadSearch]=useState("");
+  const [uploadSelectorOpen,setUploadSelectorOpen]=useState(false);
+  const [galleryReturn,setGalleryReturn]=useState(null);
   const nowForMonth=new Date();
   const [recapMonth,setRecapMonth]=useState(nowForMonth.getFullYear()+"-"+String(nowForMonth.getMonth()+1).padStart(2,"0"));
 
@@ -64,7 +67,17 @@ export default function Memories(){
     return true;
   }),[galleryPhotos,galleryCategory,galleryMonth]);
 
+  function returnToGallery(){
+    if(!galleryReturn)return;
+    setGalleryCategory(galleryReturn.category);
+    setGalleryMonth(galleryReturn.month);
+    setMemoryFilter(null);
+    setTab("gallery");
+    setGalleryReturn(null);
+  }
+
   function openGallery(month=null){
+    setGalleryReturn(null);
     setGalleryCategory("all");
     setGalleryMonth(month);
     setTab("gallery");
@@ -114,6 +127,8 @@ export default function Memories(){
   },[memories,memoryFilter]);
 
   function showMemories(label,filter){
+    if(tab==="gallery")setGalleryReturn({category:galleryCategory,month:galleryMonth});
+    else setGalleryReturn(null);
     setMemoryFilter({label,...filter});
     setTab("memories");
     setTimeout(()=>document.querySelector(".us-memory-timeline")?.scrollIntoView({behavior:"smooth",block:"start"}),0);
@@ -189,7 +204,7 @@ export default function Memories(){
             className="us-back-arrow"
             aria-label="Back"
             onClick={()=>{
-              if(memoryFilter){setMemoryFilter(null);setTab("numbers");}
+              if(memoryFilter){if(galleryReturn)returnToGallery();else{setMemoryFilter(null);setTab("numbers");}}
               else if(tab==="numbers"||tab==="recap"||tab==="gallery") setTab("memories");
               else window.location.href="/";
             }}
@@ -224,9 +239,9 @@ export default function Memories(){
       </section>
 
       <nav className="us-memory-tabs">
-        <button className={tab==="memories"?"active":""} onClick={()=>{setTab("memories");setMemoryFilter(null);}}>Memories</button>
-        <button className={tab==="numbers"?"active":""} onClick={()=>{setTab("numbers");setMemoryFilter(null);}}>Us in Numbers</button>
-        <button className={tab==="recap"?"active":""} onClick={()=>{setTab("recap");setMemoryFilter(null);}}>Monthly Recap</button>
+        <button className={tab==="memories"?"active":""} onClick={()=>{setTab("memories");setMemoryFilter(null);setGalleryReturn(null);}}>Memories</button>
+        <button className={tab==="numbers"?"active":""} onClick={()=>{setTab("numbers");setMemoryFilter(null);setGalleryReturn(null);}}>Us in Numbers</button>
+        <button className={tab==="recap"?"active":""} onClick={()=>{setTab("recap");setMemoryFilter(null);setGalleryReturn(null);}}>Monthly Recap</button>
         <button className={tab==="gallery"?"active":""} onClick={()=>openGallery()}>Gallery</button>
       </nav>
 
@@ -256,10 +271,21 @@ export default function Memories(){
           <div className="us-gallery-upload">
             <h3>Add a photo</h3>
             <p>Choose an activity so the photo stays with its memory.</p>
-            <select value={uploadItemId} onChange={e=>setUploadItemId(e.target.value)}>
-              <option value="">Choose an activity</option>
-              {state.items.filter(x=>!x.isSurprise&&x.status!=="archived").sort((a,b)=>a.title.localeCompare(b.title)).map(x=><option key={x.id} value={x.id}>{x.title}</option>)}
-            </select>
+            <button className="us-gallery-activity-trigger" onClick={()=>setUploadSelectorOpen(v=>!v)}>
+              {uploadItemId ? state.items.find(x=>x.id===uploadItemId)?.title||"Choose an activity" : "Choose an activity"} <span>⌄</span>
+            </button>
+            {uploadSelectorOpen ? <div className="us-gallery-activity-options">
+              <input aria-label="Search activities" placeholder="Search our activities…" value={uploadSearch} onChange={e=>setUploadSearch(e.target.value)}/>
+              <div className="us-gallery-activity-results">
+                {state.items.filter(x=>!x.isSurprise&&x.status!=="archived"&&x.title.toLowerCase().includes(uploadSearch.trim().toLowerCase()))
+                  .sort((a,b)=>a.title.localeCompare(b.title))
+                  .map(x=><button key={x.id} onClick={()=>{setUploadItemId(x.id);setUploadSelectorOpen(false);setUploadSearch("");}}>
+                    <span className="us-gallery-activity-thumb">{x.cover?<img src={x.cover} alt=""/>:x.emoji||categoryMeta[x.category]?.emoji||"✦"}</span>
+                    <span>{x.title}<small>{categoryMeta[x.category]?.label||""}</small></span>
+                    {uploadItemId===x.id?"✓":""}
+                  </button>)}
+              </div>
+            </div>:null}
             <label className={uploadItemId&&!uploadBusy?"enabled":""}>+ Add photo<input type="file" accept="image/*" disabled={!uploadItemId||uploadBusy} onChange={async e=>{await uploadGallery(e.target.files?.[0]);e.target.value="";}}/></label>
           </div>
         </section>
@@ -366,7 +392,8 @@ export default function Memories(){
         </section>
       ) : (
       <section className="us-memory-timeline">
-        {memoryFilter ? <div className="us-memory-filter"><span>Showing: <b>{memoryFilter.label}</b></span><button onClick={()=>setMemoryFilter(null)}>Show all</button></div> : null}
+        {galleryReturn&&memoryFilter?<button className="us-gallery-return" onClick={returnToGallery}>← Back to Gallery{galleryReturn.month?" · "+new Date(galleryReturn.month+"-01T12:00:00").toLocaleDateString(undefined,{month:"long",year:"numeric"}):""}</button>:null}
+        {memoryFilter ? <div className="us-memory-filter"><span>Showing: <b>{memoryFilter.label}</b></span><button onClick={()=>{setMemoryFilter(null);setGalleryReturn(null);}}>Show all</button></div> : null}
         {filteredMemories.map((x,i)=>{
           const images=[...(x.cover?[x.cover]:[]),...(x.gallery||[]).map(g=>g.src)];
           return <article className="us-memory-card" key={x.id}>
