@@ -838,3 +838,36 @@ body:before{display:none!important}
 .us-back-arrow{text-decoration:none;display:grid;place-items:center}
 
 .us-message-linked{margin-top:9px;font-size:8px;color:#7e8f78;font-weight:700}
+
+.us-monthly-recap{display:grid;gap:14px;margin-bottom:80px}
+.us-recap-nav{display:grid;grid-template-columns:40px 1fr 40px;align-items:center;gap:10px}
+.us-recap-nav>button{width:40px;min-height:40px;border-radius:50%;padding:0;background:#fff;color:#65585d;border:1px solid #e2d7da}
+.us-recap-nav>div{text-align:center}
+.us-recap-nav small{font-size:8px;letter-spacing:1.3px;color:#9d8a90}
+.us-recap-nav h2{font-family:Georgia,serif;font-size:26px;margin:4px 0 0;color:#453b3f}
+.us-recap-feature{display:grid;grid-template-columns:108px 1fr;gap:14px;width:100%;min-height:132px;padding:13px;border-radius:20px;background:#fff;border:1px solid #e5dadd;color:inherit;text-align:left}
+.us-recap-feature-media{height:106px;border-radius:13px;overflow:hidden;background:linear-gradient(145deg,#eee5df,#ddd2d0);display:grid;place-items:center;font-size:34px}
+.us-recap-feature-media img{width:100%;height:100%;object-fit:cover}
+.us-recap-feature small{font-size:8px;letter-spacing:1.1px;color:#a16b7e}
+.us-recap-feature h3{font-family:Georgia,serif;font-size:22px;margin:7px 0 5px;color:#463c40}
+.us-recap-feature p{font-size:9px;color:#8b7b80;margin:0}
+.us-recap-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.us-recap-grid>button,.us-recap-grid>article{min-height:88px;padding:12px;border-radius:16px;background:#fff;border:1px solid #e6dbde;color:inherit;text-align:left;display:flex;flex-direction:column;justify-content:flex-end}
+.us-recap-grid b{font-family:Georgia,serif;font-size:27px;line-height:1;color:#443a3e}
+.us-recap-grid span{font-size:8px;color:#8e7d82;margin-top:6px}
+.us-recap-breakdown{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.us-recap-breakdown button{min-height:84px;padding:10px;border-radius:16px;background:#fffaf9;color:#5f5256;border:1px solid #e6dbde;display:grid;align-content:end;text-align:left}
+.us-recap-breakdown button>span{font-size:20px}
+.us-recap-breakdown button>b{font-family:Georgia,serif;font-size:22px;margin-top:4px}
+.us-recap-breakdown button>small{font-size:7px;color:#908086}
+.us-recap-challenge{padding:16px;border-radius:18px;background:#fff7f9;border:1px solid #ecd5dd}
+.us-recap-challenge small{font-size:8px;letter-spacing:1.2px;color:#a27a88}
+.us-recap-challenge h3{font-family:Georgia,serif;font-size:24px;margin:7px 0 0}
+.us-recap-challenge p{font-size:9px;color:#8e7d82}
+.us-recap-empty{padding:28px 18px;border-radius:18px;background:#ffffff9c;border:1px solid #e4d9dc;text-align:center;display:grid;gap:5px}
+.us-recap-empty b{font-family:Georgia,serif;font-size:18px}
+.us-recap-empty span{font-size:9px;color:#95878b}
+@media(max-width:600px){
+  .us-recap-grid{grid-template-columns:repeat(2,1fr)}
+  .us-recap-breakdown{grid-template-columns:repeat(2,1fr)}
+}

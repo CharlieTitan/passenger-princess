@@ -9,6 +9,8 @@ export default function Memories(){
   const [tab,setTab]=useState("memories");
   const [memoryFilter,setMemoryFilter]=useState(null);
   const [navOpen,setNavOpen]=useState(false);
+  const nowForMonth=new Date();
+  const [recapMonth,setRecapMonth]=useState(nowForMonth.getFullYear()+"-"+String(nowForMonth.getMonth()+1).padStart(2,"0"));
 
   async function doLogout(){
     await fetch("/api/us-auth",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"logout"})});
@@ -52,6 +54,32 @@ export default function Memories(){
     setMemoryFilter({label,...filter});
     setTab("memories");
     setTimeout(()=>document.querySelector(".us-memory-timeline")?.scrollIntoView({behavior:"smooth",block:"start"}),0);
+  }
+
+  const monthlyRecap=useMemo(()=>{
+    const [year,month]=recapMonth.split("-").map(Number);
+    const monthItems=memories.filter(x=>{
+      const d=new Date(x.doneAt||0);
+      return d.getFullYear()===year&&d.getMonth()===month-1;
+    });
+    const photos=monthItems.reduce((n,x)=>n+(x.cover?1:0)+(x.gallery||[]).length,0);
+    const counts={eat:0,watch:0,go:0,do:0};
+    monthItems.forEach(x=>{if(counts[x.category]!==undefined)counts[x.category]++;});
+    const favourites=monthItems.filter(x=>x.favourites?.Charlie&&x.favourites?.Tayla);
+    const ratings=[];
+    monthItems.forEach(x=>["Charlie","Tayla"].forEach(p=>{if(x.ratings?.[p])ratings.push(Number(x.ratings[p]));}));
+    const average=ratings.length?(ratings.reduce((a,b)=>a+b,0)/ratings.length).toFixed(1):null;
+    const wins={Charlie:0,Tayla:0,Draw:0};
+    monthItems.forEach(x=>{const w=x.challenge?.winner;if(w&&wins[w]!==undefined)wins[w]++;});
+    const featured=favourites[0]||monthItems.find(x=>x.cover||(x.gallery||[]).length)||monthItems[0]||null;
+    const label=new Date(year,month-1,1).toLocaleDateString(undefined,{month:"long",year:"numeric"});
+    return {items:monthItems,photos,counts,favourites,average,wins,featured,label};
+  },[memories,recapMonth]);
+
+  function shiftRecapMonth(delta){
+    const [year,month]=recapMonth.split("-").map(Number);
+    const d=new Date(year,month-1+delta,1);
+    setRecapMonth(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"));
   }
 
   const stats=useMemo(()=>{
@@ -99,7 +127,7 @@ export default function Memories(){
             aria-label="Back"
             onClick={()=>{
               if(memoryFilter){setMemoryFilter(null);setTab("numbers");}
-              else if(tab==="numbers") setTab("memories");
+              else if(tab==="numbers"||tab==="recap") setTab("memories");
               else window.location.href="/";
             }}
           >←</button>
@@ -135,10 +163,58 @@ export default function Memories(){
       <nav className="us-memory-tabs">
         <button className={tab==="memories"?"active":""} onClick={()=>{setTab("memories");setMemoryFilter(null);}}>Memories</button>
         <button className={tab==="numbers"?"active":""} onClick={()=>{setTab("numbers");setMemoryFilter(null);}}>Us in Numbers</button>
+        <button className={tab==="recap"?"active":""} onClick={()=>{setTab("recap");setMemoryFilter(null);}}>Monthly Recap</button>
       </nav>
 
 
-      {tab==="numbers" ? (
+      {tab==="recap" ? (
+        <section className="us-monthly-recap">
+          <div className="us-recap-nav">
+            <button onClick={()=>shiftRecapMonth(-1)}>←</button>
+            <div><small>MONTHLY RECAP</small><h2>{monthlyRecap.label}</h2></div>
+            <button
+              onClick={()=>shiftRecapMonth(1)}
+              disabled={recapMonth===nowForMonth.getFullYear()+"-"+String(nowForMonth.getMonth()+1).padStart(2,"0")}
+            >→</button>
+          </div>
+
+          {monthlyRecap.featured ? (
+            <button className="us-recap-feature" onClick={()=>showMemories(monthlyRecap.label,{type:"month"})}>
+              <div className="us-recap-feature-media">
+                {monthlyRecap.featured.cover ? <img src={monthlyRecap.featured.cover} alt=""/> : <span>{monthlyRecap.featured.emoji||categoryMeta[monthlyRecap.featured.category]?.emoji||"✦"}</span>}
+              </div>
+              <div>
+                <small>{monthlyRecap.favourites.includes(monthlyRecap.featured)?"MUTUAL FAVOURITE":"A MEMORY FROM THIS MONTH"}</small>
+                <h3>{monthlyRecap.featured.title}</h3>
+                <p>{monthlyRecap.featured.location||"Tap to see this month’s memories"}</p>
+              </div>
+            </button>
+          ) : <div className="us-recap-empty"><b>Nothing completed this month yet.</b><span>Once something is Done, it’ll show up here.</span></div>}
+
+          <div className="us-recap-grid">
+            <button onClick={()=>showMemories(monthlyRecap.label,{type:"month"})} disabled={!monthlyRecap.items.length}><b>{monthlyRecap.items.length}</b><span>things done</span></button>
+            <article><b>{monthlyRecap.photos}</b><span>photos</span></article>
+            <article><b>{monthlyRecap.average||"—"}</b><span>avg rating</span></article>
+            <article><b>{monthlyRecap.favourites.length}</b><span>mutual favourites</span></article>
+          </div>
+
+          <div className="us-recap-breakdown">
+            {Object.entries(monthlyRecap.counts).map(([key,value])=>(
+              <button key={key} disabled={!value} onClick={()=>showMemories(monthlyRecap.label+" · "+categoryMeta[key].label,{type:"category",value:key})}>
+                <span>{categoryMeta[key].emoji}</span><b>{value}</b><small>{categoryMeta[key].label}</small>
+              </button>
+            ))}
+          </div>
+
+          {(monthlyRecap.wins.Charlie+monthlyRecap.wins.Tayla+monthlyRecap.wins.Draw)>0 ? (
+            <article className="us-recap-challenge">
+              <small>CHALLENGE RECORD THIS MONTH</small>
+              <h3>Charlie {monthlyRecap.wins.Charlie} — {monthlyRecap.wins.Tayla} Tayla</h3>
+              {monthlyRecap.wins.Draw ? <p>{monthlyRecap.wins.Draw} draw{monthlyRecap.wins.Draw===1?"":"s"}</p> : null}
+            </article>
+          ) : null}
+        </section>
+      ) : tab==="numbers" ? (
         <section className="us-numbers">
           <button className="us-first-date" disabled={!stats.first} onClick={()=>stats.first&&showMemories("first date",{type:"id",value:stats.first.id})}>
             <small>FIRST DATE</small>
