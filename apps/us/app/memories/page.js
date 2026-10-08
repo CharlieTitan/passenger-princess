@@ -9,6 +9,10 @@ export default function Memories(){
   const [tab,setTab]=useState("memories");
   const [memoryFilter,setMemoryFilter]=useState(null);
   const [navOpen,setNavOpen]=useState(false);
+  const [galleryCategory,setGalleryCategory]=useState("all");
+  const [galleryMonth,setGalleryMonth]=useState(null);
+  const [uploadItemId,setUploadItemId]=useState("");
+  const [uploadBusy,setUploadBusy]=useState(false);
   const nowForMonth=new Date();
   const [recapMonth,setRecapMonth]=useState(nowForMonth.getFullYear()+"-"+String(nowForMonth.getMonth()+1).padStart(2,"0"));
 
@@ -32,6 +36,59 @@ export default function Memories(){
   const memories=useMemo(()=>state.items
     .filter((x)=>x.status==="done")
     .sort((a,b)=>new Date(b.doneAt||b.updatedAt||0)-new Date(a.doneAt||a.updatedAt||0)),[state.items]);
+
+  const galleryPhotos=useMemo(()=>state.items
+    .filter(x=>!x.isSurprise)
+    .flatMap(item=>{
+      const photos=[];
+      if(item.cover) photos.push({id:item.id+":cover",src:item.cover,item,date:item.doneAt||item.updatedAt||item.createdAt||null,who:null});
+      (item.gallery||[]).forEach((g,i)=>{if(g.src)photos.push({id:item.id+":"+(g.id||i),src:g.src,item,date:g.at||item.doneAt||item.updatedAt||item.createdAt||null,who:g.addedBy||null});});
+      return photos;
+    })
+    .sort((a,b)=>new Date(b.date||0)-new Date(a.date||0)),[state.items]);
+
+  const visibleGallery=useMemo(()=>galleryPhotos.filter(photo=>{
+    if(galleryCategory!=="all" && photo.item.category!==galleryCategory)return false;
+    if(galleryMonth){
+      const d=new Date(photo.item.doneAt||photo.date||0);
+      if(Number.isNaN(d.getTime()))return false;
+      const ym=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+      return ym===galleryMonth;
+    }
+    return true;
+  }),[galleryPhotos,galleryCategory,galleryMonth]);
+
+  function openGallery(month=null){
+    setGalleryCategory("all");
+    setGalleryMonth(month);
+    setTab("gallery");
+  }
+
+  async function uploadGallery(file){
+    if(!file||!uploadItemId||uploadBusy)return;
+    if(!file.type.startsWith("image/"))return;
+    setUploadBusy(true);
+    try{
+      const item=state.items.find(x=>x.id===uploadItemId);
+      if(!item||item.isSurprise)throw Error("Invalid item");
+      const image=await new Promise((resolve,reject)=>{
+        const r=new FileReader();
+        r.onload=()=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=r.result;};
+        r.onerror=reject;r.readAsDataURL(file);
+      });
+      const canvas=document.createElement("canvas");
+      const ratio=Math.min(1,1000/Math.max(image.width,image.height));
+      canvas.width=Math.round(image.width*ratio);
+      canvas.height=Math.round(image.height*ratio);
+      canvas.getContext("2d").drawImage(image,0,0,canvas.width,canvas.height);
+      const photo={id:crypto.randomUUID(),src:canvas.toDataURL("image/jpeg",0.78),addedBy:state.user,at:new Date().toISOString()};
+      const r=await fetch("/api/us",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({id:item.id,gallery:[...(item.gallery||[]),photo]})});
+      if(!r.ok)throw Error("Upload failed");
+      const result=await r.json();
+      setState(s=>({...s,items:s.items.map(x=>x.id===item.id?result.item:x)}));
+    }catch(e){alert("Couldn’t add that photo. Please try again.");}
+    finally{setUploadBusy(false);}
+  }
 
   const filteredMemories=useMemo(()=>{
     if(!memoryFilter) return memories;
@@ -127,7 +184,7 @@ export default function Memories(){
             aria-label="Back"
             onClick={()=>{
               if(memoryFilter){setMemoryFilter(null);setTab("numbers");}
-              else if(tab==="numbers"||tab==="recap") setTab("memories");
+              else if(tab==="numbers"||tab==="recap"||tab==="gallery") setTab("memories");
               else window.location.href="/";
             }}
           >←</button>
@@ -164,10 +221,41 @@ export default function Memories(){
         <button className={tab==="memories"?"active":""} onClick={()=>{setTab("memories");setMemoryFilter(null);}}>Memories</button>
         <button className={tab==="numbers"?"active":""} onClick={()=>{setTab("numbers");setMemoryFilter(null);}}>Us in Numbers</button>
         <button className={tab==="recap"?"active":""} onClick={()=>{setTab("recap");setMemoryFilter(null);}}>Monthly Recap</button>
+        <button className={tab==="gallery"?"active":""} onClick={()=>openGallery()}>Gallery</button>
       </nav>
 
 
-      {tab==="recap" ? (
+      {tab==="gallery" ? (
+        <section className="us-gallery-hub">
+          <div className="us-gallery-title">
+            <div><small>OUR PHOTOS</small><h2>Little moments.</h2></div>
+            <span>{visibleGallery.length} photo{visibleGallery.length===1?"":"s"}</span>
+          </div>
+          {galleryMonth?<div className="us-gallery-month"><span>{new Date(galleryMonth+"-01T12:00:00").toLocaleDateString(undefined,{month:"long",year:"numeric"})}</span><button onClick={()=>setGalleryMonth(null)}>All months ×</button></div>:null}
+          <div className="us-gallery-tabs">
+            {[["all","All"],...Object.entries(categoryMeta).map(([key,value])=>[key,value.emoji+" "+value.label])].map(([key,label])=>
+              <button key={key} className={galleryCategory===key?"active":""} onClick={()=>setGalleryCategory(key)}>{label}</button>
+            )}
+          </div>
+          <div className="us-gallery-collection">
+            {visibleGallery.map((photo,index)=>(
+              <button key={photo.id} className="us-gallery-collection-tile" onClick={()=>setLightbox({src:photo.src,index,images:visibleGallery.map(x=>x.src),title:photo.item.title,caption:[photo.item.location,photo.date?new Date(photo.date).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}):null,photo.who?"Added by "+photo.who:null].filter(Boolean).join(" · "),itemId:photo.item.id})}>
+                <img src={photo.src} alt={photo.item.title}/>
+              </button>
+            ))}
+          </div>
+          {!visibleGallery.length?<div className="us-recap-empty"><b>No photos here yet.</b><span>Photos added to your activities will appear here.</span></div>:null}
+          <div className="us-gallery-upload">
+            <h3>Add a photo</h3>
+            <p>Choose an activity so the photo stays with its memory.</p>
+            <select value={uploadItemId} onChange={e=>setUploadItemId(e.target.value)}>
+              <option value="">Choose an activity</option>
+              {state.items.filter(x=>!x.isSurprise&&x.status!=="archived").sort((a,b)=>a.title.localeCompare(b.title)).map(x=><option key={x.id} value={x.id}>{x.title}</option>)}
+            </select>
+            <label className={uploadItemId&&!uploadBusy?"enabled":""}>+ Add photo<input type="file" accept="image/*" disabled={!uploadItemId||uploadBusy} onChange={async e=>{await uploadGallery(e.target.files?.[0]);e.target.value="";}}/></label>
+          </div>
+        </section>
+      ) : tab==="recap" ? (
         <section className="us-monthly-recap">
           <div className="us-recap-nav">
             <button onClick={()=>shiftRecapMonth(-1)}>←</button>
@@ -193,7 +281,7 @@ export default function Memories(){
 
           <div className="us-recap-grid">
             <button onClick={()=>showMemories(monthlyRecap.label,{type:"month"})} disabled={!monthlyRecap.items.length}><b>{monthlyRecap.items.length}</b><span>things done</span></button>
-            <article><b>{monthlyRecap.photos}</b><span>photos</span></article>
+            <button onClick={()=>openGallery(recapMonth)} disabled={!monthlyRecap.photos}><b>{monthlyRecap.photos}</b><span>photos · VIEW →</span></button>
             <article><b>{monthlyRecap.average||"—"}</b><span>avg rating</span></article>
             <article><b>{monthlyRecap.favourites.length}</b><span>mutual favourites</span></article>
           </div>
@@ -309,7 +397,8 @@ export default function Memories(){
       <button className="us-lightbox-close" onClick={()=>setLightbox(null)}>×</button>
       <div className="us-lightbox-inner" onClick={e=>e.stopPropagation()}>
         <img src={lightbox.src} alt=""/>
-        <div className="us-lightbox-foot"><span>{lightbox.title}</span><small>{lightbox.index+1} / {lightbox.images.length}</small></div>
+        <div className="us-lightbox-foot"><span>{lightbox.title}{lightbox.caption?<><small>{lightbox.caption}</small></>:null}</span><small>{lightbox.index+1} / {lightbox.images.length}</small></div>
+        {lightbox.itemId?<button className="us-gallery-view-memory" onClick={()=>{setLightbox(null);showMemories("gallery memory",{type:"id",value:lightbox.itemId});}}>View memory →</button>:null}
         {lightbox.images.length>1?<><button className="us-lightbox-nav prev" onClick={()=>{const idx=(lightbox.index-1+lightbox.images.length)%lightbox.images.length;setLightbox({...lightbox,index:idx,src:lightbox.images[idx]})}}>‹</button><button className="us-lightbox-nav next" onClick={()=>{const idx=(lightbox.index+1)%lightbox.images.length;setLightbox({...lightbox,index:idx,src:lightbox.images[idx]})}}>›</button></>:null}
       </div>
     </div>:null}
