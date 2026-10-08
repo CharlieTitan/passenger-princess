@@ -68,6 +68,20 @@ export default function Memories(){
     return true;
   }),[galleryPhotos,galleryCategory,galleryMonth]);
 
+  const galleryStacks=useMemo(()=>{
+    const groups=new Map();
+    visibleGallery.forEach(photo=>{
+      const id=photo.item.id;
+      if(!groups.has(id))groups.set(id,{item:photo.item,photos:[]});
+      groups.get(id).photos.push(photo);
+    });
+    return Array.from(groups.values()).map(group=>{
+      const cover=group.photos.find(photo=>photo.src===group.item.cover);
+      const photos=cover?[cover,...group.photos.filter(photo=>photo!==cover)]:group.photos;
+      return {...group,photos};
+    });
+  },[visibleGallery]);
+
   function returnToGallery(){
     if(!galleryReturn)return;
     setGalleryCategory(galleryReturn.category);
@@ -264,13 +278,20 @@ export default function Memories(){
             )}
           </div>
           <div className="us-gallery-collection">
-            {visibleGallery.map((photo,index)=>(
-              <button key={photo.id} className={"us-gallery-polaroid "+(index%3===0?"tilt-l":index%3===1?"tilt-r":"")} onClick={()=>setLightbox({src:photo.src,index,images:visibleGallery.map(x=>x.src),title:photo.item.title,caption:[photo.item.location,photo.date?new Date(photo.date).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}):null,photo.who?"Added by "+photo.who:null].filter(Boolean).join(" · "),itemId:photo.item.id})}>
-                <span className="us-gallery-polaroid-image"><img src={photo.src} alt={photo.item.title}/></span>
-                <span className="us-gallery-polaroid-title">{photo.item.title}</span>
-                <span className="us-gallery-polaroid-note">{photo.item.doneAt?new Date(photo.item.doneAt).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}):photo.item.location||categoryMeta[photo.item.category]?.label}</span>
-              </button>
-            ))}
+            {galleryStacks.map((stack,index)=>{
+              const first=stack.photos[0];
+              const images=stack.photos.map(photo=>photo.src);
+              return <button key={stack.item.id} className={"us-gallery-polaroid us-gallery-stack"+(images.length>1?" has-multiple":"")} style={{"--stack-jiggle-delay":((index*7)%13)+"s"}} onClick={()=>setLightbox({src:first.src,index:0,images,title:stack.item.title,caption:[stack.item.location,first.date?new Date(first.date).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}):null].filter(Boolean).join(" · "),itemId:stack.item.id})} aria-label={"View "+stack.item.title+", "+images.length+" photo"+(images.length===1?"":"s")}>
+                {images.length>1?<span className="us-stack-papers" aria-hidden="true"><span/><span/></span>:null}
+                <span className="us-gallery-stack-front">
+                  <span className="us-gallery-polaroid-image"><img src={first.src} alt=""/></span>
+                  <span className="us-gallery-polaroid-title">{stack.item.title}</span>
+                  <span className="us-gallery-polaroid-note">{stack.item.doneAt?new Date(stack.item.doneAt).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}):stack.item.location||categoryMeta[stack.item.category]?.label}</span>
+                  {images.length>1?<span className="us-stack-count">{images.length} photos ↗</span>:null}
+                </span>
+              </button>;
+            })}
+
           </div>
           {!visibleGallery.length?<div className="us-recap-empty"><b>No photos here yet.</b><span>Photos added to your activities will appear here.</span></div>:null}
           <div className="us-gallery-upload">
