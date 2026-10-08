@@ -1,6 +1,6 @@
 "use client";
 import "../us.css";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { categoryMeta } from "../../lib/usData";
 
 export default function Inbox(){
@@ -9,6 +9,9 @@ export default function Inbox(){
   const [ideaFromMessage,setIdeaFromMessage]=useState(null);
   const [toast,setToast]=useState("");
   const [navOpen,setNavOpen]=useState(false);
+  const [showTitle,setShowTitle]=useState(false);
+  const [sending,setSending]=useState(false);
+  const bottomRef=useRef(null);
 
   async function load(){
     const r=await fetch("/api/us",{cache:"no-store"});
@@ -17,7 +20,15 @@ export default function Inbox(){
     setState({loading:false,user:d.user,inbox:d.inbox||[]});
   }
 
-  useEffect(()=>{load();},[]);
+  useEffect(()=>{
+    load();
+    const refresh=()=>{if(!document.hidden)load();};
+    const timer=setInterval(refresh,5000);
+    document.addEventListener("visibilitychange",refresh);
+    return ()=>{clearInterval(timer);document.removeEventListener("visibilitychange",refresh);};
+  },[]);
+
+  useEffect(()=>{if(!state.loading)bottomRef.current?.scrollIntoView({behavior:"smooth",block:"end"});},[state.inbox.length,state.loading]);
 
   useEffect(()=>{
     if(!state.user) return;
@@ -34,7 +45,7 @@ export default function Inbox(){
         setState(s=>({...s,inbox:s.inbox.map(x=>ids.includes(x.id)?{...x,readAt}:x)}));
       }
     });
-  },[state.user]);
+  },[state.user,state.inbox]);
 
   async function doLogout(){
     await fetch("/api/us-auth",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"logout"})});
@@ -42,6 +53,7 @@ export default function Inbox(){
   }
 
   async function send(){
+    if(sending)return;
     const title=draft.title.trim();
     const content=draft.content.trim();
     if(!title&&!content) return;
@@ -50,10 +62,12 @@ export default function Inbox(){
       headers:{"content-type":"application/json"},
       body:JSON.stringify({action:"createInbox",title,content})
     });
-    if(!r.ok){setToast("Couldn’t send that");setTimeout(()=>setToast(""),1600);return;}
+    if(!r.ok){setSending(false);setToast("Couldn’t send that");setTimeout(()=>setToast(""),1600);return;}
     const d=await r.json();
     setState(s=>({...s,inbox:[...s.inbox,d.inbox]}));
     setDraft({title:"",content:""});
+    setShowTitle(false);
+    setSending(false);
     setToast("Sent ✓");
     setTimeout(()=>setToast(""),1200);
   }
@@ -104,49 +118,50 @@ export default function Inbox(){
     </header>
     <div className="us-top-strip" aria-hidden="true"/>
 
-    <div className="us-shell us-inbox-shell">
-      <section className="us-inbox-page-head">
+    <div className="us-shell us-inbox-shell us-chat-shell">
+      <section className="us-inbox-page-head us-chat-heading">
         <small>JUST US</small>
-        <h1>Inbox</h1>
-        <p>Send links, notes and ideas back and forth.</p>
+        <h1>Our conversation</h1>
+        <p>Little messages, big plans and everything in between.</p>
       </section>
 
-      <section className="us-thread us-thread-page">
-        {state.inbox.length ? [...state.inbox].sort((a,b)=>new Date(a.createdAt)-new Date(b.createdAt)).map(entry=>(
-          <article className={"us-message "+(entry.addedBy===state.user?"mine":"theirs")} key={entry.id}>
-            <div className="us-message-meta">
-              <b>{entry.addedBy}</b>
-              <span>{new Date(entry.createdAt).toLocaleDateString(undefined,{day:"numeric",month:"short"})}</span>
+      <section className="us-chat-thread" aria-label="Conversation">
+        {state.inbox.length ? [...state.inbox].sort((a,b)=>new Date(a.createdAt)-new Date(b.createdAt)).map(entry=>{
+          const mine=entry.addedBy===state.user;
+          const other=mine?"You":entry.addedBy;
+          const date=new Date(entry.createdAt);
+          const time=Number.isNaN(date.getTime())?"":date.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"});
+          const link=entry.url || (entry.content||"").match(/https?:\/\/[^\s]+/)?.[0];
+          let domain="";
+          try{if(link)domain=new URL(link).hostname.replace(/^www\./,"");}catch{}
+          return <article className={"us-chat-message "+(mine?"mine":"theirs")} key={entry.id}>
+            <div className="us-chat-bubble">
+              <div className="us-chat-meta"><strong>{other}</strong><span>{time}</span></div>
+              {entry.title ? <h3>{entry.title}</h3> : null}
+              {entry.content && entry.content!==entry.url ? <p>{entry.content}</p> : null}
+              {link ? <a className="us-chat-link" href={link} target="_blank" rel="noopener noreferrer"><span>↗</span><span><strong>{domain||"Shared link"}</strong><small>Open shared link</small></span></a> : null}
+              {entry.ideaItemId ? <div className="us-chat-saved">✓ Saved to {categoryMeta[entry.ideaCategory]?.label||"ideas"}</div> :
+                ideaFromMessage===entry.id ? <div className="us-chat-category">
+                  <span>Save as an idea</span>
+                  <div>{Object.entries(categoryMeta).map(([key,value])=><button key={key} onClick={()=>makeIdea(entry,key)}>{value.emoji} {value.label}</button>)}</div>
+                  <button className="us-chat-cancel" onClick={()=>setIdeaFromMessage(null)}>Cancel</button>
+                </div> : <button className="us-chat-make-idea" onClick={()=>setIdeaFromMessage(entry.id)}>✧ Make idea →</button>}
+              {mine&&entry.readAt?<div className="us-chat-read">Seen</div>:null}
             </div>
-            {entry.title ? <h3>{entry.title}</h3> : null}
-            {entry.content && entry.content!==entry.url ? <p>{entry.content}</p> : null}
-            {entry.url ? <a href={entry.url} target="_blank" rel="noreferrer">{entry.url.replace(/^https?:\/\//,"").slice(0,72)}{entry.url.length>78?"…":""}</a> : null}
-
-            {entry.ideaItemId ? (
-              <div className="us-message-linked">✓ Added to {categoryMeta[entry.ideaCategory]?.label || "ideas"}</div>
-            ) : ideaFromMessage===entry.id ? (
-              <div className="us-message-idea">
-                <span>Make this an idea</span>
-                <div>
-                  {Object.entries(categoryMeta).map(([key,value])=>(
-                    <button key={key} onClick={()=>makeIdea(entry,key)}>{value.emoji} {value.label}</button>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <button className="us-make-idea" onClick={()=>setIdeaFromMessage(entry.id)}>Make idea →</button>
-            )}
-          </article>
-        )) : <div className="us-inbox-empty">Nothing here yet. Send the first one.</div>}
+          </article>;
+        }) : <div className="us-inbox-empty">Your conversation starts here. Say something lovely ✨</div>}
+        <div ref={bottomRef}/>
       </section>
 
-      <section className="us-thread-compose us-thread-compose-page">
-        <input placeholder="Optional title" value={draft.title} onChange={e=>setDraft({...draft,title:e.target.value})}/>
-        <div>
-          <textarea placeholder={"Message "+(state.user==="Charlie"?"Tayla":"Charlie")+" or paste a link…"} value={draft.content} onChange={e=>setDraft({...draft,content:e.target.value})}/>
-          <button className="us-primary" disabled={!draft.title.trim()&&!draft.content.trim()} onClick={send}>SEND →</button>
+      <form className="us-chat-compose" onSubmit={e=>{e.preventDefault();send();}}>
+        {showTitle ? <input aria-label="Idea title" placeholder="Give your idea a title (optional)" value={draft.title} onChange={e=>setDraft({...draft,title:e.target.value})}/> : null}
+        <div className="us-chat-compose-row">
+          <button type="button" className="us-chat-add" aria-label={showTitle?"Hide idea title":"Add idea title"} title="Add optional idea title" onClick={()=>setShowTitle(v=>!v)}>＋</button>
+          <textarea aria-label="Message" rows={1} placeholder={"Message "+(state.user==="Charlie"?"Tayla":"Charlie")+"…"} value={draft.content} onChange={e=>setDraft({...draft,content:e.target.value})} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}}}/>
+          <button className="us-chat-send" type="submit" aria-label="Send message" disabled={sending||(!draft.content.trim()&&!draft.title.trim())}>↑</button>
         </div>
-      </section>
+        <small>Paste a link or tap + to add a title for an idea.</small>
+      </form>
     </div>
 
     {toast ? <div className="us-toast">{toast}</div> : null}
