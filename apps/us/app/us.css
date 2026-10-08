@@ -983,3 +983,20 @@ body:before{display:none!important}
 .us-gallery-activity-results small{display:block;margin-top:3px;color:#9c8a90;font-size:9px}
 .us-gallery-activity-thumb{width:42px;height:42px;flex-shrink:0;display:grid;place-items:center;background:#f6edef;border-radius:8px;font-size:21px;overflow:hidden}
 .us-gallery-activity-thumb img{width:100%;height:100%;object-fit:cover}
+
+/* US design pack v1 — canonical component typography and home composition */
+:root{--us-font-display:Georgia,"Times New Roman",serif;--us-font-ui:system-ui,-apple-system,"Segoe UI",sans-serif;--us-font-ui-weight:650;--us-letter-ui:.055em;--us-ink:#342b2f;--us-muted:#8f7d83;--us-accent:#e65a8d;--us-panel-border:#e6d9dd;--us-card-radius:20px}
+.us-cats button{display:grid;grid-template-columns:1fr auto;grid-template-rows:auto 1fr auto;align-items:end;min-width:0;gap:0;font-family:var(--us-font-ui);font-weight:var(--us-font-ui-weight)}
+.us-cats button span{grid-column:1/-1;font-size:24px;line-height:1.3}
+.us-cats button b{grid-column:2;grid-row:3;margin:0;font-family:var(--us-font-ui);font-size:14px;font-weight:750;letter-spacing:var(--us-letter-ui);line-height:1.3}
+.us-cats button small{grid-column:1;grid-row:3;font-family:var(--us-font-ui);font-weight:650;font-size:10px;letter-spacing:var(--us-letter-ui);line-height:1.3}
+.us-ideas-heading{display:flex;align-items:end;justify-content:space-between;gap:12px;padding:8px 3px 12px}
+.us-ideas-heading small{font:650 9px var(--us-font-ui);letter-spacing:.16em;color:#a47586}
+.us-ideas-heading h2{font:700 29px var(--us-font-display);color:var(--us-ink);margin:5px 0 2px}
+.us-ideas-heading p{font:400 11px var(--us-font-ui);color:var(--us-muted);margin:0}
+.us-ideas-heading button{width:auto;white-space:nowrap;min-height:36px;padding:0 12px;border-radius:999px;background:#fff;border:1px solid var(--us-panel-border);color:#906a78;font:700 10px var(--us-font-ui);letter-spacing:.05em}
+.us-pick-feature.expanded{display:grid}
+.us-pick-feature .us-picker-panel{grid-column:1/-1;width:100%;min-width:0;margin:9px 0 0;border:0;border-top:1px solid #ead8de;padding:18px 0 0;background:transparent;box-shadow:none}
+.us-pick-feature .us-picker-head{display:none}
+.us-pick-feature .us-picker-tabs{margin-top:0}
+@media(max-width:600px){.us-cats button{min-height:114px;padding:15px}.us-cats button b{font-size:14px}.us-cats button small{font-size:10px}}

@@ -856,9 +856,7 @@ export default function Us() {
         ? { category:"any", effort:"any", duration:"any", timeHorizon:"any" }
         : { category:"any", effort:"any", duration:"any", timeHorizon:"any" }
     );
-    setTimeout(() => {
-      document.querySelector(".us-picker-panel")?.scrollIntoView({ behavior:"smooth", block:"start" });
-    }, 0);
+
   }
 
   function spin() {
@@ -1002,166 +1000,12 @@ export default function Us() {
           </div>
         </section>
 
-        <section className="us-pick-feature">
+        <section className={"us-pick-feature"+(pickerMode?" expanded":"")}>
           <div className="us-pick-feature-mark">✦</div>
           <div><small>NEED A LITTLE INSPIRATION?</small><h2>Pick for us.</h2><p>Discover a new date or let fate decide.</p></div>
-          <button onClick={()=>openPicker("pick")}>LET’S PICK →</button>
-        </section>
-
-        <section className="us-polls">
-          <div className="us-polls-head">
-            <div>
-              <small>POLL IT</small>
-              <h2>Can’t decide?</h2>
-            </div>
-            <button onClick={()=>setPollOpen(true)}>+ New poll</button>
-          </div>
-
-          {polls.length ? (
-            <div className="us-poll-list">
-              {polls.slice(0,3).map((poll)=>{
-                const result=pollResult(poll);
-                const myVote=poll.votes?.[user];
-                return (
-                  <article className="us-poll-card" key={poll.id}>
-                    <div className="us-poll-title-row">
-                      <h3>{poll.question}</h3>
-                      <div className="us-poll-meta">
-                        <small>{poll.createdBy}</small>
-                        <button className="us-poll-delete" onClick={()=>deletePoll(poll)}>Delete</button>
-                      </div>
-                    </div>
-                    <div className="us-poll-options">
-                      {(poll.options||[]).map((option)=>(
-                        <button
-                          key={option.id}
-                          className={myVote===option.id?"active":""}
-                          onClick={()=>votePoll(poll,option.id)}
-                        >
-                          <span>{option.label}</span>
-                          {result ? <small>{result.counts[option.id]||0}</small> : null}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="us-poll-status">
-                      {result ? (
-                        result.tie
-                          ? <span>Tie. Very helpful 😂</span>
-                          : <span className="us-poll-winner">Winner: <b>{result.winners[0]?.label}</b><button onClick={()=>planPollWinner(poll,result.winners[0])}>PLAN IT →</button></span>
-                      ) : (
-                        <span>{myVote ? "Your vote is in. Waiting for the other one." : "Vote once. You can change it until both have voted."}</span>
-                      )}
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="us-poll-empty">Film? Restaurant? Date? Make it democratic.</div>
-          )}
-        </section>
-
-
-        <section className="us-cats">
-          {Object.entries(categoryMeta).map(([k, v]) => (
-            <button key={k} className={category === k && !shortcut ? "active" : ""} onClick={() => { setCategory(k); setSublist("all"); setLifecycleFilter("all"); setShortcut(""); setPickerMode(null); setWheelPick(null); }}>
-              <span>{v.emoji}</span><b>{v.label}</b><small>{items.filter((x) => x.category === k).length} items</small>
-            </button>
-          ))}
-        </section>
-
-        {!shortcut ? (
-          <section className="us-sublists" aria-label={categoryMeta[category].label + " lists"}>
-            <button className={sublist==="all"?"active":""} onClick={()=>setSublist("all")}>
-              <span>All</span>
-              <small>{items.filter((x)=>x.category===category).length}</small>
-            </button>
-            {listsForCategory(category).map((list) => (
-              <div key={list.id} className={"us-sublist-wrap"+(sublist===list.id?" active":"")}>
-                <button className="us-sublist-main" onClick={()=>setSublist(list.id)}>
-                  <span>{list.emoji} {list.label}</span>
-                  <small>{items.filter((x)=>x.category===category && x.list===list.id).length}</small>
-                </button>
-                {list.custom ? (
-                  <button
-                    className="us-sublist-edit"
-                    aria-label={"Edit "+list.label}
-                    onClick={()=>setEditingList({id:list.id,name:list.label,emoji:list.emoji,category})}
-                  >
-                    ···
-                  </button>
-                ) : null}
-              </div>
-            ))}
-            <button className="us-new-list-btn" onClick={()=>setNewListOpen(true)}>
-              <span>＋ New list</span>
-            </button>
-          </section>
-        ) : null}
-
-        {!shortcut ? (
-          <section className="us-lifecycle-filter" aria-label="Item status">
-            {[["all","All"],["idea","Ideas"],["planned","Planned"],["done","Done"],["archived","Archived"]].map(([value,label]) => (
-              <button
-                key={value}
-                className={lifecycleFilter===value?"active":""}
-                onClick={()=>setLifecycleFilter(value)}
-              >
-                {label}
-                <small>
-                  {value==="all"
-                    ? items.filter((x)=>x.category===category && x.status!=="archived" && (sublist==="all" || x.list===sublist)).length
-                    : items.filter((x)=>{
-                        const status=x.status==="maybe"?"idea":x.status;
-                        return x.category===category && (sublist==="all" || x.list===sublist) && status===value;
-                      }).length}
-                </small>
-              </button>
-            ))}
-          </section>
-        ) : null}
-
-        {!shortcut ? (
-          <section className="us-favourite-filter">
-            <button
-              className={lifecycleFilter==="favourites"?"active":""}
-              onClick={()=>setLifecycleFilter(lifecycleFilter==="favourites"?"all":"favourites")}
-            >
-              ♥ Favourites
-            </button>
-          </section>
-        ) : null}
-
-        <section className="us-shortcuts">
-          {quickShortcuts.map((s) => (
-            <button
-              key={s}
-              className={shortcut === s ? "active" : ""}
-              onClick={() => {
-                if (s === "Pick for us") { openPicker("pick"); setShortcut(""); }
-                else if (s === "Tonight") { openPicker("tonight"); setShortcut(""); }
-                else if (s === "Quick add") { setPickerMode(null); setWheelPick(null); setQuick(true); }
-                else if (s === "Recent activity") {
-                  setPickerMode(null); setWheelPick(null); setShortcut("");
-                  setTimeout(() => document.querySelector(".us-activity")?.scrollIntoView({behavior:"smooth",block:"start"}), 0);
-                }
-                else {
-                  setPickerMode(null); setWheelPick(null);
-                  setSublist("all");
-                  setLifecycleFilter("all");
-                  setShortcut(shortcut === s ? "" : s);
-                }
-              }}
-            >
-              {s}
-            </button>
-          ))}
-        </section>
-
-
-
-                {pickerMode ? (
-          <section className="us-picker-panel">
+          <button aria-expanded={Boolean(pickerMode)} onClick={()=>pickerMode?setPickerMode(null):openPicker("pick")}>{pickerMode?"CLOSE PICKER ↑":"LET’S PICK →"}</button>
+                          {pickerMode ? (
+          <section className="us-picker-panel" id="pick-for-us-panel">
             <div className="us-picker-head">
               <div>
                 <small>PICK FOR US</small>
@@ -1263,6 +1107,162 @@ export default function Us() {
             </>)}
           </section>
         ) : null}
+
+
+        </section>
+
+        <section className="us-polls">
+          <div className="us-polls-head">
+            <div>
+              <small>POLL IT</small>
+              <h2>Can’t decide?</h2>
+            </div>
+            <button onClick={()=>setPollOpen(true)}>+ New poll</button>
+          </div>
+
+          {polls.length ? (
+            <div className="us-poll-list">
+              {polls.slice(0,3).map((poll)=>{
+                const result=pollResult(poll);
+                const myVote=poll.votes?.[user];
+                return (
+                  <article className="us-poll-card" key={poll.id}>
+                    <div className="us-poll-title-row">
+                      <h3>{poll.question}</h3>
+                      <div className="us-poll-meta">
+                        <small>{poll.createdBy}</small>
+                        <button className="us-poll-delete" onClick={()=>deletePoll(poll)}>Delete</button>
+                      </div>
+                    </div>
+                    <div className="us-poll-options">
+                      {(poll.options||[]).map((option)=>(
+                        <button
+                          key={option.id}
+                          className={myVote===option.id?"active":""}
+                          onClick={()=>votePoll(poll,option.id)}
+                        >
+                          <span>{option.label}</span>
+                          {result ? <small>{result.counts[option.id]||0}</small> : null}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="us-poll-status">
+                      {result ? (
+                        result.tie
+                          ? <span>Tie. Very helpful 😂</span>
+                          : <span className="us-poll-winner">Winner: <b>{result.winners[0]?.label}</b><button onClick={()=>planPollWinner(poll,result.winners[0])}>PLAN IT →</button></span>
+                      ) : (
+                        <span>{myVote ? "Your vote is in. Waiting for the other one." : "Vote once. You can change it until both have voted."}</span>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="us-poll-empty">Film? Restaurant? Date? Make it democratic.</div>
+          )}
+        </section>
+
+
+        <div className="us-ideas-heading"><div><small>OUR SHARED LISTS</small><h2>Your ideas.</h2><p>All the things worth making time for.</p></div><button onClick={()=>setQuick(true)}>+ ADD IDEA</button></div>
+        <section className="us-cats">
+          {Object.entries(categoryMeta).map(([k, v]) => (
+            <button key={k} className={category === k && !shortcut ? "active" : ""} onClick={() => { setCategory(k); setSublist("all"); setLifecycleFilter("all"); setShortcut(""); setPickerMode(null); setWheelPick(null); }}>
+              <span>{v.emoji}</span><b>{v.label}</b><small>{items.filter((x) => x.category === k).length} items</small>
+            </button>
+          ))}
+        </section>
+
+        {!shortcut ? (
+          <section className="us-sublists" aria-label={categoryMeta[category].label + " lists"}>
+            <button className={sublist==="all"?"active":""} onClick={()=>setSublist("all")}>
+              <span>All</span>
+              <small>{items.filter((x)=>x.category===category).length}</small>
+            </button>
+            {listsForCategory(category).map((list) => (
+              <div key={list.id} className={"us-sublist-wrap"+(sublist===list.id?" active":"")}>
+                <button className="us-sublist-main" onClick={()=>setSublist(list.id)}>
+                  <span>{list.emoji} {list.label}</span>
+                  <small>{items.filter((x)=>x.category===category && x.list===list.id).length}</small>
+                </button>
+                {list.custom ? (
+                  <button
+                    className="us-sublist-edit"
+                    aria-label={"Edit "+list.label}
+                    onClick={()=>setEditingList({id:list.id,name:list.label,emoji:list.emoji,category})}
+                  >
+                    ···
+                  </button>
+                ) : null}
+              </div>
+            ))}
+            <button className="us-new-list-btn" onClick={()=>setNewListOpen(true)}>
+              <span>＋ New list</span>
+            </button>
+          </section>
+        ) : null}
+
+        {!shortcut ? (
+          <section className="us-lifecycle-filter" aria-label="Item status">
+            {[["all","All"],["idea","Ideas"],["planned","Planned"],["done","Done"],["archived","Archived"]].map(([value,label]) => (
+              <button
+                key={value}
+                className={lifecycleFilter===value?"active":""}
+                onClick={()=>setLifecycleFilter(value)}
+              >
+                {label}
+                <small>
+                  {value==="all"
+                    ? items.filter((x)=>x.category===category && x.status!=="archived" && (sublist==="all" || x.list===sublist)).length
+                    : items.filter((x)=>{
+                        const status=x.status==="maybe"?"idea":x.status;
+                        return x.category===category && (sublist==="all" || x.list===sublist) && status===value;
+                      }).length}
+                </small>
+              </button>
+            ))}
+          </section>
+        ) : null}
+
+        {!shortcut ? (
+          <section className="us-favourite-filter">
+            <button
+              className={lifecycleFilter==="favourites"?"active":""}
+              onClick={()=>setLifecycleFilter(lifecycleFilter==="favourites"?"all":"favourites")}
+            >
+              ♥ Favourites
+            </button>
+          </section>
+        ) : null}
+
+        <section className="us-shortcuts">
+          {quickShortcuts.filter(s=>!["Pick for us","Tonight"].includes(s)).map((s) => (
+            <button
+              key={s}
+              className={shortcut === s ? "active" : ""}
+              onClick={() => {
+                if (s === "Pick for us") { openPicker("pick"); setShortcut(""); }
+                else if (s === "Tonight") { openPicker("tonight"); setShortcut(""); }
+                else if (s === "Quick add") { setPickerMode(null); setWheelPick(null); setQuick(true); }
+                else if (s === "Recent activity") {
+                  setPickerMode(null); setWheelPick(null); setShortcut("");
+                  setTimeout(() => document.querySelector(".us-activity")?.scrollIntoView({behavior:"smooth",block:"start"}), 0);
+                }
+                else {
+                  setPickerMode(null); setWheelPick(null);
+                  setSublist("all");
+                  setLifecycleFilter("all");
+                  setShortcut(shortcut === s ? "" : s);
+                }
+              }}
+            >
+              {s}
+            </button>
+          ))}
+        </section>
+
+
 
         {shortcut === "Surprises" ? (
           <section className="us-surprise-head">
