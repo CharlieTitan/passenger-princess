@@ -896,3 +896,19 @@ body:before{display:none!important}
 .us-gallery-view-memory{display:block;width:auto;min-height:32px;margin:8px auto 0;padding:0 13px;border-radius:999px;background:#fff;color:#342b2f;font-size:10px}
 .us-lightbox-foot span small{display:block;margin-top:4px;font-size:9px;color:#ddd}
 @media(max-width:600px){.us-gallery-collection{gap:4px}.us-gallery-collection-tile{border-radius:7px}}
+
+/* Shared scrapbook: image and its story belong to one polaroid */
+.us-gallery-collection{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 12px;align-items:start;padding:12px 7px 18px}
+.us-gallery-polaroid{display:flex;flex-direction:column;align-items:stretch;width:100%;min-width:0;height:auto;min-height:0;padding:9px 9px 16px;text-align:left;border:1px solid #ede6e3;border-radius:2px;background:#fff;color:#473c40;box-shadow:0 9px 17px #392a2d1c;transition:transform .2s,box-shadow .2s}
+.us-gallery-polaroid:nth-child(3n+2){margin-top:14px}
+.us-gallery-polaroid:active{box-shadow:0 5px 10px #392a2d22}
+.us-gallery-polaroid-image{display:block;width:100%;aspect-ratio:1/1;background:#ede5e1;overflow:hidden}
+.us-gallery-polaroid-image img{display:block;width:100%;height:100%;object-fit:cover}
+.us-gallery-polaroid-title{display:block;margin-top:10px;font-family:Georgia,serif;font-size:13px;font-weight:700;line-height:1.25;letter-spacing:0;white-space:normal;overflow-wrap:anywhere}
+.us-gallery-polaroid-note{display:block;margin-top:4px;color:#9a8a8f;font-size:9px;font-weight:400;letter-spacing:0;white-space:normal}
+@media(max-width:600px){
+  .us-gallery-collection{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 13px;padding:8px 12px 22px}
+  .us-gallery-polaroid{padding:8px 8px 17px}
+  .us-gallery-polaroid:nth-child(3n+2){margin-top:0}
+  .us-gallery-polaroid:nth-child(even){margin-top:16px}
+}

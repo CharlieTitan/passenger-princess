@@ -41,8 +41,14 @@ export default function Memories(){
     .filter(x=>!x.isSurprise)
     .flatMap(item=>{
       const photos=[];
-      if(item.cover) photos.push({id:item.id+":cover",src:item.cover,item,date:item.doneAt||item.updatedAt||item.createdAt||null,who:null});
-      (item.gallery||[]).forEach((g,i)=>{if(g.src)photos.push({id:item.id+":"+(g.id||i),src:g.src,item,date:g.at||item.doneAt||item.updatedAt||item.createdAt||null,who:g.addedBy||null});});
+      const seen=new Set();
+      const add=(src,id,date,who)=>{
+        if(!src||seen.has(src))return;
+        seen.add(src);
+        photos.push({id,src,item,date:item.doneAt||date||item.updatedAt||item.createdAt||null,who});
+      };
+      add(item.cover,item.id+":cover",item.updatedAt,null);
+      (item.gallery||[]).forEach((g,i)=>add(g.src,item.id+":"+(g.id||i),g.at,g.addedBy||null));
       return photos;
     })
     .sort((a,b)=>new Date(b.date||0)-new Date(a.date||0)),[state.items]);
@@ -212,9 +218,9 @@ export default function Memories(){
     <div className="us-shell">
 
       <section className="us-memories-hero">
-        <small>DONE, BUT NOT GONE</small>
-        <h1>Things we’ve actually done.</h1>
-        <p>{memories.length} memor{memories.length===1?"y":"ies"} so far.</p>
+        <small>{tab==="gallery"?"OUR SCRAPBOOK":"DONE, BUT NOT GONE"}</small>
+        <h1>{tab==="gallery"?"The little things.":"Things we’ve actually done."}</h1>
+        <p>{tab==="gallery"?galleryPhotos.length+" photo"+(galleryPhotos.length===1?"":"s")+" collected.":memories.length+" memor"+(memories.length===1?"y":"ies")+" so far."}</p>
       </section>
 
       <nav className="us-memory-tabs">
@@ -239,8 +245,10 @@ export default function Memories(){
           </div>
           <div className="us-gallery-collection">
             {visibleGallery.map((photo,index)=>(
-              <button key={photo.id} className="us-gallery-collection-tile" onClick={()=>setLightbox({src:photo.src,index,images:visibleGallery.map(x=>x.src),title:photo.item.title,caption:[photo.item.location,photo.date?new Date(photo.date).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}):null,photo.who?"Added by "+photo.who:null].filter(Boolean).join(" · "),itemId:photo.item.id})}>
-                <img src={photo.src} alt={photo.item.title}/>
+              <button key={photo.id} className={"us-gallery-polaroid "+(index%3===0?"tilt-l":index%3===1?"tilt-r":"")} onClick={()=>setLightbox({src:photo.src,index,images:visibleGallery.map(x=>x.src),title:photo.item.title,caption:[photo.item.location,photo.date?new Date(photo.date).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}):null,photo.who?"Added by "+photo.who:null].filter(Boolean).join(" · "),itemId:photo.item.id})}>
+                <span className="us-gallery-polaroid-image"><img src={photo.src} alt={photo.item.title}/></span>
+                <span className="us-gallery-polaroid-title">{photo.item.title}</span>
+                <span className="us-gallery-polaroid-note">{photo.item.doneAt?new Date(photo.item.doneAt).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}):photo.item.location||categoryMeta[photo.item.category]?.label}</span>
               </button>
             ))}
           </div>
