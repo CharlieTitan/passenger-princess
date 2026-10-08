@@ -6,6 +6,7 @@ import { categoryMeta } from "../../lib/usData";
 export default function Memories(){
   const [state,setState]=useState({loading:true,user:null,items:[],inbox:[]});
   const [lightbox,setLightbox]=useState(null);
+  const [expandedMemoryId,setExpandedMemoryId]=useState(null);
   const [tab,setTab]=useState("memories");
   const [memoryFilter,setMemoryFilter]=useState(null);
   const [navOpen,setNavOpen]=useState(false);
@@ -83,29 +84,32 @@ export default function Memories(){
     setTab("gallery");
   }
 
-  async function uploadGallery(file){
-    if(!file||!uploadItemId||uploadBusy)return;
-    if(!file.type.startsWith("image/"))return;
+  async function uploadGallery(input,targetItemId=uploadItemId){
+    const files=(Array.isArray(input)?input:[input]).filter(file=>file&&file.type.startsWith("image/"));
+    if(!files.length||!targetItemId||uploadBusy)return;
     setUploadBusy(true);
     try{
-      const item=state.items.find(x=>x.id===uploadItemId);
+      const item=state.items.find(x=>x.id===targetItemId);
       if(!item||item.isSurprise)throw Error("Invalid item");
-      const image=await new Promise((resolve,reject)=>{
-        const r=new FileReader();
-        r.onload=()=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=r.result;};
-        r.onerror=reject;r.readAsDataURL(file);
-      });
-      const canvas=document.createElement("canvas");
-      const ratio=Math.min(1,1000/Math.max(image.width,image.height));
-      canvas.width=Math.round(image.width*ratio);
-      canvas.height=Math.round(image.height*ratio);
-      canvas.getContext("2d").drawImage(image,0,0,canvas.width,canvas.height);
-      const photo={id:crypto.randomUUID(),src:canvas.toDataURL("image/jpeg",0.78),addedBy:state.user,at:new Date().toISOString()};
-      const r=await fetch("/api/us",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({id:item.id,gallery:[...(item.gallery||[]),photo]})});
-      if(!r.ok)throw Error("Upload failed");
-      const result=await r.json();
+      const photos=[];
+      for(const file of files){
+        const image=await new Promise((resolve,reject)=>{
+          const reader=new FileReader();
+          reader.onload=()=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=reader.result;};
+          reader.onerror=reject;reader.readAsDataURL(file);
+        });
+        const canvas=document.createElement("canvas");
+        const ratio=Math.min(1,1000/Math.max(image.width,image.height));
+        canvas.width=Math.round(image.width*ratio);
+        canvas.height=Math.round(image.height*ratio);
+        canvas.getContext("2d").drawImage(image,0,0,canvas.width,canvas.height);
+        photos.push({id:crypto.randomUUID(),src:canvas.toDataURL("image/jpeg",0.78),addedBy:state.user,at:new Date().toISOString()});
+      }
+      const response=await fetch("/api/us",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({id:item.id,gallery:[...(item.gallery||[]),...photos]})});
+      if(!response.ok)throw Error("Upload failed");
+      const result=await response.json();
       setState(s=>({...s,items:s.items.map(x=>x.id===item.id?result.item:x)}));
-    }catch(e){alert("Couldn’t add that photo. Please try again.");}
+    }catch(e){alert("Couldn’t add those photos. Please try again.");}
     finally{setUploadBusy(false);}
   }
 
@@ -131,6 +135,7 @@ export default function Memories(){
     else setGalleryReturn(null);
     setMemoryFilter({label,...filter});
     setTab("memories");
+    if(filter.type==="id")setExpandedMemoryId(filter.value);
     setTimeout(()=>document.querySelector(".us-memory-timeline")?.scrollIntoView({behavior:"smooth",block:"start"}),0);
   }
 
@@ -209,7 +214,7 @@ export default function Memories(){
               else window.location.href="/";
             }}
           >←</button>
-          <div className="us-appbar-brand">MEMORIES</div>
+          <div className="us-appbar-brand">Memories</div>
         </div>
         <button className="us-nav-toggle" aria-label="Open navigation" onClick={()=>setNavOpen(!navOpen)}>
           ☰
@@ -404,11 +409,22 @@ export default function Memories(){
               </div>
               <div className="us-memory-copy">
                 <small>{categoryMeta[x.category]?.emoji} {x.doneAt?new Date(x.doneAt).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}):"Date not set"}</small>
-                <h2>{x.title}</h2>
+                <h2><button className="us-memory-open" aria-expanded={expandedMemoryId===x.id} onClick={()=>setExpandedMemoryId(v=>v===x.id?null:x.id)}>{x.title} <span>{expandedMemoryId===x.id?"−":"↗"}</span></button></h2>
                 {x.location?<p>{x.location}</p>:null}
                 {x.tryAgain?<span className="us-memory-try">TRY AGAIN</span>:null}
               </div>
             </div>
+
+            <button className="us-memory-details-trigger" aria-expanded={expandedMemoryId===x.id} onClick={()=>setExpandedMemoryId(v=>v===x.id?null:x.id)}>{expandedMemoryId===x.id?"Close memory details ↑":"Open memory & photos →"}</button>
+            {expandedMemoryId===x.id?<section className="us-memory-expanded" aria-label={x.title+" photo gallery"}>
+              <div className="us-memory-expanded-head"><div><small>OUR PHOTOS</small><h3>{x.title}</h3><p>{images.length} photo{images.length===1?"":"s"} in this memory</p></div></div>
+              <div className="us-memory-expanded-photos">
+                {images.map((src,idx)=><button key={idx} onClick={()=>setLightbox({src,index:idx,images,title:x.title,itemId:x.id})}><img src={src} alt={x.title+" photo "+(idx+1)}/></button>)}
+              </div>
+              <label className={"us-memory-add-photo"+(uploadBusy?" busy":"")}>＋ {uploadBusy?"Adding photo…":"Add photos"}
+                <input type="file" accept="image/*" multiple disabled={uploadBusy} onChange={async e=>{const files=Array.from(e.target.files||[]);e.target.value="";await uploadGallery(files,x.id);}}/>
+              </label>
+            </section>:null}
 
             {(x.gallery||[]).length?<div className="us-memory-gallery">
               {(x.gallery||[]).slice(0,6).map((g,idx)=><button key={g.id} onClick={()=>setLightbox({src:g.src,index:(x.cover?1:0)+idx,images,title:x.title})}><img src={g.src} alt=""/></button>)}
