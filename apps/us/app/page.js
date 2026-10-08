@@ -33,6 +33,8 @@ export default function Us() {
   const [wheel, setWheel] = useState(false);
   const [wheelPick, setWheelPick] = useState(null);
   const [pickerMode, setPickerMode] = useState(null);
+  const [inspireMode,setInspireMode]=useState("mix");
+  const [inspireOffset,setInspireOffset]=useState(0);
   const [pickerFilters, setPickerFilters] = useState({category:"any",effort:"any",duration:"any",timeHorizon:"any"});
   const [pendingIds, setPendingIds] = useState({});
   const [toast, setToast] = useState("");
@@ -747,6 +749,52 @@ export default function Us() {
     openPlan(item);
   }
 
+  const inspiration=useMemo(()=>{
+    const fresh=[
+      {title:"Pottery painting date",category:"do",list:"date-ideas",emoji:"🎨",effort:"normal",duration:"1-2h",reason:"Try something creative together."},
+      {title:"Sunset picnic",category:"go",list:"day-trips",emoji:"🌅",effort:"low",duration:"1-2h",reason:"A change of scenery."},
+      {title:"Make homemade pizza together",category:"eat",list:"cook-together",emoji:"🍕",effort:"normal",duration:"1-2h",reason:"A twist on your cooking nights."},
+      {title:"Try a dessert you've never had",category:"eat",list:"dessert",emoji:"🍨",effort:"low",duration:"30m",reason:"Something spontaneous."},
+      {title:"Pick a film neither of you has seen",category:"watch",list:"films",emoji:"🎬",effort:"low",duration:"1-2h",reason:"A cosy night in."},
+      {title:"Explore a neighbourhood on foot",category:"go",list:"day-trips",emoji:"🚶",effort:"normal",duration:"half-day",reason:"Find somewhere unexpected."},
+      {title:"Breakfast somewhere new",category:"eat",list:"restaurants",emoji:"🥐",effort:"low",duration:"1-2h",reason:"Start the day differently."},
+      {title:"Plan a board game night",category:"do",list:"date-ideas",emoji:"🎲",effort:"low",duration:"1-2h",reason:"Low effort and fun."}
+    ].filter(x=>!items.some(item=>item.title.toLowerCase()===x.title.toLowerCase()));
+    const saved=items.filter(x=>!x.isSurprise&&x.status!=="done"&&x.status!=="archived")
+      .map(x=>({...x,source:"saved",reason:x.favourites?.[user]?"You liked this one.":x.favourites?.Charlie||x.favourites?.Tayla?"One of you favourited it.":"Already on your list."}))
+      .sort((a,b)=>Number(!!(b.favourites?.Charlie||b.favourites?.Tayla))-Number(!!(a.favourites?.Charlie||a.favourites?.Tayla)));
+    const repeat=items.filter(x=>x.status==="done"&&!x.isSurprise)
+      .map(x=>({...x,source:"repeat",reason:x.tryAgain?"Already calling for a repeat.":x.ratings?.Charlie>=8||x.ratings?.Tayla>=8?"One of you rated it highly.":"A memory worth revisiting."}))
+      .sort((a,b)=>Number(!!b.tryAgain)-Number(!!a.tryAgain));
+    const freshItems=fresh.map(x=>({...x,source:"new"}));
+    const pool=inspireMode==="tonight"
+      ? [...saved,...repeat,...freshItems].filter(x=>x.effort!=="big" && x.duration!=="full-day" && x.duration!=="overnight")
+      :inspireMode==="weekend"
+      ? [...freshItems,...saved,...repeat].filter(x=>x.category!=="watch"||x.effort==="low")
+      :[...freshItems,...saved,...repeat];
+    const unique=[];const seen=new Set();
+    for(const x of pool){const key=x.title.toLowerCase();if(!seen.has(key)){seen.add(key);unique.push(x);}}
+    if(!unique.length)return [];
+    return Array.from({length:Math.min(3,unique.length)},(_,i)=>unique[(inspireOffset+i)%unique.length]);
+  },[items,user,inspireMode,inspireOffset]);
+
+  async function chooseInspiration(item,customise=false){
+    if(customise){
+      setDraft(current=>({...current,title:item.title,category:item.category,list:item.list||"date-ideas",effort:item.effort||"normal",duration:item.duration||"",location:item.location||"",notes:item.source==="repeat"?"Inspired by a previous date.":""}));
+      setQuick(true);return;
+    }
+    if(item.source==="saved"){
+      openPlan(item);return;
+    }
+    const r=await fetch("/api/us",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({
+      title:item.title,category:item.category,list:item.list||"date-ideas",effort:item.effort||"normal",duration:item.duration||"",location:item.location||"",emoji:item.emoji||null,repeatOf:item.source==="repeat"?item.id:null
+    })});
+    if(!r.ok){setToast("Couldn’t create that idea");return;}
+    const data=await r.json();
+    setItems(current=>[...current,data.item]);
+    openPlan(data.item);
+  }
+
   const filtered = useMemo(() => {
     return items.filter((x) => {
       if (shortcut === "Planned" && x.status !== "planned") return false;
@@ -932,6 +980,27 @@ export default function Us() {
               <button className="us-now-cta" onClick={()=>openPicker("pick")}>PICK SOMETHING →</button>
             ) : null}
           </div>
+        </section>
+
+        <section className="us-inspire">
+          <div className="us-inspire-head"><div><small>✦ INSPIRE US</small><h2>What shall we do?</h2><p>A little inspiration for the two of you.</p></div></div>
+          <div className="us-inspire-modes">
+            {[["mix","Surprise us"],["tonight","Tonight"],["weekend","Weekend"]].map(([value,label])=><button key={value} className={inspireMode===value?"active":""} onClick={()=>{setInspireMode(value);setInspireOffset(0);}}>{label}</button>)}
+          </div>
+          <div className="us-inspire-list">
+            {inspiration.map((item,i)=>(
+              <article className="us-inspire-item" key={item.source+":"+item.title}>
+                <span className="us-inspire-emoji">{item.emoji||categoryMeta[item.category]?.emoji||"✨"}</span>
+                <div className="us-inspire-copy"><b>{item.title}</b><small>{item.source==="new"?"Something new":item.source==="repeat"?"Worth doing again":"From our lists"} · {item.reason}</small>
+                  <div className="us-inspire-actions">
+                    <button onClick={()=>chooseInspiration(item,false)}>Let's do it</button>
+                    <button onClick={()=>chooseInspiration(item,true)}>Make it ours</button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+          <button className="us-inspire-more" onClick={()=>setInspireOffset(n=>n+3)}>Not these? Show us more ↻</button>
         </section>
 
         <section className="us-polls">
