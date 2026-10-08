@@ -6,6 +6,7 @@ import { categoryMeta } from "../../lib/usData";
 export default function Memories(){
   const [state,setState]=useState({loading:true,user:null,items:[],inbox:[]});
   const [lightbox,setLightbox]=useState(null);
+  const touchStartX=useRef(null);
   const [expandedMemoryId,setExpandedMemoryId]=useState(null);
   const [tab,setTab]=useState("memories");
   const [memoryFilter,setMemoryFilter]=useState(null);
@@ -467,7 +468,7 @@ export default function Memories(){
 
     {lightbox?<div className="us-lightbox" onClick={()=>setLightbox(null)}>
       <button className="us-lightbox-close" onClick={()=>setLightbox(null)}>×</button>
-      <div className="us-lightbox-inner" onClick={e=>e.stopPropagation()}>
+      <div className="us-lightbox-inner" onClick={e=>e.stopPropagation()} onTouchStart={e=>{touchStartX.current=e.touches[0]?.clientX??null;}} onTouchEnd={e=>{if(touchStartX.current===null||lightbox.images.length<2)return;const delta=(e.changedTouches[0]?.clientX??touchStartX.current)-touchStartX.current;touchStartX.current=null;if(Math.abs(delta)<45)return;const idx=(lightbox.index+(delta<0?1:-1)+lightbox.images.length)%lightbox.images.length;setLightbox({...lightbox,index:idx,src:lightbox.images[idx]});}}>
         <img src={lightbox.src} alt=""/>
         <div className="us-lightbox-foot"><span>{lightbox.title}{lightbox.caption?<><small>{lightbox.caption}</small></>:null}</span><small>{lightbox.index+1} / {lightbox.images.length}</small></div>
         {lightbox.itemId?<button className="us-gallery-view-memory" onClick={()=>{setLightbox(null);showMemories("gallery memory",{type:"id",value:lightbox.itemId});}}>View memory →</button>:null}
