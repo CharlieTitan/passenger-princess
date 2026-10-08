@@ -10,6 +10,9 @@ export default function Inbox(){
   const [toast,setToast]=useState("");
   const [navOpen,setNavOpen]=useState(false);
   const [showTitle,setShowTitle]=useState(false);
+  const [plusOpen,setPlusOpen]=useState(false);
+  const [photo,setPhoto]=useState(null);
+  const photoInputRef=useRef(null);
   const [sending,setSending]=useState(false);
   const bottomRef=useRef(null);
 
@@ -52,11 +55,22 @@ export default function Inbox(){
     window.location.href="/";
   }
 
+  async function attachPhoto(file){
+    if(!file||!file.type.startsWith("image/"))return;
+    try{
+      const image=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=reader.result;};reader.onerror=reject;reader.readAsDataURL(file);});
+      const canvas=document.createElement("canvas");const ratio=Math.min(1,700/Math.max(image.width,image.height));canvas.width=Math.round(image.width*ratio);canvas.height=Math.round(image.height*ratio);canvas.getContext("2d").drawImage(image,0,0,canvas.width,canvas.height);
+      let data=canvas.toDataURL("image/jpeg",.65);if(data.length>220000)data=canvas.toDataURL("image/jpeg",.42);
+      if(data.length>220000)throw Error("Photo too large");
+      setPhoto(data);setPlusOpen(false);
+    }catch{setToast("Couldn’t attach photo. Try a smaller image.");}
+  }
+
   async function send(){
     if(sending)return;
     const title=draft.title.trim();
     const content=draft.content.trim();
-    if(!title&&!content) return;
+    if(!title&&!content&&!photo) return;
     const r=await fetch("/api/us",{
       method:"POST",
       headers:{"content-type":"application/json"},
@@ -67,6 +81,8 @@ export default function Inbox(){
     setState(s=>({...s,inbox:[...s.inbox,d.inbox]}));
     setDraft({title:"",content:""});
     setShowTitle(false);
+    setPhoto(null);
+    setPlusOpen(false);
     setSending(false);
     setToast("Sent ✓");
     setTimeout(()=>setToast(""),1200);
@@ -138,6 +154,7 @@ export default function Inbox(){
             <div className="us-chat-bubble">
               <div className="us-chat-meta"><strong>{other}</strong><span>{time}</span></div>
               {entry.title ? <h3>{entry.title}</h3> : null}
+              {entry.photo ? <a className="us-chat-photo" href={entry.photo} target="_blank" rel="noreferrer" aria-label="View shared photo"><img src={entry.photo} alt={entry.title||"Shared photo"}/></a> : null}
               {entry.content && entry.content!==entry.url ? <p>{entry.content}</p> : null}
               {link ? <a className="us-chat-link" href={link} target="_blank" rel="noopener noreferrer"><span>↗</span><span><strong>{domain||"Shared link"}</strong><small>Open shared link</small></span></a> : null}
               {entry.ideaItemId ? <div className="us-chat-saved">✓ Saved to {categoryMeta[entry.ideaCategory]?.label||"ideas"}</div> :
@@ -154,13 +171,16 @@ export default function Inbox(){
       </section>
 
       <form className="us-chat-compose" onSubmit={e=>{e.preventDefault();send();}}>
+        {plusOpen ? <div className="us-chat-plus-menu" role="group" aria-label="Add to conversation"><button type="button" onClick={()=>photoInputRef.current?.click()}>📷 <span>Send photo</span></button><button type="button" onClick={()=>{setShowTitle(true);setPlusOpen(false);}}>✧ <span>Share an idea</span></button><button type="button" onClick={()=>{setPlusOpen(false);document.querySelector(".us-chat-compose textarea")?.focus();}}>↗ <span>Paste a link</span></button></div> : null}
+        <input ref={photoInputRef} type="file" accept="image/*" className="us-chat-file-input" aria-label="Choose photo to send" onChange={e=>{attachPhoto(e.target.files?.[0]);e.target.value="";}}/>
+        {photo ? <div className="us-chat-photo-preview"><img src={photo} alt="Photo ready to send"/><button type="button" onClick={()=>setPhoto(null)} aria-label="Remove photo">×</button></div> : null}
         {showTitle ? <input aria-label="Idea title" placeholder="Give your idea a title (optional)" value={draft.title} onChange={e=>setDraft({...draft,title:e.target.value})}/> : null}
         <div className="us-chat-compose-row">
-          <button type="button" className="us-chat-add" aria-label={showTitle?"Hide idea title":"Add idea title"} title="Add optional idea title" onClick={()=>setShowTitle(v=>!v)}>＋</button>
+          <button type="button" className="us-chat-add" aria-label={plusOpen?"Close attachment menu":"Add photo, idea or link"} aria-expanded={plusOpen} title="Add photo, idea or link" onClick={()=>setPlusOpen(v=>!v)}>＋</button>
           <textarea aria-label="Message" rows={1} placeholder={"Message "+(state.user==="Charlie"?"Tayla":"Charlie")+"…"} value={draft.content} onChange={e=>setDraft({...draft,content:e.target.value})} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}}}/>
-          <button className="us-chat-send" type="submit" aria-label="Send message" disabled={sending||(!draft.content.trim()&&!draft.title.trim())}>↑</button>
+          <button className="us-chat-send" type="submit" aria-label="Send message" disabled={sending||(!draft.content.trim()&&!draft.title.trim()&&!photo)}>↑</button>
         </div>
-        <small>Paste a link or tap + to add a title for an idea.</small>
+        <small>Tap + to send a photo, share an idea or paste a link.</small>
       </form>
     </div>
 
