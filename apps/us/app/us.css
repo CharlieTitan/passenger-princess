@@ -1042,3 +1042,21 @@ body:before{display:none!important}
 .us-chat-send:disabled{opacity:.4}
 .us-chat-compose>small{display:block;margin:8px 14px 0;color:#a18e94;font-size:10px}
 @media(max-width:600px){.us-chat-shell{min-height:calc(100svh - 70px)}.us-chat-heading{padding:18px 5px 10px}.us-chat-bubble{max-width:88%}.us-chat-thread{padding:14px 0 22px}.us-chat-compose{padding-left:0;padding-right:0}}
+
+
+/* Shared navigation typography: editorial title, consistent across US / Inbox / Memories */
+.us-appbar .us-appbar-brand{font-family:var(--us-font-display,Georgia,serif);font-size:clamp(23px,5vw,28px);font-weight:700;letter-spacing:-.025em;line-height:1.1;text-transform:none}
+.us-memory-open{display:inline-flex;align-items:baseline;gap:10px;width:auto;min-height:40px;padding:0;background:none;border:0;color:inherit;text-align:left;font:inherit;letter-spacing:inherit;line-height:inherit}
+.us-memory-open span{font:600 15px var(--us-font-ui,system-ui,sans-serif);color:#ab7587}
+.us-memory-details-trigger{display:block;width:100%;margin:13px 0;padding:12px;border-radius:14px;border:1px solid #e8d6dd;background:#fff9fb;color:#99677a;font:700 12px var(--us-font-ui,system-ui,sans-serif);text-align:center}
+.us-memory-expanded{padding:18px 15px 22px;margin:8px 0 15px;border-radius:18px;background:#faf5f3;border:1px solid #e9dfe0}
+.us-memory-expanded-head small{font-size:9px;letter-spacing:.14em;color:#a77989}
+.us-memory-expanded-head h3{font:700 23px var(--us-font-display,Georgia,serif);margin:5px 0;color:#3e3439}
+.us-memory-expanded-head p{margin:0 0 13px;font-size:11px;color:#917e86}
+.us-memory-expanded-photos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:16px}
+.us-memory-expanded-photos button{width:100%;aspect-ratio:1;min-height:0;padding:0;border:0;border-radius:10px;overflow:hidden;background:#efe4e5}
+.us-memory-expanded-photos img{display:block;width:100%;height:100%;object-fit:cover}
+.us-memory-add-photo{position:relative;display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border-radius:999px;background:#3b3035;color:white;font:700 12px var(--us-font-ui,system-ui,sans-serif);cursor:pointer;overflow:hidden}
+.us-memory-add-photo.busy{opacity:.6}
+.us-memory-add-photo input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+@media(max-width:600px){.us-memory-expanded-photos{grid-template-columns:repeat(2,minmax(0,1fr))}}
