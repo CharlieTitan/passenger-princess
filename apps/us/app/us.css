@@ -1072,3 +1072,20 @@ body:before{display:none!important}
 .us-chat-photo-preview button{position:absolute;right:-9px;top:-9px;width:25px;height:25px;min-height:25px;padding:0;border-radius:50%;background:#342b2f;color:white;font-size:19px}
 .us-chat-photo{display:block;margin:7px 0}
 .us-chat-photo img{display:block;max-width:100%;max-height:300px;width:auto;height:auto;border-radius:12px}
+
+
+/* QC50 Inbox refinements: compact chat and dedicated share-idea form */
+.us-chat-plus-menu{grid-template-columns:repeat(2,minmax(0,1fr))}
+.us-chat-compose .us-chat-compose-row textarea{height:44px!important;min-height:44px!important;max-height:90px!important;resize:none!important;padding:10px 4px!important;box-sizing:border-box;overflow-y:auto}
+.us-chat-compose .us-chat-compose-row{align-items:center}
+.us-share-idea-form{display:grid;gap:11px;padding:15px;background:#fff;border:1px solid #eadce0;border-radius:19px}
+.us-share-idea-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.us-share-idea-heading strong{font:700 22px var(--us-font-display,Georgia,serif);color:#413438}
+.us-share-idea-heading button{width:auto;padding:6px 0;min-height:32px;background:transparent;color:#9a6e7e;font-size:12px}
+.us-share-idea-form label{display:grid;gap:5px;color:#7c666e;font-size:11px;font-weight:700}
+.us-share-idea-form input,.us-share-idea-form textarea{display:block;width:100%;box-sizing:border-box;margin:0;min-height:43px;padding:11px 12px;background:#fffaf9;border:1px solid #eadce0;border-radius:11px;color:#342b2f;font:400 16px var(--us-font-ui,system-ui,sans-serif)}
+.us-share-idea-form textarea{min-height:65px;max-height:115px;resize:vertical}
+.us-share-idea-actions{display:flex;gap:9px;justify-content:space-between;align-items:center}
+.us-share-idea-actions button{min-height:41px;width:auto;padding:9px 12px;border-radius:12px;font-size:11px}
+.us-share-idea-actions button:first-child{background:#f6eef1;color:#906477}
+.us-share-idea-actions button:disabled{opacity:.45}
