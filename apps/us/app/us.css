@@ -1089,3 +1089,26 @@ body:before{display:none!important}
 .us-share-idea-actions button{min-height:41px;width:auto;padding:9px 12px;border-radius:12px;font-size:11px}
 .us-share-idea-actions button:first-child{background:#f6eef1;color:#906477}
 .us-share-idea-actions button:disabled{opacity:.45}
+
+
+/* QC 51B.7 — one tactile Polaroid pile per event */
+.us-gallery-collection{gap:27px 18px;padding:18px 13px 26px;align-items:start}
+.us-gallery-stack{position:relative;isolation:isolate;overflow:visible;box-shadow:none!important;background:transparent!important;border:0!important;padding:0!important;border-radius:0!important;transform:none!important}
+.us-gallery-stack:nth-child(even){margin-top:16px}
+.us-gallery-stack-front{position:relative;z-index:2;display:flex;flex-direction:column;width:100%;padding:8px 8px 16px;text-align:left;background:white;border:1px solid #eee6e2;box-shadow:0 8px 19px #392a2d21;transform:rotate(-1deg);transition:transform .3s ease,box-shadow .3s ease}
+.us-gallery-stack:nth-child(even) .us-gallery-stack-front{transform:rotate(1.2deg)}
+.us-stack-papers{position:absolute;z-index:0;inset:1px 6px 5px 5px;pointer-events:none}
+.us-stack-papers span{position:absolute;inset:0;background:#fff;border:1px solid #e5dbd9;box-shadow:0 7px 15px #392a2d23}
+.us-stack-papers span:first-child{transform:rotate(-7deg) translate(-6px,5px)}
+.us-stack-papers span:last-child{transform:rotate(5deg) translate(6px,4px)}
+.us-gallery-stack-front .us-gallery-polaroid-title{font-size:13px}
+.us-stack-count{display:block;margin-top:7px;font:700 10px var(--us-font-ui,system-ui,sans-serif);color:#a0647c}
+@media(hover:hover){.us-gallery-stack:hover .us-gallery-stack-front{transform:rotate(0deg) translateY(-4px);box-shadow:0 14px 25px #392a2d2b}}
+@keyframes us-stack-settle{0%,92%,100%{transform:rotate(-1deg)}94%{transform:rotate(0.8deg) translateY(-2px)}96%{transform:rotate(-1.6deg)}98%{transform:rotate(-.4deg)}}
+@keyframes us-stack-settle-alt{0%,92%,100%{transform:rotate(1.2deg)}94%{transform:rotate(-.5deg) translateY(-2px)}96%{transform:rotate(2deg)}98%{transform:rotate(.7deg)}}
+@media(prefers-reduced-motion:no-preference){
+.us-gallery-stack.has-multiple .us-gallery-stack-front{animation:us-stack-settle 13s ease-in-out infinite;animation-delay:var(--stack-jiggle-delay,0s)}
+.us-gallery-stack.has-multiple:nth-child(even) .us-gallery-stack-front{animation-name:us-stack-settle-alt}
+}
+@media(prefers-reduced-motion:reduce){.us-gallery-stack-front{animation:none!important;transition:none!important}}
+@media(max-width:600px){.us-gallery-collection{gap:28px 17px;padding:18px 15px 28px}.us-gallery-stack:nth-child(even){margin-top:14px}}
