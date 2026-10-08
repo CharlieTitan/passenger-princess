@@ -10,6 +10,7 @@ export default function Inbox(){
   const [toast,setToast]=useState("");
   const [navOpen,setNavOpen]=useState(false);
   const [showTitle,setShowTitle]=useState(false);
+  const [ideaLink,setIdeaLink]=useState("");
   const [plusOpen,setPlusOpen]=useState(false);
   const [photo,setPhoto]=useState(null);
   const photoInputRef=useRef(null);
@@ -70,7 +71,7 @@ export default function Inbox(){
     if(sending)return;
     const title=draft.title.trim();
     const content=draft.content.trim();
-    if(!title&&!content&&!photo) return;
+    if(showTitle ? (!title||!ideaLink.trim()) : (!content&&!photo)) return;
     const r=await fetch("/api/us",{
       method:"POST",
       headers:{"content-type":"application/json"},
@@ -82,6 +83,7 @@ export default function Inbox(){
     setDraft({title:"",content:""});
     setShowTitle(false);
     setPhoto(null);
+    setIdeaLink("");
     setPlusOpen(false);
     setSending(false);
     setToast("Sent ✓");
@@ -171,16 +173,24 @@ export default function Inbox(){
       </section>
 
       <form className="us-chat-compose" onSubmit={e=>{e.preventDefault();send();}}>
-        {plusOpen ? <div className="us-chat-plus-menu" role="group" aria-label="Add to conversation"><button type="button" onClick={()=>photoInputRef.current?.click()}>📷 <span>Send photo</span></button><button type="button" onClick={()=>{setShowTitle(true);setPlusOpen(false);}}>✧ <span>Share an idea</span></button><button type="button" onClick={()=>{setPlusOpen(false);document.querySelector(".us-chat-compose textarea")?.focus();}}>↗ <span>Paste a link</span></button></div> : null}
+        {plusOpen ? <div className="us-chat-plus-menu" role="group" aria-label="Add to conversation"><button type="button" onClick={()=>photoInputRef.current?.click()}>📷 <span>Send photo</span></button><button type="button" onClick={()=>{setShowTitle(true);setPlusOpen(false);setPhoto(null);}}>✧ <span>Share an idea</span></button></div> : null}
         <input ref={photoInputRef} type="file" accept="image/*" className="us-chat-file-input" aria-label="Choose photo to send" onChange={e=>{attachPhoto(e.target.files?.[0]);e.target.value="";}}/>
-        {photo ? <div className="us-chat-photo-preview"><img src={photo} alt="Photo ready to send"/><button type="button" onClick={()=>setPhoto(null)} aria-label="Remove photo">×</button></div> : null}
-        {showTitle ? <input aria-label="Idea title" placeholder="Give your idea a title (optional)" value={draft.title} onChange={e=>setDraft({...draft,title:e.target.value})}/> : null}
-        <div className="us-chat-compose-row">
-          <button type="button" className="us-chat-add" aria-label={plusOpen?"Close attachment menu":"Add photo, idea or link"} aria-expanded={plusOpen} title="Add photo, idea or link" onClick={()=>setPlusOpen(v=>!v)}>＋</button>
-          <textarea aria-label="Message" rows={1} placeholder={"Message "+(state.user==="Charlie"?"Tayla":"Charlie")+"…"} value={draft.content} onChange={e=>setDraft({...draft,content:e.target.value})} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}}}/>
-          <button className="us-chat-send" type="submit" aria-label="Send message" disabled={sending||(!draft.content.trim()&&!draft.title.trim()&&!photo)}>↑</button>
-        </div>
-        <small>Tap + to send a photo, share an idea or paste a link.</small>
+        {showTitle ? <div className="us-share-idea-form">
+          <div className="us-share-idea-heading"><strong>Share an idea</strong><button type="button" onClick={()=>{setShowTitle(false);setDraft({title:"",content:""});setIdeaLink("");setPhoto(null);}}>Cancel ×</button></div>
+          <label>Title <input required placeholder="e.g. Outdoor Cinema" value={draft.title} onChange={e=>setDraft({...draft,title:e.target.value})}/></label>
+          <label>Link <input required type="url" placeholder="https://…" value={ideaLink} onChange={e=>setIdeaLink(e.target.value)}/></label>
+          <label>Note (optional) <textarea rows={2} placeholder="What do you think?" value={draft.content} onChange={e=>setDraft({...draft,content:e.target.value})}/></label>
+          {photo ? <div className="us-chat-photo-preview"><img src={photo} alt="Idea image"/><button type="button" onClick={()=>setPhoto(null)} aria-label="Remove photo">×</button></div>:null}
+          <div className="us-share-idea-actions"><button type="button" onClick={()=>photoInputRef.current?.click()}>＋ {photo?"Change picture":"Add picture (optional)"}</button><button type="submit" className="us-primary" disabled={sending||!draft.title.trim()||!/^https?:\/\//i.test(ideaLink.trim())}>Share idea →</button></div>
+        </div> : <>
+          {photo ? <div className="us-chat-photo-preview"><img src={photo} alt="Photo ready to send"/><button type="button" onClick={()=>setPhoto(null)} aria-label="Remove photo">×</button></div> : null}
+          <div className="us-chat-compose-row">
+            <button type="button" className="us-chat-add" aria-label={plusOpen?"Close attachment menu":"Add photo or idea"} aria-expanded={plusOpen} title="Add photo or idea" onClick={()=>setPlusOpen(v=>!v)}>＋</button>
+            <textarea aria-label="Message" rows={1} placeholder={"Message "+(state.user==="Charlie"?"Tayla":"Charlie")+"…"} value={draft.content} onChange={e=>setDraft({...draft,content:e.target.value})} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}}}/>
+            <button className="us-chat-send" type="submit" aria-label="Send message" disabled={sending||(!draft.content.trim()&&!photo)}>↑</button>
+          </div>
+        </>}
+
       </form>
     </div>
 
