@@ -33,6 +33,7 @@ export default function Us() {
   const [wheel, setWheel] = useState(false);
   const [wheelPick, setWheelPick] = useState(null);
   const [pickerMode, setPickerMode] = useState(null);
+  const [pickerTab,setPickerTab]=useState("inspire");
   const [inspireMode,setInspireMode]=useState("mix");
   const [inspireOffset,setInspireOffset]=useState(0);
   const [pickerFilters, setPickerFilters] = useState({category:"any",effort:"any",duration:"any",timeHorizon:"any"});
@@ -767,16 +768,25 @@ export default function Us() {
       .map(x=>({...x,source:"repeat",reason:x.tryAgain?"Already calling for a repeat.":x.ratings?.Charlie>=8||x.ratings?.Tayla>=8?"One of you rated it highly.":"A memory worth revisiting."}))
       .sort((a,b)=>Number(!!b.tryAgain)-Number(!!a.tryAgain));
     const freshItems=fresh.map(x=>({...x,source:"new"}));
-    const pool=inspireMode==="tonight"
-      ? [...saved,...repeat,...freshItems].filter(x=>x.effort!=="big" && x.duration!=="full-day" && x.duration!=="overnight")
-      :inspireMode==="weekend"
-      ? [...freshItems,...saved,...repeat].filter(x=>x.category!=="watch"||x.effort==="low")
-      :[...freshItems,...saved,...repeat];
-    const unique=[];const seen=new Set();
-    for(const x of pool){const key=x.title.toLowerCase();if(!seen.has(key)){seen.add(key);unique.push(x);}}
-    if(!unique.length)return [];
-    return Array.from({length:Math.min(3,unique.length)},(_,i)=>unique[(inspireOffset+i)%unique.length]);
-  },[items,user,inspireMode,inspireOffset]);
+    const permitted=x=>{
+      if(inspireMode==="tonight"&&(x.effort==="big"||["full-day","overnight"].includes(x.duration)))return false;
+      if(pickerFilters.category!=="any"&&x.category!==pickerFilters.category)return false;
+      if(pickerFilters.effort!=="any"&&x.effort&&x.effort!==pickerFilters.effort)return false;
+      if(pickerFilters.duration!=="any"&&x.duration&&x.duration!==pickerFilters.duration)return false;
+      return true;
+    };
+    const groups=[freshItems.filter(permitted),saved.filter(permitted),repeat.filter(permitted)];
+    const pool=[];const seen=new Set();
+    for(let i=0;i<Math.max(...groups.map(g=>g.length),0);i++){
+      for(const group of groups){
+        const x=group[i];if(!x)continue;
+        const key=x.title.toLowerCase();
+        if(!seen.has(key)){seen.add(key);pool.push(x);}
+      }
+    }
+    if(!pool.length)return [];
+    return Array.from({length:Math.min(3,pool.length)},(_,i)=>pool[(inspireOffset+i)%pool.length]);
+  },[items,user,inspireMode,inspireOffset,pickerFilters.category,pickerFilters.effort,pickerFilters.duration]);
 
   async function chooseInspiration(item,customise=false){
     if(customise){
@@ -791,6 +801,7 @@ export default function Us() {
     })});
     if(!r.ok){setToast("Couldn’t create that idea");return;}
     const data=await r.json();
+    if(!data.item){load();return;}
     setItems(current=>[...current,data.item]);
     openPlan(data.item);
   }
@@ -832,6 +843,7 @@ export default function Us() {
     setShortcut("");
     setSublist("all");
     setPickerMode(mode);
+    setPickerTab("inspire");
     setWheelPick(null);
     setPickerFilters(
       mode === "tonight"
@@ -980,27 +992,6 @@ export default function Us() {
               <button className="us-now-cta" onClick={()=>openPicker("pick")}>PICK SOMETHING →</button>
             ) : null}
           </div>
-        </section>
-
-        <section className="us-inspire">
-          <div className="us-inspire-head"><div><small>✦ INSPIRE US</small><h2>What shall we do?</h2><p>A little inspiration for the two of you.</p></div></div>
-          <div className="us-inspire-modes">
-            {[["mix","Surprise us"],["tonight","Tonight"],["weekend","Weekend"]].map(([value,label])=><button key={value} className={inspireMode===value?"active":""} onClick={()=>{setInspireMode(value);setInspireOffset(0);}}>{label}</button>)}
-          </div>
-          <div className="us-inspire-list">
-            {inspiration.map((item,i)=>(
-              <article className="us-inspire-item" key={item.source+":"+item.title}>
-                <span className="us-inspire-emoji">{item.emoji||categoryMeta[item.category]?.emoji||"✨"}</span>
-                <div className="us-inspire-copy"><b>{item.title}</b><small>{item.source==="new"?"Something new":item.source==="repeat"?"Worth doing again":"From our lists"} · {item.reason}</small>
-                  <div className="us-inspire-actions">
-                    <button onClick={()=>chooseInspiration(item,false)}>Let's do it</button>
-                    <button onClick={()=>chooseInspiration(item,true)}>Make it ours</button>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-          <button className="us-inspire-more" onClick={()=>setInspireOffset(n=>n+3)}>Not these? Show us more ↻</button>
         </section>
 
         <section className="us-polls">
@@ -1159,12 +1150,37 @@ export default function Us() {
           <section className="us-picker-panel">
             <div className="us-picker-head">
               <div>
-                <small>{pickerMode === "tonight" ? "TONIGHT" : "PICK FOR US"}</small>
-                <h2>{pickerMode === "tonight" ? "What kind of night is it?" : "Narrow it down or leave it open."}</h2>
+                <small>PICK FOR US</small>
+                <h2>Something good for the two of us.</h2>
               </div>
               <button className="us-picker-close" onClick={() => { setPickerMode(null); setWheelPick(null); }}>×</button>
             </div>
 
+            <div className="us-picker-tabs"><button className={pickerTab==="inspire"?"active":""} onClick={()=>setPickerTab("inspire")}>✨ Inspire us</button><button className={pickerTab==="random"?"active":""} onClick={()=>setPickerTab("random")}>🎲 Surprise us</button></div>
+            {pickerTab==="inspire" ? (<>
+                      <section className="us-inspire us-inspire-embedded">
+          <div className="us-inspire-head"><div><small>✦ INSPIRE US</small><h2>What shall we do?</h2><p>A little inspiration for the two of you.</p></div></div>
+          <div className="us-inspire-modes">
+            {[["mix","Anytime"],["tonight","Tonight"],["weekend","Weekend"]].map(([value,label])=><button key={value} className={inspireMode===value?"active":""} onClick={()=>{setInspireMode(value);setInspireOffset(0);}}>{label}</button>)}
+          </div>
+          <div className="us-inspire-list">
+            {inspiration.map((item,i)=>(
+              <article className="us-inspire-item" key={item.source+":"+item.title}>
+                <span className="us-inspire-emoji">{item.emoji||categoryMeta[item.category]?.emoji||"✨"}</span>
+                <div className="us-inspire-copy"><b>{item.title}</b><small>{item.source==="new"?"Something new":item.source==="repeat"?"Worth doing again":"From our lists"} · {item.reason}</small>
+                  <div className="us-inspire-actions">
+                    <button onClick={()=>chooseInspiration(item,false)}>Let's do it</button>
+                    <button onClick={()=>chooseInspiration(item,true)}>Make it ours</button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+          <button className="us-inspire-more" onClick={()=>setInspireOffset(n=>n+3)}>Not these? Show us more ↻</button>
+        </section>
+
+
+            </>) : (<>
             <div className="us-picker-group">
               <span>Category</span>
               <div className="us-picker-chips">
@@ -1224,6 +1240,7 @@ export default function Us() {
                 </div>
               </div>
             ) : null}
+            </>)}
           </section>
         ) : null}
 

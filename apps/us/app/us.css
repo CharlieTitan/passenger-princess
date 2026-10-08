@@ -931,3 +931,8 @@ body:before{display:none!important}
 .us-inspire-actions button,.us-inspire-more{width:auto;min-height:28px;padding:0;background:transparent;color:#b45f7d;font-size:9px;border:0;text-decoration:underline;text-underline-offset:3px}
 .us-inspire-actions button:first-child{font-weight:800}
 .us-inspire-more{display:block;margin:12px auto 0;font-size:10px}
+
+.us-picker-tabs{display:flex;gap:8px;margin:12px 0 14px}
+.us-picker-tabs button{flex:1;min-width:0;padding:12px 8px;border-radius:12px;border:1px solid #e4d8dc;background:#fff;color:#655760;font-size:11px}
+.us-picker-tabs button.active{background:#3b3035;color:#fff}
+.us-inspire-embedded{margin:0;padding:8px 0 4px;border:0;background:transparent}
