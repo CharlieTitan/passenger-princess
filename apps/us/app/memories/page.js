@@ -84,29 +84,32 @@ export default function Memories(){
     setTab("gallery");
   }
 
-  async function uploadGallery(file,targetItemId=uploadItemId){
-    if(!file||!targetItemId||uploadBusy)return;
-    if(!file.type.startsWith("image/"))return;
+  async function uploadGallery(input,targetItemId=uploadItemId){
+    const files=(Array.isArray(input)?input:[input]).filter(file=>file&&file.type.startsWith("image/"));
+    if(!files.length||!targetItemId||uploadBusy)return;
     setUploadBusy(true);
     try{
       const item=state.items.find(x=>x.id===targetItemId);
       if(!item||item.isSurprise)throw Error("Invalid item");
-      const image=await new Promise((resolve,reject)=>{
-        const r=new FileReader();
-        r.onload=()=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=r.result;};
-        r.onerror=reject;r.readAsDataURL(file);
-      });
-      const canvas=document.createElement("canvas");
-      const ratio=Math.min(1,1000/Math.max(image.width,image.height));
-      canvas.width=Math.round(image.width*ratio);
-      canvas.height=Math.round(image.height*ratio);
-      canvas.getContext("2d").drawImage(image,0,0,canvas.width,canvas.height);
-      const photo={id:crypto.randomUUID(),src:canvas.toDataURL("image/jpeg",0.78),addedBy:state.user,at:new Date().toISOString()};
-      const r=await fetch("/api/us",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({id:item.id,gallery:[...(item.gallery||[]),photo]})});
-      if(!r.ok)throw Error("Upload failed");
-      const result=await r.json();
+      const photos=[];
+      for(const file of files){
+        const image=await new Promise((resolve,reject)=>{
+          const reader=new FileReader();
+          reader.onload=()=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=reader.result;};
+          reader.onerror=reject;reader.readAsDataURL(file);
+        });
+        const canvas=document.createElement("canvas");
+        const ratio=Math.min(1,1000/Math.max(image.width,image.height));
+        canvas.width=Math.round(image.width*ratio);
+        canvas.height=Math.round(image.height*ratio);
+        canvas.getContext("2d").drawImage(image,0,0,canvas.width,canvas.height);
+        photos.push({id:crypto.randomUUID(),src:canvas.toDataURL("image/jpeg",0.78),addedBy:state.user,at:new Date().toISOString()});
+      }
+      const response=await fetch("/api/us",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({id:item.id,gallery:[...(item.gallery||[]),...photos]})});
+      if(!response.ok)throw Error("Upload failed");
+      const result=await response.json();
       setState(s=>({...s,items:s.items.map(x=>x.id===item.id?result.item:x)}));
-    }catch(e){alert("Couldn’t add that photo. Please try again.");}
+    }catch(e){alert("Couldn’t add those photos. Please try again.");}
     finally{setUploadBusy(false);}
   }
 
@@ -419,7 +422,7 @@ export default function Memories(){
                 {images.map((src,idx)=><button key={idx} onClick={()=>setLightbox({src,index:idx,images,title:x.title,itemId:x.id})}><img src={src} alt={x.title+" photo "+(idx+1)}/></button>)}
               </div>
               <label className={"us-memory-add-photo"+(uploadBusy?" busy":"")}>＋ {uploadBusy?"Adding photo…":"Add photos"}
-                <input type="file" accept="image/*" multiple disabled={uploadBusy} onChange={async e=>{const files=Array.from(e.target.files||[]);e.target.value="";for(const file of files)await uploadGallery(file,x.id);}}/>
+                <input type="file" accept="image/*" multiple disabled={uploadBusy} onChange={async e=>{const files=Array.from(e.target.files||[]);e.target.value="";await uploadGallery(files,x.id);}}/>
               </label>
             </section>:null}
 
