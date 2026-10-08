@@ -96,7 +96,7 @@ export default function Inbox(){
       <div className="us-appbar-inner">
         <div className="us-memory-header-left">
           <a className="us-back-arrow" href="/" aria-label="Back">←</a>
-          <div className="us-appbar-brand">INBOX</div>
+          <div className="us-appbar-brand">Inbox</div>
         </div>
         <button className="us-nav-toggle" aria-label="Open navigation" onClick={()=>setNavOpen(!navOpen)}>
           ☰
