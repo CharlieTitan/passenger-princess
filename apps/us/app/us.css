@@ -1000,3 +1000,6 @@ body:before{display:none!important}
 .us-pick-feature .us-picker-head{display:none}
 .us-pick-feature .us-picker-tabs{margin-top:0}
 @media(max-width:600px){.us-cats button{min-height:114px;padding:15px}.us-cats button b{font-size:14px}.us-cats button small{font-size:10px}}
+
+/* Next Up content is an editorial title, not a UI button label. */
+.us-now > b{font-family:var(--us-font-display,Georgia,serif);font-size:clamp(24px,5vw,30px);font-weight:700;line-height:1.16;letter-spacing:-.025em;color:var(--us-ink,#342b2f);overflow-wrap:anywhere;margin:9px 0 7px}
