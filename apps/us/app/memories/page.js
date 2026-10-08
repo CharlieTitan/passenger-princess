@@ -6,6 +6,7 @@ import { categoryMeta } from "../../lib/usData";
 export default function Memories(){
   const [state,setState]=useState({loading:true,user:null,items:[],inbox:[]});
   const [lightbox,setLightbox]=useState(null);
+  const [expandedMemoryId,setExpandedMemoryId]=useState(null);
   const [tab,setTab]=useState("memories");
   const [memoryFilter,setMemoryFilter]=useState(null);
   const [navOpen,setNavOpen]=useState(false);
@@ -83,12 +84,12 @@ export default function Memories(){
     setTab("gallery");
   }
 
-  async function uploadGallery(file){
-    if(!file||!uploadItemId||uploadBusy)return;
+  async function uploadGallery(file,targetItemId=uploadItemId){
+    if(!file||!targetItemId||uploadBusy)return;
     if(!file.type.startsWith("image/"))return;
     setUploadBusy(true);
     try{
-      const item=state.items.find(x=>x.id===uploadItemId);
+      const item=state.items.find(x=>x.id===targetItemId);
       if(!item||item.isSurprise)throw Error("Invalid item");
       const image=await new Promise((resolve,reject)=>{
         const r=new FileReader();
@@ -131,6 +132,7 @@ export default function Memories(){
     else setGalleryReturn(null);
     setMemoryFilter({label,...filter});
     setTab("memories");
+    if(filter.type==="id")setExpandedMemoryId(filter.value);
     setTimeout(()=>document.querySelector(".us-memory-timeline")?.scrollIntoView({behavior:"smooth",block:"start"}),0);
   }
 
@@ -404,11 +406,22 @@ export default function Memories(){
               </div>
               <div className="us-memory-copy">
                 <small>{categoryMeta[x.category]?.emoji} {x.doneAt?new Date(x.doneAt).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}):"Date not set"}</small>
-                <h2>{x.title}</h2>
+                <h2><button className="us-memory-open" aria-expanded={expandedMemoryId===x.id} onClick={()=>setExpandedMemoryId(v=>v===x.id?null:x.id)}>{x.title} <span>{expandedMemoryId===x.id?"−":"↗"}</span></button></h2>
                 {x.location?<p>{x.location}</p>:null}
                 {x.tryAgain?<span className="us-memory-try">TRY AGAIN</span>:null}
               </div>
             </div>
+
+            <button className="us-memory-details-trigger" aria-expanded={expandedMemoryId===x.id} onClick={()=>setExpandedMemoryId(v=>v===x.id?null:x.id)}>{expandedMemoryId===x.id?"Close memory details ↑":"Open memory & photos →"}</button>
+            {expandedMemoryId===x.id?<section className="us-memory-expanded" aria-label={x.title+" photo gallery"}>
+              <div className="us-memory-expanded-head"><div><small>OUR PHOTOS</small><h3>{x.title}</h3><p>{images.length} photo{images.length===1?"":"s"} in this memory</p></div></div>
+              <div className="us-memory-expanded-photos">
+                {images.map((src,idx)=><button key={idx} onClick={()=>setLightbox({src,index:idx,images,title:x.title,itemId:x.id})}><img src={src} alt={x.title+" photo "+(idx+1)}/></button>)}
+              </div>
+              <label className={"us-memory-add-photo"+(uploadBusy?" busy":"")}>＋ {uploadBusy?"Adding photo…":"Add photos"}
+                <input type="file" accept="image/*" multiple disabled={uploadBusy} onChange={async e=>{const files=Array.from(e.target.files||[]);e.target.value="";for(const file of files)await uploadGallery(file,x.id);}}/>
+              </label>
+            </section>:null}
 
             {(x.gallery||[]).length?<div className="us-memory-gallery">
               {(x.gallery||[]).slice(0,6).map((g,idx)=><button key={g.id} onClick={()=>setLightbox({src:g.src,index:(x.cover?1:0)+idx,images,title:x.title})}><img src={g.src} alt=""/></button>)}
