@@ -34,6 +34,9 @@ export default function Us() {
   const [wheelPick, setWheelPick] = useState(null);
   const [pickerMode, setPickerMode] = useState(null);
   const [pickerTab,setPickerTab]=useState("inspire");
+  const [surpriseWhen,setSurpriseWhen]=useState("anytime");
+  const [surpriseFineTune,setSurpriseFineTune]=useState(false);
+  const [surpriseNoExcuses,setSurpriseNoExcuses]=useState(false);
   const [inspireMode,setInspireMode]=useState("mix");
   const [inspireOffset,setInspireOffset]=useState(0);
   const [pickerFilters, setPickerFilters] = useState({category:"any",effort:"any",duration:"any",timeHorizon:"any"});
@@ -844,6 +847,9 @@ export default function Us() {
     setSublist("all");
     setPickerMode(mode);
     setPickerTab("inspire");
+    setSurpriseWhen(mode==="tonight"?"tonight":"anytime");
+    setSurpriseFineTune(false);
+    setSurpriseNoExcuses(false);
     setWheelPick(null);
     setPickerFilters(
       mode === "tonight"
@@ -855,19 +861,23 @@ export default function Us() {
     }, 0);
   }
 
-  function spin(mode = pickerMode) {
-    const pool = items.filter((x) => eligibleForPicker(x, mode));
-    if (!pool.length) {
-      setToast("Nothing matches those filters");
-      setTimeout(() => setToast(""), 1800);
-      return;
-    }
-    setWheel(true);
-    setWheelPick(null);
-    setTimeout(() => {
-      setWheelPick(pool[Math.floor(Math.random() * pool.length)]);
+  function spin() {
+    const pool = items.filter(x=>{
+      if(x.isSurprise||x.status==="archived"||x.status==="planned")return false;
+      if(!["idea","done"].includes(x.status))return false;
+      if(!surpriseNoExcuses&&surpriseWhen==="tonight"&&(x.effort==="big"||["full-day","overnight"].includes(x.duration)||x.timeHorizon==="someday"))return false;
+      if(!surpriseNoExcuses&&surpriseFineTune&&!eligibleForPicker({...x,status:"idea"}, "pick"))return false;
+      return true;
+    });
+    if(!pool.length){setToast("Nothing to surprise you with yet");setTimeout(()=>setToast(""),1800);return;}
+    const alternatives=pool.filter(x=>x.id!==wheelPick?.id);
+    const choices=alternatives.length?alternatives:pool;
+    setWheel(true);setWheelPick(null);
+    setTimeout(()=>{
+      const chosen=choices[Math.floor(Math.random()*choices.length)];
+      setWheelPick({...chosen,source:chosen.status==="done"?"repeat":"saved"});
       setWheel(false);
-    }, 1100);
+    },950);
   }
 
   if (loading && !user) {
@@ -1181,7 +1191,14 @@ export default function Us() {
 
 
             </>) : (<>
-            <div className="us-picker-group">
+            <section className="us-surprise-experience">
+              <div className="us-surprise-intro"><small>🎲 LET FATE DECIDE</small><h2>No overthinking.</h2><p>One surprise from your own ideas or memories. No pressure, no booking until you choose.</p></div>
+              <div className="us-inspire-modes">
+                {[["anytime","Anytime"],["tonight","Tonight"],["weekend","Weekend"]].map(([v,l])=><button key={v} className={surpriseWhen===v?"active":""} onClick={()=>{setSurpriseWhen(v);setWheelPick(null);}}>{l}</button>)}
+              </div>
+              <label className="us-surprise-dare"><input type="checkbox" checked={surpriseNoExcuses} onChange={e=>{setSurpriseNoExcuses(e.target.checked);setWheelPick(null);}}/><span><b>No excuses</b><small>Anything goes — even a big plan.</small></span></label>
+              <button className="us-surprise-filter-toggle" onClick={()=>setSurpriseFineTune(v=>!v)}>{surpriseFineTune?"Hide fine-tuning −":"Fine-tune your surprise +"}</button>
+              {surpriseFineTune? <div className="us-surprise-filters">            <div className="us-picker-group">
               <span>Category</span>
               <div className="us-picker-chips">
                 {[["any","Anything"],["eat","Eat"],["watch","Watch"],["go","Go"],["do","Do"]].map(([v,l]) => (
@@ -1220,26 +1237,25 @@ export default function Us() {
               </label>
             </div>
 
-            <div className="us-picker-count">
-              {items.filter((x)=>eligibleForPicker(x,pickerMode)).length} option{items.filter((x)=>eligibleForPicker(x,pickerMode)).length===1?"":"s"} match
-            </div>
-
-            <button className="us-primary us-picker-go" onClick={()=>spin()}>
-              {pickerMode === "tonight" ? "PICK TONIGHT →" : "SPIN FOR US →"}
-            </button>
-
-            {wheel ? <div className="us-wheel-inline"><span />Picking…</div> : null}
-            {wheelPick ? (
-              <div className="us-picker-result-inline">
-                <small>HOW ABOUT</small>
-                <h3>{wheelPick.title}</h3>
-                <p>{wheelPick.category ? categoryMeta[wheelPick.category]?.label : ""}{wheelPick.effort ? " · "+wheelPick.effort : ""}</p>
-                <div>
-                  <button className="us-primary" onClick={()=>openPlan(wheelPick)}>LOCK IT IN</button>
-                  <button className="us-secondary" onClick={()=>spin()}>PICK AGAIN</button>
-                </div>
+</div>:null}
+              <div className="us-surprise-stage">
+                {wheel ? <div className="us-surprise-rolling"><span>🎲</span><b>Shuffling our plans…</b></div> : wheelPick ? (
+                  <div className="us-surprise-reveal">
+                    <small>THE UNIVERSE HAS SPOKEN</small>
+                    <div className="us-surprise-polaroid">
+                      {wheelPick.cover?<img src={wheelPick.cover} alt=""/>:<span>{wheelPick.emoji||categoryMeta[wheelPick.category]?.emoji||"✨"}</span>}
+                      <h3>{wheelPick.title}</h3>
+                      <p>{wheelPick.source==="repeat"?"One worth doing again.":wheelPick.category?categoryMeta[wheelPick.category]?.label+" · From our lists":"From our lists"}</p>
+                    </div>
+                    <div className="us-surprise-result-actions">
+                      <button className="us-primary" onClick={()=>chooseInspiration(wheelPick,false)}>We're doing it!</button>
+                      <button onClick={()=>chooseInspiration(wheelPick,true)}>Make it ours</button>
+                      <button onClick={()=>spin()}>One more spin ↻</button>
+                    </div>
+                  </div>
+                ) : <div className="us-surprise-idle"><span>✦</span><p>The next date is in fate's hands.</p><button className="us-primary" onClick={()=>spin()}>SURPRISE US! 🎲</button></div>}
               </div>
-            ) : null}
+            </section>
             </>)}
           </section>
         ) : null}

@@ -936,3 +936,33 @@ body:before{display:none!important}
 .us-picker-tabs button{flex:1;min-width:0;padding:12px 8px;border-radius:12px;border:1px solid #e4d8dc;background:#fff;color:#655760;font-size:11px}
 .us-picker-tabs button.active{background:#3b3035;color:#fff}
 .us-inspire-embedded{margin:0;padding:8px 0 4px;border:0;background:transparent}
+
+/* QC52: distinct surprise picker */
+.us-surprise-experience{padding:10px 2px 18px}
+.us-surprise-intro small{font-size:9px;letter-spacing:1.4px;color:#a16d80}
+.us-surprise-intro h2{font:700 27px Georgia,serif;margin:8px 0;color:#403539}
+.us-surprise-intro p{font-size:11px;line-height:1.6;color:#877880;margin:0 0 18px}
+.us-surprise-dare{display:flex;align-items:center;gap:11px;padding:13px 15px;background:#fff6f8;border:1px solid #e9d7dc;border-radius:13px;margin:10px 0}
+.us-surprise-dare input{width:18px;height:18px;accent-color:#e65a8d}
+.us-surprise-dare span{display:grid;gap:4px}
+.us-surprise-dare b{font-size:12px;color:#45383c}
+.us-surprise-dare small{font-size:10px;color:#978189}
+.us-surprise-filter-toggle{display:block;width:auto;margin:12px 0 13px;padding:0;border:0;background:transparent;color:#9d6f80;font-size:11px}
+.us-surprise-filters{padding:14px 5px}
+.us-surprise-stage{min-height:260px;display:grid;place-items:center;text-align:center;border:1px solid #ecdee2;background:linear-gradient(150deg,#fff9fa,#f5ece9);border-radius:22px;padding:24px 14px}
+.us-surprise-idle>span{font:42px Georgia,serif;color:#e65a8d}
+.us-surprise-idle p{font:19px Georgia,serif;margin:12px 0 18px}
+.us-surprise-idle button{width:auto}
+.us-surprise-rolling{display:grid;gap:14px;justify-items:center;font:18px Georgia,serif}
+.us-surprise-rolling span{font-size:52px;animation:us-surprise-turn .6s ease-in-out infinite alternate}
+@keyframes us-surprise-turn{from{transform:rotate(-18deg) scale(.95)}to{transform:rotate(18deg) scale(1.08)}}
+.us-surprise-reveal{width:100%}
+.us-surprise-reveal>small{font-size:9px;letter-spacing:1.4px;color:#a16d80}
+.us-surprise-polaroid{max-width:250px;margin:16px auto 17px;padding:12px 12px 19px;background:white;box-shadow:0 12px 24px #3c263622;transform:rotate(-2deg)}
+.us-surprise-polaroid>img{width:100%;aspect-ratio:1.25;object-fit:cover}
+.us-surprise-polaroid>span{display:grid;place-items:center;font-size:50px;height:135px;background:#f2e9e8}
+.us-surprise-polaroid h3{font:700 22px Georgia,serif;line-height:1.2;margin:13px 0 4px;color:#41373b}
+.us-surprise-polaroid p{font-size:10px;color:#88767d;margin:0}
+.us-surprise-result-actions{display:flex;justify-content:center;flex-wrap:wrap;gap:9px}
+.us-surprise-result-actions button{width:auto;min-height:34px;padding:7px 12px;font-size:10px;border-radius:999px}
+.us-surprise-result-actions button:not(.us-primary){border:1px solid #e4d6db;background:#fff;color:#9a5b74}
