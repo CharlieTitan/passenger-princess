@@ -214,7 +214,7 @@ export default function Memories(){
               else window.location.href="/";
             }}
           >←</button>
-          <div className="us-appbar-brand">MEMORIES</div>
+          <div className="us-appbar-brand">Memories</div>
         </div>
         <button className="us-nav-toggle" aria-label="Open navigation" onClick={()=>setNavOpen(!navOpen)}>
           ☰
