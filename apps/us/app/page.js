@@ -959,7 +959,7 @@ export default function Us() {
     <main className={"us-bg theme-" + category}>
       <header className="us-appbar">
         <div className="us-appbar-inner">
-          <div className="us-appbar-brand">US</div>
+          <div className="us-appbar-brand">Us</div>
           <button className="us-nav-toggle" aria-label="Open navigation" onClick={()=>setNavOpen(!navOpen)}>
             ☰
             {unreadInbox ? <span className="us-nav-badge">{unreadInbox}</span> : null}
