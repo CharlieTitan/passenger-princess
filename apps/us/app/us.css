@@ -1131,3 +1131,7 @@ body:before{display:none!important}
 .us-notice b{font-size:12px}
 .us-notice span{font-size:12px;line-height:1.4}
 .us-notice small{font-size:10px;color:#97848b}
+
+/* Ensure SVG bell remains visible despite global button/icon styles */
+.us-appbar .us-notices-bell{color:#54464c!important;opacity:1!important}
+.us-appbar .us-notices-bell svg{display:block!important;width:22px!important;height:22px!important;min-width:22px;stroke:#54464c!important;fill:none!important;opacity:1!important;visibility:visible!important}
