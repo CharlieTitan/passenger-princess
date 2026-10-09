@@ -19,6 +19,8 @@ export default function Us() {
   const [polls, setPolls] = useState([]);
   const [customLists, setCustomLists] = useState([]);
   const [inbox,setInbox]=useState([]);
+  const [notifications,setNotifications]=useState([]);
+  const [noticesOpen,setNoticesOpen]=useState(false);
   const [loading, setLoading] = useState(true);
   const [login, setLogin] = useState({ username: "Charlie", password: "" });
   const [category, setCategory] = useState("eat");
@@ -74,6 +76,7 @@ export default function Us() {
       setPolls(d.polls || []);
       setCustomLists(d.customLists || []);
       setInbox(d.inbox || []);
+      setNotifications(d.notifications || []);
     }
     setLoading(false);
   }
@@ -88,6 +91,10 @@ export default function Us() {
   }, []);
 
   const unreadInbox=inbox.filter(x=>x.to===user&&!x.readAt).length;
+  const unreadNotices=notifications.filter(x=>!x.readAt).length;
+  useEffect(()=>{if(!user)return;const refresh=async()=>{if(document.hidden)return;try{const r=await fetch("/api/us",{cache:"no-store"});if(r.ok){const d=await r.json();setNotifications(d.notifications||[]);}}catch{}};const timer=setInterval(refresh,15000);return ()=>clearInterval(timer);},[user]);
+  async function markNoticesRead(ids){if(!ids.length)return;const r=await fetch("/api/us",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({action:"markNotificationsRead",ids})});if(r.ok){const at=new Date().toISOString();setNotifications(old=>old.map(n=>ids.includes(n.id)?{...n,readAt:at}:n));}}
+
 
   useEffect(()=>{
     if(!inboxOpen||!user) return;
@@ -973,10 +980,12 @@ export default function Us() {
       <header className="us-appbar">
         <div className="us-appbar-inner">
           <div className="us-appbar-brand">Us</div>
+          <button className="us-notices-bell" aria-label={"Notifications"+(unreadNotices?" ("+unreadNotices+" unread)":"")} aria-expanded={noticesOpen} onClick={()=>setNoticesOpen(v=>!v)}>🔔{unreadNotices?<span className="us-notices-count">{unreadNotices}</span>:null}</button>
           <button className="us-nav-toggle" aria-label="Open navigation" onClick={()=>setNavOpen(!navOpen)}>
             ☰
             {unreadInbox ? <span className="us-nav-badge">{unreadInbox}</span> : null}
           </button>
+          {noticesOpen?<div className="us-notices-panel"><div className="us-notices-head"><strong>Notifications</strong><button onClick={()=>markNoticesRead(notifications.filter(n=>!n.readAt).map(n=>n.id))} disabled={!unreadNotices}>Mark all read</button></div>{notifications.length?notifications.slice(0,30).map(n=><button className={"us-notice"+(!n.readAt?" unread":"")} key={n.id} onClick={()=>{markNoticesRead([n.id]);setNoticesOpen(false);if(n.itemId){const target=items.find(x=>x.id===n.itemId);if(target){setCategory(target.category);setShortcut("");setSublist("all");setLifecycleFilter("all");setOpen(n.itemId);}}}}><b>{n.actor} {n.type==="idea"?"added an idea":n.type==="poll"?"created a poll":n.type==="reveal"?"revealed a surprise":"updated a plan"}</b><span>{n.type==="reveal"?"A surprise is ready":n.title}</span><small>{new Date(n.createdAt).toLocaleString(undefined,{day:"numeric",month:"short",hour:"numeric",minute:"2-digit"})}</small></button>):<p>All caught up ✨</p>}</div>:null}
           {navOpen ? (
             <div className="us-nav-drawer">
               <div className="us-nav-links">
