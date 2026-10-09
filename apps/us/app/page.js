@@ -754,42 +754,55 @@ export default function Us() {
   }
 
   const inspiration=useMemo(()=>{
+    // Discovery first; personal signals improve relevance without inventing preferences.
     const fresh=[
-      {title:"Pottery painting date",category:"do",list:"date-ideas",emoji:"🎨",effort:"normal",duration:"1-2h",reason:"Try something creative together."},
-      {title:"Sunset picnic",category:"go",list:"day-trips",emoji:"🌅",effort:"low",duration:"1-2h",reason:"A change of scenery."},
-      {title:"Make homemade pizza together",category:"eat",list:"cook-together",emoji:"🍕",effort:"normal",duration:"1-2h",reason:"A twist on your cooking nights."},
-      {title:"Try a dessert you've never had",category:"eat",list:"dessert",emoji:"🍨",effort:"low",duration:"30m",reason:"Something spontaneous."},
-      {title:"Pick a film neither of you has seen",category:"watch",list:"films",emoji:"🎬",effort:"low",duration:"1-2h",reason:"A cosy night in."},
-      {title:"Explore a neighbourhood on foot",category:"go",list:"day-trips",emoji:"🚶",effort:"normal",duration:"half-day",reason:"Find somewhere unexpected."},
-      {title:"Breakfast somewhere new",category:"eat",list:"restaurants",emoji:"🥐",effort:"low",duration:"1-2h",reason:"Start the day differently."},
-      {title:"Plan a board game night",category:"do",list:"date-ideas",emoji:"🎲",effort:"low",duration:"1-2h",reason:"Low effort and fun."}
-    ].filter(x=>!items.some(item=>item.title.toLowerCase()===x.title.toLowerCase()));
-    const saved=items.filter(x=>!x.isSurprise&&x.status!=="done"&&x.status!=="archived")
-      .map(x=>({...x,source:"saved",reason:x.favourites?.[user]?"You liked this one.":x.favourites?.Charlie||x.favourites?.Tayla?"One of you favourited it.":"Already on your list."}))
-      .sort((a,b)=>Number(!!(b.favourites?.Charlie||b.favourites?.Tayla))-Number(!!(a.favourites?.Charlie||a.favourites?.Tayla)));
-    const repeat=items.filter(x=>x.status==="done"&&!x.isSurprise)
-      .map(x=>({...x,source:"repeat",reason:x.tryAgain?"Already calling for a repeat.":x.ratings?.Charlie>=8||x.ratings?.Tayla>=8?"One of you rated it highly.":"A memory worth revisiting."}))
-      .sort((a,b)=>Number(!!b.tryAgain)-Number(!!a.tryAgain));
-    const freshItems=fresh.map(x=>({...x,source:"new"}));
+      {title:"Pottery painting date",category:"do",list:"date-ideas",emoji:"🎨",effort:"normal",duration:"1-2h",reason:"Try something creative together.",modes:["anytime","weekend"]},
+      {title:"Sunset picnic",category:"go",list:"day-trips",emoji:"🌅",effort:"low",duration:"1-2h",reason:"A change of scenery.",modes:["anytime","tonight","weekend"]},
+      {title:"Make homemade pizza together",category:"eat",list:"cook-together",emoji:"🍕",effort:"normal",duration:"1-2h",reason:"A cosy cooking night.",modes:["anytime","tonight","weekend"]},
+      {title:"Try a dessert you've never had",category:"eat",list:"dessert",emoji:"🍨",effort:"low",duration:"30m",reason:"Something spontaneous.",modes:["anytime","tonight","weekend"]},
+      {title:"Pick a film neither of you has seen",category:"watch",list:"films",emoji:"🎬",effort:"low",duration:"1-2h",reason:"A cosy night in.",modes:["anytime","tonight","weekend"]},
+      {title:"Explore a neighbourhood on foot",category:"go",list:"day-trips",emoji:"🚶",effort:"normal",duration:"half-day",reason:"Find somewhere unexpected.",modes:["anytime","weekend"]},
+      {title:"Breakfast somewhere new",category:"eat",list:"restaurants",emoji:"🥐",effort:"low",duration:"1-2h",reason:"Start the day differently.",modes:["anytime","weekend"]},
+      {title:"Plan a board game night",category:"do",list:"date-ideas",emoji:"🎲",effort:"low",duration:"1-2h",reason:"Low effort and fun.",modes:["anytime","tonight","weekend"]},
+      {title:"Coffee and a long walk",category:"go",list:"day-trips",emoji:"☕",effort:"low",duration:"1-2h",reason:"A little fresh air together.",modes:["anytime","weekend"]},
+      {title:"Choose a takeaway and a film",category:"watch",list:"films",emoji:"🍿",effort:"low",duration:"1-2h",reason:"An easy evening plan.",modes:["anytime","tonight","weekend"]},
+      {title:"Try a new brunch spot",category:"eat",list:"restaurants",emoji:"🥞",effort:"normal",duration:"1-2h",reason:"Make a morning of it.",modes:["anytime","weekend"]},
+      {title:"Explore an art gallery",category:"do",list:"date-ideas",emoji:"🖼️",effort:"normal",duration:"half-day",reason:"Something different to discover.",modes:["anytime","weekend"]},
+      {title:"Cook a new recipe together",category:"eat",list:"cook-together",emoji:"🥘",effort:"normal",duration:"1-2h",reason:"Pick something neither of you has made.",modes:["anytime","tonight","weekend"]},
+      {title:"Go for an evening dessert run",category:"eat",list:"dessert",emoji:"🍰",effort:"low",duration:"30m",reason:"A small treat after dinner.",modes:["anytime","tonight","weekend"]},
+      {title:"A full-day exploring date",category:"go",list:"day-trips",emoji:"🗺️",effort:"big",duration:"full-day",reason:"Make a whole day of it.",modes:["anytime","weekend"]},
+      {title:"Have a cosy games evening",category:"do",list:"date-ideas",emoji:"🃏",effort:"low",duration:"1-2h",reason:"Stay in and play something together.",modes:["anytime","tonight","weekend"]}
+    ].filter(x=>!items.some(item=>(item.title||"").trim().toLowerCase()===x.title.toLowerCase()));
+    const positive=x=>x.tryAgain||!!(x.favourites?.Charlie&&x.favourites?.Tayla)||Number(x.ratings?.Charlie)>=8||Number(x.ratings?.Tayla)>=8;
+    const score=x=>Number(!!x.tryAgain)*4+Number(!!(x.favourites?.Charlie&&x.favourites?.Tayla))*5+Number(!!x.favourites?.Charlie||!!x.favourites?.Tayla)*2+Number(Number(x.ratings?.Charlie)>=8)+Number(Number(x.ratings?.Tayla)>=8);
+    const saved=items.filter(x=>!x.isSurprise&&["idea","planned"].includes(x.status))
+      .map(x=>({...x,source:"saved",reason:x.favourites?.Charlie&&x.favourites?.Tayla?"You both favourited this.":x.favourites?.Charlie||x.favourites?.Tayla?"One of you favourited this.":"Still on your shared list."}))
+      .sort((a,b)=>score(b)-score(a));
+    const repeat=items.filter(x=>x.status==="done"&&!x.isSurprise&&positive(x))
+      .map(x=>({...x,source:"repeat",reason:x.tryAgain?"You marked this Try Again.":x.favourites?.Charlie&&x.favourites?.Tayla?"A mutual favourite worth revisiting.":"One of you rated this highly."}))
+      .sort((a,b)=>score(b)-score(a));
     const permitted=x=>{
-      if(inspireMode==="tonight"&&(x.effort==="big"||["full-day","overnight"].includes(x.duration)))return false;
+      if(inspireMode==="tonight"&&(x.effort==="big"||["half-day","full-day","overnight","trip"].includes(x.duration)||x.timeHorizon==="someday"||x.modes&&!x.modes.includes("tonight")))return false;
+      if(inspireMode==="weekend"&&x.modes&&!x.modes.includes("weekend"))return false;
       if(pickerFilters.category!=="any"&&x.category!==pickerFilters.category)return false;
       if(pickerFilters.effort!=="any"&&x.effort&&x.effort!==pickerFilters.effort)return false;
       if(pickerFilters.duration!=="any"&&x.duration&&x.duration!==pickerFilters.duration)return false;
       return true;
     };
-    const groups=[freshItems.filter(permitted),saved.filter(permitted),repeat.filter(permitted)];
-    const pool=[];const seen=new Set();
-    for(let i=0;i<Math.max(...groups.map(g=>g.length),0);i++){
-      for(const group of groups){
-        const x=group[i];if(!x)continue;
-        const key=x.title.toLowerCase();
-        if(!seen.has(key)){seen.add(key);pool.push(x);}
-      }
-    }
-    if(!pool.length)return [];
-    return Array.from({length:Math.min(3,pool.length)},(_,i)=>pool[(inspireOffset+i)%pool.length]);
-  },[items,user,inspireMode,inspireOffset,pickerFilters.category,pickerFilters.effort,pickerFilters.duration]);
+    const freshPool=fresh.filter(permitted).map(x=>({...x,source:"new"}));
+    const personalPool=[...saved,...repeat].filter(permitted);
+    const rotate=(list,by)=>list.length?[...list.slice(by%list.length),...list.slice(0,by%list.length)]:[];
+    const freshOrder=rotate(freshPool,inspireOffset*2);
+    const personalOrder=rotate(personalPool,inspireOffset);
+    // Two fresh suggestions and one relevant shared-history suggestion where possible.
+    const result=[],seen=new Set();
+    const add=x=>{if(x&&!seen.has(x.title.toLowerCase())){seen.add(x.title.toLowerCase());result.push(x);}};
+    add(freshOrder[0]);add(freshOrder[1]);add(personalOrder[0]);
+    [...freshOrder.slice(2),...personalOrder.slice(1)].forEach(x=>{if(result.length<3)add(x);});
+    // Rotate positions so the personal item isn't always last.
+    if(result.length===3&&personalOrder.length&&inspireOffset%3===1)result.push(result.shift());
+    return result;
+  },[items,inspireMode,inspireOffset,pickerFilters.category,pickerFilters.effort,pickerFilters.duration]);
 
   async function chooseInspiration(item,customise=false){
     if(customise){
