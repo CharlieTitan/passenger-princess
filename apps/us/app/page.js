@@ -29,6 +29,7 @@ export default function Us() {
   const [shortcut, setShortcut] = useState("");
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(null);
+  const [notificationTarget,setNotificationTarget]=useState(null);
   const [quick, setQuick] = useState(false);
   const [quickMore, setQuickMore] = useState(false);
   const [draft, setDraft] = useState({ title: "", category: "eat", list: "restaurants", effort: "normal", timeHorizon: "soon", mealType: "any", location:"", priority:"normal", budget:"", duration:"", tagsText:"", notes:"", isSurprise:false, surpriseDate:"", surpriseTime:"", surpriseDressCode:"", surpriseMeetMode:"meet", surprisePickupTime:"", surpriseLocation:"", surpriseTeaser:"", surpriseNote:"", surpriseRevealPreset:"start", surpriseRevealCustom:"" });
@@ -829,6 +830,8 @@ export default function Us() {
     openPlan(data.item);
   }
 
+  useEffect(()=>{if(!notificationTarget)return;const timer=setTimeout(()=>{const node=document.getElementById("us-item-"+notificationTarget);if(node){node.scrollIntoView({behavior:"smooth",block:"start"});setNotificationTarget(null);}},120);return ()=>clearTimeout(timer);},[notificationTarget,category,shortcut,query]);
+
   const filtered = useMemo(() => {
     return items.filter((x) => {
       if (shortcut === "Planned" && x.status !== "planned") return false;
@@ -985,7 +988,7 @@ export default function Us() {
             ☰
             {unreadInbox ? <span className="us-nav-badge">{unreadInbox}</span> : null}
           </button>
-          {noticesOpen?<div className="us-notices-panel"><div className="us-notices-head"><strong>Notifications</strong><button onClick={()=>markNoticesRead(notifications.filter(n=>!n.readAt).map(n=>n.id))} disabled={!unreadNotices}>Mark all read</button></div>{notifications.length?notifications.slice(0,30).map(n=><button className={"us-notice"+(!n.readAt?" unread":"")} key={n.id} onClick={()=>{markNoticesRead([n.id]);setNoticesOpen(false);if(n.itemId){const target=items.find(x=>x.id===n.itemId);if(target){setCategory(target.category);setShortcut("");setSublist("all");setLifecycleFilter("all");setOpen(n.itemId);}}}}><b>{n.actor} {n.type==="idea"?"added an idea":n.type==="poll"?"created a poll":n.type==="reveal"?"revealed a surprise":"updated a plan"}</b><span>{n.type==="reveal"?"A surprise is ready":n.title}</span><small>{new Date(n.createdAt).toLocaleString(undefined,{day:"numeric",month:"short",hour:"numeric",minute:"2-digit"})}</small></button>):<p>All caught up ✨</p>}</div>:null}
+          {noticesOpen?<div className="us-notices-panel"><div className="us-notices-head"><strong>Notifications</strong><button onClick={()=>markNoticesRead(notifications.filter(n=>!n.readAt).map(n=>n.id))} disabled={!unreadNotices}>Mark all read</button></div>{notifications.length?notifications.slice(0,30).map(n=><button className={"us-notice"+(!n.readAt?" unread":"")} key={n.id} onClick={()=>{markNoticesRead([n.id]);setNoticesOpen(false);if(n.itemId){const target=items.find(x=>x.id===n.itemId);if(target){setCategory(target.category);setShortcut("");setSublist("all");setLifecycleFilter("all");setQuery("");setPickerMode(null);setOpen(n.itemId);setNotificationTarget(n.itemId);}}}}><b>{n.actor} {n.type==="idea"?"added an idea":n.type==="poll"?"created a poll":n.type==="reveal"?"revealed a surprise":"updated a plan"}</b><span>{n.type==="reveal"?"A surprise is ready":n.title}</span><small>{new Date(n.createdAt).toLocaleString(undefined,{day:"numeric",month:"short",hour:"numeric",minute:"2-digit"})}</small></button>):<p>All caught up ✨</p>}</div>:null}
           {navOpen ? (
             <div className="us-nav-drawer">
               <div className="us-nav-links">
@@ -1312,7 +1315,7 @@ export default function Us() {
 
         <section className="us-list">
           {filtered.map((x, i) => (
-            <article className={"us-card status-" + x.status + (x.cover ? " has-photo" : " no-photo")} key={x.id} onClick={() => setOpen(open === x.id ? null : x.id)}>
+            <article className={"us-card status-" + x.status + (x.cover ? " has-photo" : " no-photo")} id={"us-item-"+x.id} key={x.id} onClick={() => setOpen(open === x.id ? null : x.id)}>
               <div className={"us-polaroid " + (i % 2 ? "tilt-r" : "tilt-l")}>
                 {x.cover ? (
                   <button className="us-cover-view" onClick={(e)=>{e.stopPropagation();setLightbox({src:x.cover,title:x.title,index:0,images:[x.cover,...(x.gallery||[]).map((g)=>g.src)]});}}><img className="us-cover-img" src={x.cover} alt="" /></button>
