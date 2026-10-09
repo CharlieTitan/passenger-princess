@@ -980,7 +980,7 @@ export default function Us() {
       <header className="us-appbar">
         <div className="us-appbar-inner">
           <div className="us-appbar-brand">Us</div>
-          <button className="us-notices-bell" aria-label={"Notifications"+(unreadNotices?" ("+unreadNotices+" unread)":"")} aria-expanded={noticesOpen} onClick={()=>setNoticesOpen(v=>!v)}>🔔{unreadNotices?<span className="us-notices-count">{unreadNotices}</span>:null}</button>
+          <button className="us-notices-bell" aria-label={"Notifications"+(unreadNotices?" ("+unreadNotices+" unread)":"")} aria-expanded={noticesOpen} onClick={()=>setNoticesOpen(v=>!v)}><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>{unreadNotices?<span className="us-notices-count">{unreadNotices}</span>:null}</button>
           <button className="us-nav-toggle" aria-label="Open navigation" onClick={()=>setNavOpen(!navOpen)}>
             ☰
             {unreadInbox ? <span className="us-nav-badge">{unreadInbox}</span> : null}
