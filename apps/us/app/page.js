@@ -93,7 +93,21 @@ export default function Us() {
 
   const unreadInbox=inbox.filter(x=>x.to===user&&!x.readAt).length;
   const unreadNotices=notifications.filter(x=>!x.readAt).length;
-  useEffect(()=>{if(!user)return;const refresh=async()=>{if(document.hidden)return;try{const r=await fetch("/api/us",{cache:"no-store"});if(r.ok){const d=await r.json();setNotifications(d.notifications||[]);}}catch{}};const timer=setInterval(refresh,15000);return ()=>clearInterval(timer);},[user]);
+  useEffect(()=>{if(!user)return;const refresh=async()=>{if(document.hidden)return;try{const r=await fetch("/api/us",{cache:"no-store"});if(r.ok){const d=await r.json();setNotifications(d.notifications||[]);setItems(d.items||[]);}}catch{}};const timer=setInterval(refresh,15000);return ()=>clearInterval(timer);},[user]);
+  async function openNotification(notification){
+    markNoticesRead([notification.id]);
+    setNoticesOpen(false);
+    if(!notification.itemId)return;
+    let target=items.find(x=>x.id===notification.itemId);
+    if(!target){
+      try{
+        const response=await fetch("/api/us",{cache:"no-store"});
+        if(response.ok){const data=await response.json();setItems(data.items||[]);target=(data.items||[]).find(x=>x.id===notification.itemId);}
+      }catch{}
+    }
+    if(!target){setToast("That activity is no longer available");return;}
+    setCategory(target.category);setShortcut("");setSublist("all");setLifecycleFilter("all");setQuery("");setPickerMode(null);setOpen(target.id);setNotificationTarget(target.id);
+  }
   async function markNoticesRead(ids){if(!ids.length)return;const r=await fetch("/api/us",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({action:"markNotificationsRead",ids})});if(r.ok){const at=new Date().toISOString();setNotifications(old=>old.map(n=>ids.includes(n.id)?{...n,readAt:at}:n));}}
 
 
@@ -988,7 +1002,7 @@ export default function Us() {
             ☰
             {unreadInbox ? <span className="us-nav-badge">{unreadInbox}</span> : null}
           </button>
-          {noticesOpen?<div className="us-notices-panel"><div className="us-notices-head"><strong>Notifications</strong><button onClick={()=>markNoticesRead(notifications.filter(n=>!n.readAt).map(n=>n.id))} disabled={!unreadNotices}>Mark all read</button></div>{notifications.length?notifications.slice(0,30).map(n=><button className={"us-notice"+(!n.readAt?" unread":"")} key={n.id} onClick={()=>{markNoticesRead([n.id]);setNoticesOpen(false);if(n.itemId){const target=items.find(x=>x.id===n.itemId);if(target){setCategory(target.category);setShortcut("");setSublist("all");setLifecycleFilter("all");setQuery("");setPickerMode(null);setOpen(n.itemId);setNotificationTarget(n.itemId);}}}}><b>{n.actor} {n.type==="idea"?"added an idea":n.type==="poll"?"created a poll":n.type==="reveal"?"revealed a surprise":"updated a plan"}</b><span>{n.type==="reveal"?"A surprise is ready":n.title}</span><small>{new Date(n.createdAt).toLocaleString(undefined,{day:"numeric",month:"short",hour:"numeric",minute:"2-digit"})}</small></button>):<p>All caught up ✨</p>}</div>:null}
+          {noticesOpen?<div className="us-notices-panel"><div className="us-notices-head"><strong>Notifications</strong><button onClick={()=>markNoticesRead(notifications.filter(n=>!n.readAt).map(n=>n.id))} disabled={!unreadNotices}>Mark all read</button></div>{notifications.length?notifications.slice(0,30).map(n=><button className={"us-notice"+(!n.readAt?" unread":"")} key={n.id} onClick={()=>openNotification(n)}><b>{n.actor} {n.type==="idea"?"added an idea":n.type==="poll"?"created a poll":n.type==="reveal"?"revealed a surprise":"updated a plan"}</b><span>{n.type==="reveal"?"A surprise is ready":n.title}</span><small>{new Date(n.createdAt).toLocaleString(undefined,{day:"numeric",month:"short",hour:"numeric",minute:"2-digit"})}</small></button>):<p>All caught up ✨</p>}</div>:null}
           {navOpen ? (
             <div className="us-nav-drawer">
               <div className="us-nav-links">
