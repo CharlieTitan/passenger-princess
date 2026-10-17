@@ -1390,6 +1390,7 @@ export default function Us() {
                     </div>
                   ) : null}
 
+                  {x.isSurprise && x.surprise?.creator!==user && !x.surprise?.isRevealed ? <div className="us-surprise-recipient-note">The details are staying secret until the reveal. Come back when it unlocks.</div> : <>
                   <div className="us-detail-audit">Added by {x.addedBy} · Last updated by {x.updatedBy}</div>
                   <div className="us-actions">
                     <button className={(x.status === "idea" || x.status === "maybe") ? "active" : ""} disabled={!!pendingIds[x.id]} onClick={() => patch(x, { status: "idea" }, "Saved as Idea")}>Idea</button>
@@ -1682,6 +1683,7 @@ export default function Us() {
                       ))}
                     </div>
                   </div>
+                  </>}
                 </div>
               ) : null}
             </article>
