@@ -111,7 +111,7 @@ export default function Us() {
       }catch{}
     }
     if(!target){setToast("That activity is no longer available");return;}
-    setCategory(target.category);setShortcut("");setSublist("all");setLifecycleFilter("all");setQuery("");setPickerMode(null);setOpen(target.id);setNotificationTarget(target.id);
+    setCategory(target.category);setShortcut("");setSublist("all");setLifecycleFilter(target.status==="archived"?"archived":"all");setQuery("");setPickerMode(null);setOpen(target.id);setNotificationTarget(target.id);
   }
   async function markNoticesRead(ids){if(!ids.length)return;const r=await fetch("/api/us",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({action:"markNotificationsRead",ids})});if(r.ok){const at=new Date().toISOString();setNotifications(old=>old.map(n=>ids.includes(n.id)?{...n,readAt:at}:n));}}
 
