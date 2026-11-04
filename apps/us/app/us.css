@@ -1145,3 +1145,6 @@ body:before{display:none!important}
 @media(max-width:600px){.us-shared-plans{padding:15px}.us-shared-heading h2{font-size:24px}.us-goal-list{grid-template-columns:1fr}.us-packing li{flex-wrap:wrap}.us-packing li>label{flex-basis:60%}.us-packing li form{flex-wrap:wrap}}
 
 @keyframes us-unfold-reveal{from{opacity:0;transform:translateY(-8px) scaleY(.94);transform-origin:top}to{opacity:1;transform:none}}.us-unfold-reveal{animation:us-unfold-reveal .5s ease-out}@media(prefers-reduced-motion:reduce){.us-unfold-reveal{animation:none}}
+
+/* Keep longer planning sheets usable on smaller phones. */
+.us-modal-card{box-sizing:border-box;max-height:calc(100svh - 16px);overflow-y:auto;overscroll-behavior:contain;padding-bottom:max(26px,env(safe-area-inset-bottom))}

@@ -29,3 +29,8 @@ test('recovery uses strong hashing, revokes old sessions and retains concurrent 
  assert.equal((await call({action:'login',username:'Charlie',password:'new-long-password'})).status,200);
 });
 test('login attempts are limited',async()=>{const {call}=await setup();for(let i=0;i<20;i++)assert.equal((await call({action:'login',username:'Tayla',password:'wrong'})).status,401);assert.equal((await call({action:'login',username:'Tayla',password:'wrong'})).status,429);});
+test('historical predictable recovery codes fail closed',async()=>{
+ const {call}=await setup({Charlie:{passwordHash:hash('existing-password'),recoveryHash:hash('charlie-recovery')}});
+ assert.equal((await call({action:'recover',username:'Charlie',recoveryCode:'charlie-recovery',newPassword:'attacker-password'})).status,503);
+ assert.equal((await call({action:'login',username:'Charlie',password:'existing-password'})).status,200);
+});
