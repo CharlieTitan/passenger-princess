@@ -2,6 +2,7 @@
 import "../us.css";
 import { useEffect, useMemo, useState } from "react";
 import { categoryMeta } from "../../lib/usData";
+import {useSharedSync,sharedFetch as fetch} from "../components/useSharedSync";
 
 export default function Memories(){
   const [state,setState]=useState({loading:true,user:null,items:[],inbox:[]});
@@ -21,19 +22,17 @@ export default function Memories(){
   const [recapMonth,setRecapMonth]=useState(nowForMonth.getFullYear()+"-"+String(nowForMonth.getMonth()+1).padStart(2,"0"));
 
   async function doLogout(){
+    sync.reset();setState({loading:false,user:null,items:[],inbox:[]});setLightbox(null);
     await fetch("/api/us-auth",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"logout"})});
     window.location.href="/";
   }
 
-  useEffect(()=>{
-    fetch("/api/us",{cache:"no-store"})
-      .then(async r=>{
-        if(!r.ok){setState({loading:false,user:null,items:[],inbox:[]});return;}
-        const d=await r.json();
-        setState({loading:false,user:d.user,items:d.items||[],inbox:d.inbox||[]});
-      })
-      .catch(()=>setState({loading:false,user:null,items:[],inbox:[]}));
-  },[]);
+  const sync=useSharedSync({
+    user:state.user,
+    onData:d=>setState({loading:false,user:d.user,items:d.items||[],inbox:d.inbox||[]}),
+    onExpired:()=>{setState({loading:false,user:null,items:[],inbox:[]});setLightbox(null);setExpandedMemoryId(null);}
+  });
+  useEffect(()=>{sync.refresh().then(data=>{if(!data)setState(s=>({...s,loading:false}));});},[]);
 
   const unreadInbox=(state.inbox||[]).filter(x=>x.to===state.user&&!x.readAt).length;
 

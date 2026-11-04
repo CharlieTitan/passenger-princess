@@ -2,6 +2,7 @@
 import "../us.css";
 import { useEffect, useRef, useState } from "react";
 import { categoryMeta } from "../../lib/usData";
+import {useSharedSync,sharedFetch as fetch} from "../components/useSharedSync";
 
 export default function Inbox(){
   const [state,setState]=useState({loading:true,user:null,inbox:[]});
@@ -17,20 +18,13 @@ export default function Inbox(){
   const [sending,setSending]=useState(false);
   const bottomRef=useRef(null);
 
-  async function load(){
-    const r=await fetch("/api/us",{cache:"no-store"});
-    if(!r.ok){setState({loading:false,user:null,inbox:[]});return;}
-    const d=await r.json();
-    setState({loading:false,user:d.user,inbox:d.inbox||[]});
-  }
-
-  useEffect(()=>{
-    load();
-    const refresh=()=>{if(!document.hidden)load();};
-    const timer=setInterval(refresh,5000);
-    document.addEventListener("visibilitychange",refresh);
-    return ()=>{clearInterval(timer);document.removeEventListener("visibilitychange",refresh);};
-  },[]);
+  const sync=useSharedSync({
+    user:state.user,
+    onData:d=>setState({loading:false,user:d.user,inbox:d.inbox||[]}),
+    onExpired:()=>{setState({loading:false,user:null,inbox:[]});setPhoto(null);setDraft({title:"",content:""});}
+  });
+  async function load(){await sync.refresh();}
+  useEffect(()=>{sync.refresh().then(data=>{if(!data)setState(s=>({...s,loading:false}));});},[]);
 
   useEffect(()=>{if(!state.loading)bottomRef.current?.scrollIntoView({behavior:"smooth",block:"end"});},[state.inbox.length,state.loading]);
 
@@ -52,6 +46,7 @@ export default function Inbox(){
   },[state.user,state.inbox]);
 
   async function doLogout(){
+    sync.reset();setState({loading:false,user:null,inbox:[]});setPhoto(null);
     await fetch("/api/us-auth",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"logout"})});
     window.location.href="/";
   }
@@ -72,22 +67,20 @@ export default function Inbox(){
     const title=draft.title.trim();
     const content=draft.content.trim();
     if(showTitle ? (!title||!ideaLink.trim()) : (!content&&!photo)) return;
-    const r=await fetch("/api/us",{
-      method:"POST",
-      headers:{"content-type":"application/json"},
-      body:JSON.stringify({action:"createInbox",title,content})
-    });
-    if(!r.ok){setSending(false);setToast("Couldn’t send that");setTimeout(()=>setToast(""),1600);return;}
-    const d=await r.json();
-    setState(s=>({...s,inbox:[...s.inbox,d.inbox]}));
-    setDraft({title:"",content:""});
-    setShowTitle(false);
-    setPhoto(null);
-    setIdeaLink("");
-    setPlusOpen(false);
-    setSending(false);
-    setToast("Sent ✓");
-    setTimeout(()=>setToast(""),1200);
+    setSending(true);
+    try{
+      const r=await fetch("/api/us",{
+        method:"POST",
+        headers:{"content-type":"application/json"},
+        body:JSON.stringify({action:"createInbox",title,content,link:showTitle?ideaLink.trim():"",photo})
+      });
+      if(!r.ok)throw Error("Couldn’t send that");
+      const d=await r.json();
+      setState(s=>({...s,inbox:[...s.inbox,d.inbox]}));
+      setDraft({title:"",content:""});setShowTitle(false);setPhoto(null);setIdeaLink("");setPlusOpen(false);
+      setToast("Sent ✓");setTimeout(()=>setToast(""),1200);
+    }catch(error){if(error.name!=="AbortError"){setToast("Couldn’t send that. Please try again.");setTimeout(()=>setToast(""),1800);}}
+    finally{setSending(false);}
   }
 
   async function makeIdea(entry,category){

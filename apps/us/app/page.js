@@ -2,6 +2,8 @@
 import "./us.css";
 import { useEffect, useMemo, useState } from "react";
 import { categoryMeta, quickShortcuts, mealTypes } from "../lib/usData";
+import {PackingChecklist, SharedGoals, RecurrenceFields, recurrenceLabel} from "./components/SharedPlans";
+import {useSharedSync, sharedFetch as fetch} from "./components/useSharedSync";
 
 const quickReactions=["❤️","😂","👀","👍"];
 
@@ -15,6 +17,9 @@ const quickAddMeta={
 export default function Us() {
   const [user, setUser] = useState(null);
   const [items, setItems] = useState([]);
+  const [goals,setGoals]=useState([]);
+  const [revealedIds,setRevealedIds]=useState({});
+  function needsReveal(item){return item.isSurprise && item.surprise?.creator!==user && !revealedIds[item.id];}
   const [activity, setActivity] = useState([]);
   const [polls, setPolls] = useState([]);
   const [customLists, setCustomLists] = useState([]);
@@ -66,20 +71,20 @@ export default function Us() {
   const [saveDraft,setSaveDraft]=useState({title:"",content:""});
   const [ideaFromMessage,setIdeaFromMessage]=useState(null);
 
+  function applySharedData(d) {
+    setUser(d.user);setItems(d.items||[]);setActivity(d.activity||[]);
+    setPolls(d.polls||[]);setCustomLists(d.customLists||[]);setInbox(d.inbox||[]);
+    setNotifications(d.notifications||[]);setGoals(d.goals||[]);
+  }
+  function clearSharedData() {
+    setUser(null);setItems([]);setActivity([]);setPolls([]);setCustomLists([]);
+    setInbox([]);setNotifications([]);setGoals([]);setRevealedIds({});setOpen(null);
+    setPlanningItem(null);setEditValues({});setCommentDrafts({});setLightbox(null);
+  }
+  const sync=useSharedSync({user,onData:applySharedData,onExpired:clearSharedData});
   async function load() {
     setLoading(true);
-    const r = await fetch("/api/us", { cache: "no-store" });
-    if (r.ok) {
-      const d = await r.json();
-      setUser(d.user);
-      setItems(d.items);
-      setActivity(d.activity);
-      setPolls(d.polls || []);
-      setCustomLists(d.customLists || []);
-      setInbox(d.inbox || []);
-      setNotifications(d.notifications || []);
-    }
-    setLoading(false);
+    try {await sync.refresh();} finally {setLoading(false);}
   }
 
   useEffect(() => {
@@ -93,7 +98,7 @@ export default function Us() {
 
   const unreadInbox=inbox.filter(x=>x.to===user&&!x.readAt).length;
   const unreadNotices=notifications.filter(x=>!x.readAt).length;
-  useEffect(()=>{if(!user)return;const refresh=async()=>{if(document.hidden)return;try{const r=await fetch("/api/us",{cache:"no-store"});if(r.ok){const d=await r.json();setNotifications(d.notifications||[]);setItems(d.items||[]);}}catch{}};const timer=setInterval(refresh,15000);return ()=>clearInterval(timer);},[user]);
+
   async function openNotification(notification){
     markNoticesRead([notification.id]);
     setNoticesOpen(false);
@@ -129,6 +134,7 @@ export default function Us() {
   },[inboxOpen,user]);
 
   async function doLogout() {
+    sync.reset();clearSharedData();
     await fetch("/api/us-auth", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "logout" }) });
     setUser(null);
     setItems([]);
@@ -196,6 +202,7 @@ export default function Us() {
       setToast("Deleted");
       setTimeout(()=>setToast(""),1600);
     } catch(e) {
+      if(e.name==="AbortError")return;
       setItems(previous);
       setToast("Couldn’t delete that");
       setTimeout(()=>setToast(""),2200);
@@ -214,15 +221,16 @@ export default function Us() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ id: item.id, ...changes })
       });
-      if (!r.ok) throw new Error("Save failed");
+      if (!r.ok) {const failure=await r.json();throw new Error(failure.error||"Couldn’t save that");}
       const d = await r.json();
-      setItems((current) => current.map((x) => x.id === item.id ? d.item : x));
+      setItems((current) => {const updated=current.map((x) => x.id === item.id ? d.item : x);return d.nextItem&&!updated.some(x=>x.id===d.nextItem.id)?[...updated,d.nextItem]:updated;});
       setToast(successMessage);
       setTimeout(() => setToast(""), 1600);
       return true;
     } catch (e) {
+      if(e.name==="AbortError")return false;
       setItems(previous);
-      setToast("Couldn’t save that");
+      setToast(e.message||"Couldn’t save that");
       setTimeout(() => setToast(""), 2200);
       return false;
     } finally {
@@ -383,6 +391,7 @@ export default function Us() {
   }
 
   async function savePlan() {
+    if (typeof planDraft.recurrence==="object" && (!Number.isInteger(planDraft.recurrence.interval)||planDraft.recurrence.interval<1||planDraft.recurrence.interval>52)) {setToast("Choose a repeat interval from 1 to 52");return;}
     if (!planningItem || !planDraft.date) {
       setToast("Pick a date first");
       setTimeout(()=>setToast(""),1600);
@@ -668,7 +677,7 @@ export default function Us() {
       body:JSON.stringify({action:"createInbox",title,content,to:user==="Charlie"?"Tayla":"Charlie"})
     });
     if(!r.ok){
-      setToast("Couldn’t save that");
+      setToast(e.message||"Couldn’t save that");
       setTimeout(()=>setToast(""),1800);
       return;
     }
@@ -1276,7 +1285,7 @@ export default function Us() {
         ) : null}
 
         <section className="us-shortcuts">
-          {quickShortcuts.filter(s=>!["Pick for us","Tonight"].includes(s)).map((s) => (
+          {[...quickShortcuts.filter(s=>!["Pick for us","Tonight"].includes(s)),"Goals"].map((s) => (
             <button
               key={s}
               className={shortcut === s ? "active" : ""}
@@ -1284,6 +1293,9 @@ export default function Us() {
                 if (s === "Pick for us") { openPicker("pick"); setShortcut(""); }
                 else if (s === "Tonight") { openPicker("tonight"); setShortcut(""); }
                 else if (s === "Quick add") { setPickerMode(null); setWheelPick(null); setQuick(true); }
+                else if (s === "Goals") {
+                  setTimeout(()=>document.getElementById("us-goals")?.scrollIntoView({behavior:"smooth",block:"start"}),0);
+                }
                 else if (s === "Recent activity") {
                   setPickerMode(null); setWheelPick(null); setShortcut("");
                   setTimeout(() => document.querySelector(".us-activity")?.scrollIntoView({behavior:"smooth",block:"start"}), 0);
@@ -1303,12 +1315,14 @@ export default function Us() {
 
 
 
+        <SharedGoals goals={goals} items={items} onGoals={setGoals}/>
+
         {shortcut === "Surprises" ? (
           <section className="us-surprise-head">
             <div>
               <small>SURPRISES</small>
               <h2>Keep something up your sleeve.</h2>
-              <p>Plan it here. Tayla only sees the safe teaser until you reveal it.</p>
+              <p>Plan it here. The other person sees only your safe teaser until it unlocks.</p>
             </div>
             <button
               className="us-primary"
@@ -1331,12 +1345,12 @@ export default function Us() {
           {filtered.map((x, i) => (
             <article className={"us-card status-" + x.status + (x.cover ? " has-photo" : " no-photo")} id={"us-item-"+x.id} key={x.id} onClick={() => setOpen(open === x.id ? null : x.id)}>
               <div className={"us-polaroid " + (i % 2 ? "tilt-r" : "tilt-l")}>
-                {x.cover ? (
+                {x.cover && !needsReveal(x) ? (
                   <button className="us-cover-view" onClick={(e)=>{e.stopPropagation();setLightbox({src:x.cover,title:x.title,index:0,images:[x.cover,...(x.gallery||[]).map((g)=>g.src)]});}}><img className="us-cover-img" src={x.cover} alt="" /></button>
                 ) : (
                   <div className="us-photo-placeholder">{x.emoji || categoryMeta[x.category]?.emoji || "✦"}</div>
                 )}
-                <small>{x.location || itemListLabel(x)}</small>
+                <small>{needsReveal(x)?"Surprise":x.location || itemListLabel(x)}</small>
               </div>
 
               <div className="us-card-summary">
@@ -1354,9 +1368,9 @@ export default function Us() {
                     </button>
                   </div>
                 </div>
-                <h3>{x.title}</h3>
-                {x.isSurprise && x.surprise?.teaser ? <p className="us-surprise-teaser">👀 ${x.surprise.teaser}</p> : null}
-                {itemSecondary(x) ? <p className="us-card-subtitle">{itemSecondary(x)}</p> : null}
+                <h3>{needsReveal(x)?"Surprise Plan":x.title}</h3>
+                {x.isSurprise && x.surprise?.teaser ? <p className="us-surprise-teaser">👀 {x.surprise.teaser}</p> : null}
+                {!needsReveal(x)&&itemSecondary(x) ? <p className="us-card-subtitle">{itemSecondary(x)}</p> : null}
                 <div className="us-reaction-row us-item-reactions" onClick={(e)=>e.stopPropagation()}>
                   {quickReactions.map((emoji)=>{
                     const users=Array.isArray(x.reactions?.[emoji]) ? x.reactions[emoji] : [];
@@ -1386,8 +1400,8 @@ export default function Us() {
                           <button onClick={()=>patch(x,{action:"revealSurprise"},"Surprise revealed ✨")}>Reveal early</button>
                         ) : null}
                       </div>
-                      {x.surprise?.isRevealed ? (
-                        <div className="us-surprise-revealed-grid">
+                      {x.surprise?.isRevealed && !needsReveal(x) ? (
+                        <div className="us-surprise-revealed-grid us-unfold-reveal">
                           {x.surprise?.dressCode ? <div><small>Dress code</small><b>{x.surprise.dressCode}</b></div> : null}
                           {x.surprise?.meetMode ? <div><small>Plan</small><b>{x.surprise.meetMode==="pickup"?"Pickup":"Meet there"}</b></div> : null}
                           {x.surprise?.pickupTime ? <div><small>Pickup</small><b>{x.surprise.pickupTime}</b></div> : null}
@@ -1396,6 +1410,7 @@ export default function Us() {
                         </div>
                       ) : (
                         <div className="us-surprise-locked-copy">
+                          {x.surprise?.isRevealed && needsReveal(x)?<button className="us-primary" onClick={()=>setRevealedIds(previous=>({...previous,[x.id]:true}))}>Tap to reveal</button>:null}
                           <b>{x.surprise?.date || "Date TBC"}{x.surprise?.time ? " · "+x.surprise.time : ""}</b>
                           <span>{x.surprise?.teaser || "No clues yet."}</span>
                           {x.surprise?.revealAt ? <small>Unlocks {new Date(x.surprise.revealAt).toLocaleString()}</small> : null}
@@ -1404,7 +1419,7 @@ export default function Us() {
                     </div>
                   ) : null}
 
-                  {x.isSurprise && x.surprise?.creator!==user && !x.surprise?.isRevealed ? <div className="us-surprise-recipient-note">The details are staying secret until the reveal. Come back when it unlocks.</div> : <>
+                  {x.isSurprise && x.surprise?.creator!==user && (!x.surprise?.isRevealed || needsReveal(x)) ? <div className="us-surprise-recipient-note">The details are staying secret until the reveal. Come back when it unlocks.</div> : <>
                   <div className="us-detail-audit">Added by {x.addedBy} · Last updated by {x.updatedBy}</div>
                   <div className="us-actions">
                     <button className={(x.status === "idea" || x.status === "maybe") ? "active" : ""} disabled={!!pendingIds[x.id]} onClick={() => patch(x, { status: "idea" }, "Saved as Idea")}>Idea</button>
@@ -1509,7 +1524,7 @@ export default function Us() {
                         <span>{x.planDate || "No date"}</span>
                         {x.planTime ? <span>{x.planTime}</span> : null}
                         {x.location ? <span>{x.location}</span> : null}
-                        {x.recurrence && x.recurrence!=="none" ? <span>{x.recurrence}</span> : null}
+                        {recurrenceLabel(x.recurrence) ? <span>{recurrenceLabel(x.recurrence)}</span> : null}
                         {x.reminderPreset && x.reminderPreset!=="none" ? <span>Reminder: {x.reminderPreset}</span> : null}
                       </div>
                       {x.planNotes ? <p>{x.planNotes}</p> : null}
@@ -1520,6 +1535,9 @@ export default function Us() {
                       </div>
                     </div>
                   ) : null}
+
+                  {x.category==="go" && ["holidays","staycations"].includes(x.list) && (x.status==="planned" || x.status==="done" && (x.checklist||[]).length>0) ? <PackingChecklist item={x} onItem={updated=>setItems(current=>current.map(item=>item.id===updated.id?updated:item))}/> : null}
+                  {x.status==="done" && x.nextOccurrenceId ? <p className="us-recurring-note">The next date is in Planned. This memory stays saved.</p> : null}
 
                   <div className="us-media-controls">
                     <label>Card emoji
@@ -1850,15 +1868,7 @@ export default function Us() {
             </label>
 
             <div className="us-plan-grid">
-              <label>Recurrence
-                <select value={planDraft.recurrence} onChange={(e)=>setPlanDraft({...planDraft,recurrence:e.target.value})}>
-                  <option value="none">Doesn’t repeat</option>
-                  <option value="weekly">Weekly</option>
-                  <option value="monthly">Monthly</option>
-                  <option value="yearly">Yearly</option>
-                  <option value="every-2-weeks">Every 2 weeks</option>
-                </select>
-              </label>
+              <RecurrenceFields value={planDraft.recurrence} onChange={recurrence=>setPlanDraft({...planDraft,recurrence})}/>
 
               <label>Reminder
                 <select value={planDraft.reminderPreset} onChange={(e)=>setPlanDraft({...planDraft,reminderPreset:e.target.value})}>
@@ -1870,7 +1880,7 @@ export default function Us() {
               </label>
             </div>
 
-            <button className="us-primary us-quick-submit" disabled={!planDraft.date} onClick={savePlan}>
+            <button className="us-primary us-quick-submit" disabled={!planDraft.date||!!pendingIds[planningItem.id]} onClick={savePlan}>
               {planningItem.status==="planned" ? "SAVE PLAN →" : "LOCK IN PLAN →"}
             </button>
           </div>

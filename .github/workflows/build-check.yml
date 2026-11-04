@@ -1,15 +1,35 @@
-name: Build Check
+name: Build and privacy checks
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
+permissions:
+  contents: read
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        directory: [".", "apps/us"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
-      - run: npm install
+          node-version: 24
+          cache: npm
+          cache-dependency-path: ${{ matrix.directory }}/package-lock.json
+      - run: npm ci
+        working-directory: ${{ matrix.directory }}
+      - run: npm test --if-present
+        working-directory: ${{ matrix.directory }}
+      - run: npm audit --omit=dev --audit-level=high
+        working-directory: ${{ matrix.directory }}
       - run: npm run build
+        working-directory: ${{ matrix.directory }}
+      - run: npx playwright install --with-deps chromium
+        if: matrix.directory == 'apps/us'
+        working-directory: apps/us
+      - run: npm run test:e2e
+        if: matrix.directory == 'apps/us'
+        working-directory: apps/us
