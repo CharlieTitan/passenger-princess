@@ -10,12 +10,12 @@ Current implementation is `apps/us` (tay-princess deployment). The repository ro
 
 | Record | Implementation | Automated evidence | User/device acceptance |
 | --- | --- | --- | --- |
-| QC54 shared trip/staycation checklists | Add/edit/tick/remove for both users; atomic concurrent edits; planned and completed Go holidays/staycations | Server CRUD, concurrent update and surprise-denial tests; browser checks recorded below | Pending Charlie + Tayla device check |
-| QC55 goals | Shared create/edit/delete; manual progress and linked Done items; surprise links excluded | CRUD/progress/privacy server tests; browser checks recorded below | Pending device check |
-| QC56 recurring plans | Weekly/monthly/yearly every 1–52 units; legacy fortnightly values; next plan generated exactly once on Done; memory retained | Month ends, leap days, duplicate completion and history tests; browser checks recorded below | Pending real ritual acceptance |
-| QC57 shared sync | Three-second visible polling of all shared datasets; focus/online recovery; session expiry clearing and stale-response protection | Sync state and actual fetch body/logout race tests; browser checks recorded below | Pending two physical devices, background/resume and poor-network checks |
+| QC54 shared trip/staycation checklists | Add/edit/tick/remove for both users; atomic concurrent edits; planned and completed Go holidays/staycations | Server CRUD, concurrent update and surprise-denial tests; two mobile browser regressions pass | Pending Charlie + Tayla device check |
+| QC55 goals | Shared create/edit/delete; manual progress and linked Done items; surprise links excluded | CRUD/progress/privacy server tests; two mobile browser regressions pass | Pending device check |
+| QC56 recurring plans | Weekly/monthly/yearly every 1–52 units; legacy fortnightly values; next plan generated exactly once on Done; memory retained | Month ends, leap days, duplicate completion and history tests; two mobile browser regressions pass | Pending real ritual acceptance |
+| QC57 shared sync | Three-second visible polling of all shared datasets; focus/online recovery; session expiry clearing and stale-response protection | Sync state and actual fetch body/logout race tests; two mobile browser regressions pass | Pending two physical devices, background/resume and poor-network checks |
 | QC58 PWA | Manifest/icons, standalone install, public-only service worker cache, generic offline page | Icon dimensions and service worker cache-policy tests | Pending iOS Add to Home Screen, Android install and icon/update check |
-| Notification navigation | Existing referenced-item lookup retained; opens item and clears filters; missing target handled | Browser regression pending below | Earlier user said items now open; latest production acceptance not inferred |
+| Notification navigation | Existing referenced-item lookup retained; opens item and clears filters; missing target handled | Mobile browser notification navigation regression passes | Earlier user said items now open; latest production acceptance not inferred |
 | Surprise reveal/privacy | Server allowlist, hidden checklist/media/metadata, safe activity/notice/poll projections, protected calendar, timed safe notice, deliberate tap to reveal | Creator/recipient, timed reveal, forged mutations, deleted references, calendar and session tests | Pending timed reveal on both devices |
 
 ## Security and regression changes
@@ -26,7 +26,9 @@ CI now checks PRs as well as main, builds both application roots, runs available
 
 ## Verification record
 
-Local verification: 25 automated Node checks pass; root and standalone production builds pass; both dependency audits report zero vulnerabilities. Browser, CI and production evidence will be recorded after execution. QC58 is prepared for a separate PWA PR. Implementation is not user acceptance.
+Local verification: 26 automated Node checks and 2 mobile browser scenarios pass. Browser scenarios run two independent user contexts through the real production handlers with isolated test-only storage. They verify checklist add/edit/tick/remove, goal create/edit/delete and linked progress, custom recurrence and retained history, notification item opening, and locked surprise unlock plus deliberate reveal. Root and standalone production builds pass. Dependency audits report zero vulnerabilities. Independent review identified and repaired concurrent recovery, legacy recurrence, historical surprise references, logout races and mobile planning-sheet overflow.
+
+Delivery: [shared planning/privacy PR #13](https://github.com/CharlieTitan/passenger-princess/pull/13) and [private PWA PR #14](https://github.com/CharlieTitan/passenger-princess/pull/14). Their GitHub check and Vercel deployment records are the authoritative release evidence. Merge requires both application CI jobs and both Vercel previews green; production deployment is checked after merge. User/device acceptance remains pending.
 
 ## Device-side follow-up
 
