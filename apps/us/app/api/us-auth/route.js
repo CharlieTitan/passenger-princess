@@ -56,6 +56,10 @@ export async function POST(req) {
   try { await ensureUsers(); } catch { return reply({ error: "Authentication setup required" }, 503); }
   const accounts = parse(await kv.get("us:auth:users"));
   const account = accounts?.[username];
+  // Historical bootstrap codes were predictable. Fail closed until configured securely.
+  if (action === "recover" && account?.recoveryHash === digest(username.toLowerCase() + "-recovery")) {
+    return reply({ error: "Recovery setup required. Contact Charlie." }, 503);
+  }
   if (!account || !matches(value, action === "recover" ? account.recoveryHash : account.passwordHash)) return reply({ error: "Invalid login or recovery code" }, 401);
   if (action === "recover") {
     if (typeof body.newPassword !== "string" || body.newPassword.length < 12 || body.newPassword.length > 1024) return reply({ error: "Use a password of at least 12 characters" }, 400);

@@ -20,7 +20,7 @@ Current implementation is `apps/us` (tay-princess deployment). The repository ro
 
 ## Security and regression changes
 
-Authentication occurs before seeding. Only Charlie/Tayla sessions are valid. Logout removes the session; password recovery revokes older sessions and uses atomic account updates. Default credentials and embedded password repair paths were removed. Existing hashes remain compatible; newly set passwords use salted scrypt. Login/recovery attempts are rate limited. Private responses use no-store. Both deployments reuse the current US API/calendar rules.
+Authentication occurs before seeding. Only Charlie/Tayla sessions are valid. Logout removes the session; password recovery revokes older sessions and uses atomic account updates. Default credentials and embedded password repair paths were removed. Historical predictable recovery codes are explicitly disabled if still stored; those accounts require secure recovery setup before self-service recovery works. Existing login remains available. Existing hashes remain compatible; newly set passwords use salted scrypt. Login/recovery attempts are rate limited. Private responses use no-store. Both deployments reuse the current US API/calendar rules.
 
 CI now checks PRs as well as main, builds both application roots, runs available tests and rejects high-severity dependency advisories. Lockfiles make installation reproducible. PostCSS is overridden to a verified patched version while keeping Next.js 15.
 
