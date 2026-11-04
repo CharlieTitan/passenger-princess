@@ -26,9 +26,15 @@ CI now checks PRs as well as main, builds both application roots, runs available
 
 ## Verification record
 
-Local verification: 26 automated Node checks and 2 mobile browser scenarios pass. Browser scenarios run two independent user contexts through the real production handlers with isolated test-only storage. They verify checklist add/edit/tick/remove, goal create/edit/delete and linked progress, custom recurrence and retained history, notification item opening, and locked surprise unlock plus deliberate reveal. Root and standalone production builds pass. Dependency audits report zero vulnerabilities. Independent review identified and repaired concurrent recovery, legacy recurrence, historical surprise references, logout races and mobile planning-sheet overflow.
+Local verification: 28 automated Node checks and 2 mobile browser scenarios pass. Browser scenarios run two independent user contexts through the real production handlers with isolated test-only storage. They verify checklist add/edit/tick/remove, goal create/edit/delete and linked progress, custom recurrence and retained history, notification item opening, and locked surprise unlock plus deliberate reveal. Root and standalone production builds pass. Dependency audits report zero vulnerabilities. Independent review identified and repaired concurrent recovery, legacy recurrence, historical surprise references, logout races and mobile planning-sheet overflow.
 
-Delivery: [shared planning/privacy PR #13](https://github.com/CharlieTitan/passenger-princess/pull/13) and [private PWA PR #14](https://github.com/CharlieTitan/passenger-princess/pull/14). Their GitHub check and Vercel deployment records are the authoritative release evidence. Merge requires both application CI jobs and both Vercel previews green; production deployment is checked after merge. User/device acceptance remains pending.
+Delivery: [shared planning/privacy PR #13](https://github.com/CharlieTitan/passenger-princess/pull/13) and [private PWA PR #14](https://github.com/CharlieTitan/passenger-princess/pull/14). Their GitHub check and Vercel deployment records are the authoritative release evidence. Both PRs merged and both production projects deployed commit `4d7e22b56083768e287d75ec5ad9d588c34db0c5`; main-branch CI passed. A follow-up review repairs copied recurring-challenge results and unnecessary redaction of poll/inbox activity, with two additional regression tests. Merge requires both application CI jobs and both Vercel previews green; production deployment is checked after merge. User/device acceptance remains pending.
+
+## Production smoke evidence
+
+On https://tay-princess.vercel.app: the shared API and calendar return 401 without credentials and include private/no-store headers; manifest and all PNG icons return 200; the service worker activates in a fresh mobile browser session with no page errors. Cache Storage contains only offline.html and public icons. An offline navigation to /memories displays the generic reconnect screen. No shared content or production test records were used.
+
+The legacy production deployment is READY in GitHub's Vercel records. Its team-qualified URL requires Vercel SSO, so direct production HTTP verification of its redirects and runtime-log inspection were not available through the current connector. Both application builds passed. Authenticated production CRUD and physical-device acceptance remain unverified.
 
 ## Device-side follow-up
 
