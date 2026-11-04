@@ -2,7 +2,7 @@
 
 Two existing Next.js applications deploy from this repository:
 
-- Repository root: original Passenger Princess, Pillow and Programme experiences, plus the legacy `/us` entry point.
+- Repository root: original Passenger Princess, Pillow and Programme experiences, plus legacy `/us` entry points that redirect to the current US app.
 - `apps/us`: the current private US app, deployed by the `tay-princess` Vercel project at its root route. Recent shared-app development belongs here.
 
 US is exclusively for Charlie and Tayla. Its data uses the existing `us:*` Redis namespace, separate from `pp:*`. The legacy US API delegates to the current implementation so both deployments enforce the same privacy and session rules.

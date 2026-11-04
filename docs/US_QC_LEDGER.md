@@ -6,7 +6,7 @@ Updated 4 November 2026. Baseline: `de6efbc13fcf4f204724a00968b26b1e98b8991a` on
 
 The repository contained the locked master specification, a one-line README, no AGENTS.md and no QC ledger. The referenced ChatGPT conversation returned user messages and inaccessible assistant content-reference markers, so earlier acceptance results cannot be reconstructed. QC54–58 labels below follow Woody's explicit continuation request; they do not certify any earlier QC item.
 
-Current implementation is `apps/us` (tay-princess deployment). The repository root deploys the legacy experiences separately. The old US API and calendar endpoint now share the current security rules; the old root UI is retained.
+Current implementation is `apps/us` (tay-princess deployment). The repository root deploys the legacy experiences separately. The old US API and calendar endpoint now share the current security rules; the old root UI entry points redirect to the canonical current app at https://tay-princess.vercel.app.
 
 | Record | Implementation | Automated evidence | User/device acceptance |
 | --- | --- | --- | --- |
